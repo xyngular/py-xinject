@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glazy"
-version = "0.2.0"
+version = "0.2.1"
 description = "Inject global resources lazily; global-lazy -> glazy"
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "glazy"}]

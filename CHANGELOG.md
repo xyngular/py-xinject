@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/xyngular/py-glazy/compare/v0.2.0...v0.2.1) (2022-10-08)
+
+
+### Bug Fixes
+
+* remove unneeded input to reusable workflow call. ([040e4fd](https://github.com/xyngular/py-glazy/commit/040e4fda9b4a5c69108d7bc9ec492621a7e10e64))
+
 ## [0.2.0](https://github.com/xyngular/py-glazy/compare/v0.1.0...v0.2.0) (2022-10-08)
 
 
