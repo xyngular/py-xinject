@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "glazy"
+version = "1.0.0"
+description = "Inject global resources lazily; global-lazy -> glazy"
+authors = ["Josh Orr <josh@orr.blue>"]
+packages = [{include = "guards"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+guards = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+mkdocs = "^1.4.0"
+mike = "^1.1.2"
+pytest-pycodestyle = "^2.3.0"
+pytest = "^7.1.3"
+pdoc3 = "^0"
+mkdocs-material = "^8.5.6"
+tomlkit = "^0.11.5"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--verbose --pycodestyle"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins]
+# Pytest plugin to support automatic clearing of all current resource between each test.
+pytest11 = {glazy_pytest_plugin = "glazy.pytest_plugin"}
+
+[tool.black]
+line-length = 99
+skip-string-normalization = 1
+target_version = ['py38']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''

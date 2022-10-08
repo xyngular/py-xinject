@@ -1,0 +1,3 @@
+
+class XynResourceError(Exception):
+    pass
