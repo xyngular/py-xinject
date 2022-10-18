@@ -6,7 +6,7 @@ dev_addr: 127.0.0.1:7000
 nav:
   - Homepage: index.md
   - Changelog: changelog.md
-  - API reference: api/glazy/" target="_blank
+  - API Reference: api/glazy/" target="_blank
 
 theme:
   name: material
