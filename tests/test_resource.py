@@ -1,6 +1,6 @@
 import pytest as pytest
 
-from glazy import ActiveResourceProxy, GlazyContext, Dependency
+from glazy import ActiveResourceProxy, UContext, Dependency
 from glazy.dependency import PerThreadDependency
 
 
@@ -26,7 +26,7 @@ my_class_via_proxy_method = MyClass.resource_proxy()
 
 def test_proxy_wrapper():
     for current_class in [my_class, my_class_via_proxy_method]:
-        with GlazyContext(resources=[MyClass()]):
+        with UContext(resources=[MyClass()]):
             assert_myclass("b")
 
             current_class.my_prop = "c"

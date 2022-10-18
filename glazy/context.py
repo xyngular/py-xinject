@@ -128,14 +128,14 @@ This means another way to grab resources is to get the current `Context.current`
 and then ask it for the resource like below. This works for any type, including
 types that don't inherit from `glazy.resource.Resource`:
 
->>> GlazyContext.current().resource(SomeResourceType).some_value
+>>> UContext.current().resource(SomeResourceType).some_value
 'hello!'
 
 If you pass a type into `Context.current`, it will do the above ^ for you:
 
->>> GlazyContext.current(SomeResourceType).some_value
+>>> UContext.current(SomeResourceType).some_value
 'hello!'
->>> GlazyContext.current(SomeResourceType).ident
+>>> UContext.current(SomeResourceType).ident
 0
 
 As you can see, it still returns the same object [ie: `ident == 0`]
@@ -185,7 +185,7 @@ the copy is what is made current/activated (see `Context.__copy__` for more deta
 
 Here are examples of the four ways to create/activate a new context:
 
->>> with GlazyContext():
+>>> with UContext():
 ...     SomeResourceType.resource().ident
 1
 
@@ -196,7 +196,7 @@ When the context manager or decorated method is exited, it will pop-off the cont
 be the default one anymore. Whatever the default one was before you entered the `with` will
 be the default once more.
 
->>> @GlazyContext():
+>>> @UContext():
 >>> def a_decorated_method():
 ...     return SomeResourceType.resource().ident
 >>> a_decorated_method()
@@ -215,7 +215,7 @@ SomeResourceType when it was asked for it because the new blank `Context` did no
 have the resource.
 
 
->>> GlazyContext().make_current()
+>>> UContext().make_current()
 >>> SomeResourceType.resource().ident
 4
 
@@ -246,7 +246,7 @@ more details on how to do that.
 
 You can make an isolated Context by doing:
 
->>> GlazyContext(parent=None)
+>>> UContext(parent=None)
 
 When creating a new context. This will tell the context NOT to use a parent. By default, a
 Context will use the current Context as the time the Context was created as it's parent.
@@ -285,14 +285,14 @@ I create a new class that uses our previous [SomeResourceType][resources] but ad
 
 Now watch as I do this:
 
->>> with GlazyContext():
+>>> with UContext():
 ...     MySingleton.resource().ident
 5
 
 The same resource is kept when making a child-context. However, if you make a parent-less
 context:
 
->>> with GlazyContext(parent=None):
+>>> with UContext(parent=None):
 ...     MySingleton.resource().ident
 6
 
@@ -321,8 +321,8 @@ Some sort of resource, I am usuallyemphasizingg with this that you need to pass 
 
 # Tell pdoc3 to document the normally private method __call__.
 __pdoc__ = {
-    "GlazyContext.__call__": True,
-    "GlazyContext.__copy__": True,
+    "UContext.__call__": True,
+    "UContext.__copy__": True,
     "Dependency.__call__": True,
     "Dependency.__copy__": True
 }
@@ -341,23 +341,23 @@ class _TreatAsRootParentType(Singleton):
 
 
 _TreatAsRootParent = _TreatAsRootParentType()
-""" Can be used for the parent of a new `GlazyContext`, it will make the context a root-like
+""" Can be used for the parent of a new `UContext`, it will make the context a root-like
     context. What this means is the parent is treated as if you set it to `None` while at the
     same time altering the copying/activating behavior.
 
-    When you make a copy of a root-like `GlazyContext`, or use it in a `with` or `@` decorator
-    which will also copy of the GlazyContext and activate the copy. When this happens the new context
+    When you make a copy of a root-like `UContext`, or use it in a `with` or `@` decorator
+    which will also copy of the UContext and activate the copy. When this happens the new context
     will use the currently activated context as it's parent.
 
     Normally when you pass in `None` as the parent of a new context, ie:
 
-    >>> GlazyContext(parent=None)
+    >>> UContext(parent=None)
 
     New copies of that context object will have their parent set as None.
 
     For a root-like context created like this:
 
-    >>> GlazyContext(parent=_TreatAsRootParent)
+    >>> UContext(parent=_TreatAsRootParent)
 
     When activating this context, it will make a copy and have it's parent set as None.
     But if you then make another copy of this root-like context, the new context will
@@ -371,26 +371,26 @@ _TreatAsRootParent = _TreatAsRootParentType()
 
 
 # todo: Remove ContextType
-class GlazyContext:
+class UContext:
     """
-    See [Quick Start](#quick-start) in the `glazy.context` module if your new to the GlazyContext
+    See [Quick Start](#quick-start) in the `glazy.context` module if your new to the UContext
     class.
     """
 
     @classmethod
-    def current(cls, for_type: Union[Type[C], "GlazyContext"] = None) -> Union[C, "GlazyContext"]:
+    def current(cls, for_type: Union[Type[C], "UContext"] = None) -> Union[C, "UContext"]:
         """ Gets the current context that should be used by default, via the Python 3.7 ContextVar
-            feature. Please see GlazyContext class doc [just above] for more details on how this works.
+            feature. Please see UContext class doc [just above] for more details on how this works.
         """
         context = _current_context_contextvar.get()
 
         # If we are None, we need to create the 'root-context' for current thread.
         if context is None:
             import threading
-            context = GlazyContext(name=f'ThreadRoot-{threading.current_thread().name}')
+            context = UContext(name=f'ThreadRoot-{threading.current_thread().name}')
             context._make_current_and_get_reset_token(is_thread_root_context=True)
 
-        if for_type in (None, GlazyContext):
+        if for_type in (None, UContext):
             return context
 
         return context.resource(for_type=for_type)
@@ -399,7 +399,7 @@ class GlazyContext:
     def _current_without_creating_thread_root(cls):
         return _current_context_contextvar.get()
 
-    def make_current(self) -> 'GlazyContext':
+    def make_current(self) -> 'UContext':
         """
         Read [Quick Start](#quick-start) first if you don't know anything about how `Context`
         works.
@@ -415,43 +415,43 @@ class GlazyContext:
         .. note:: See `Context.__copy__` for more details on copying aspect.
 
         Example of this via a 'with'`' statement:
-        >>> before_context = GlazyContext.current()
-        >>> with GlazyContext() as my_context:
-        ...    assert GlazyContext.current() is my_context
-        ...    another_context = GlazyContext()
+        >>> before_context = UContext.current()
+        >>> with UContext() as my_context:
+        ...    assert UContext.current() is my_context
+        ...    another_context = UContext()
         ...    active_context_copy = another_context.make_current()
-        ...    assert GlazyContext.current() is active_context_copy
-        >>> assert GlazyContext.current() is before_context
+        ...    assert UContext.current() is active_context_copy
+        >>> assert UContext.current() is before_context
 
         Example of this via a '@' method decorator statement:
 
         >>>
-        >>> before_int_resource_value = GlazyContext.current(for_type=int)
-        >>> method_context = GlazyContext(resources=[20])
+        >>> before_int_resource_value = UContext.current(for_type=int)
+        >>> method_context = UContext(resources=[20])
         >>>
         >>> # This dectorator will make a copy of `method_context` each time `my_method` is called.
         >>> @method_context
         >>> def my_method():
-        ...     assert GlazyContext.current(for_type=int) == 20
-        ...     another_context = GlazyContext(resources=[19])
+        ...     assert UContext.current(for_type=int) == 20
+        ...     another_context = UContext(resources=[19])
         ...     another_context.make_current()
-        ...     assert GlazyContext.current(for_type=int) == 19
+        ...     assert UContext.current(for_type=int) == 19
         ...     # After method exits, due to `@method_context` the previous context
         ...     # state will be restored.
-        >>> assert GlazyContext.current(for_type=int) == before_int_resource_value
+        >>> assert UContext.current(for_type=int) == before_int_resource_value
 
         ## Other Notes
 
         If you want to have a config object only temporarily current for the current thread,
         use it in a with statement:
 
-        >>> with GlazyContext() as my_context:
-        ...     assert GlazyContext.current() is my_context
-        ... assert GlazyContext.current() is not my_context
+        >>> with UContext() as my_context:
+        ...     assert UContext.current() is my_context
+        ... assert UContext.current() is not my_context
 
         Or as a method decorator:
 
-        >>> some_context = GlazyContext()
+        >>> some_context = UContext()
         >>> @some_context:
         >>> def my_method()
         ...     # Current context will be copy of `some_context` (with it's resources intact).
@@ -477,9 +477,9 @@ class GlazyContext:
         is_thread_root_context=False,
         is_app_root_context=False
     ) -> Optional[Any]:
-        """ See `GlazyContext.make_current` docs for more details.
+        """ See `UContext.make_current` docs for more details.
 
-            This method is called by `GlazyContext.make_current`, but will also pass back the reset
+            This method is called by `UContext.make_current`, but will also pass back the reset
             token (to be used internally in this module).
 
             Args:
@@ -487,7 +487,7 @@ class GlazyContext:
                     `_TreatAsRootParent` as the parent when creating the context
                     and wanting it to be a 'root-context'.
 
-                is_app_root_context: This tells us to NOT add this GlazyContext to the
+                is_app_root_context: This tells us to NOT add this UContext to the
                     per-thread `_current_context_contextvar`.  Instead, we activate
                     this context as the app-root context that is shared between all threads.
                     We only ever have one of these, and it's always allocated at
@@ -508,8 +508,8 @@ class GlazyContext:
             assert self._parent is _TreatAsRootParent, "See my methods doc-comment for details."
 
         if self._parent is Default:
-            # Side Note: This will be `None` if we are the first GlazyContext on current thread.
-            self._parent = GlazyContext._current_without_creating_thread_root()
+            # Side Note: This will be `None` if we are the first UContext on current thread.
+            self._parent = UContext._current_without_creating_thread_root()
 
             if self._parent is None:
                 # We set parent to use app-root-context if we are the thread-root-context.
@@ -535,7 +535,7 @@ class GlazyContext:
         return _current_context_contextvar.set(self)
 
     @property
-    def parent(self) -> Optional["GlazyContext"]:
+    def parent(self) -> Optional["UContext"]:
         parent = self._parent
         if self._is_active:
             if parent is None:
@@ -545,18 +545,18 @@ class GlazyContext:
                 return parent
 
             raise XynResourceError(
-                f"Somehow we have a GlazyContext has been activated "
+                f"Somehow we have a UContext has been activated "
                 f"(ie: has activated via decorator `@` or via `with` or via "
-                f"`GlazyContext.make_active` at some point and has not exited yet) "
+                f"`UContext.make_active` at some point and has not exited yet) "
                 f"but still has it's internal parent value set to `Default`. "
-                f"This indicates some sort of programming error or bug with GlazyContext. "
-                f"An active GlazyContext should NEVER have their parent set at `Default`. "
-                f"It should either be None or an explict parent GlazyContext instance "
+                f"This indicates some sort of programming error or bug with UContext. "
+                f"An active UContext should NEVER have their parent set at `Default`. "
+                f"It should either be None or an explict parent UContext instance "
                 # Can't resolve parent, would create infinite recursion.
                 f"({self.__repr__(include_parent=False)}). "
-                f"A GlazyContext should either have an explicit parent or a parent of `None` after "
-                f"GlazyContext has been activated via `@` or `with` or `GlazyContext.make_current()`; "
-                f"(side note: you can look at GlazyContext._is_active doc-comment for more internal "
+                f"A UContext should either have an explicit parent or a parent of `None` after "
+                f"UContext has been activated via `@` or `with` or `UContext.make_current()`; "
+                f"(side note: you can look at UContext._is_active doc-comment for more internal "
                 f"details)."
             )
 
@@ -569,27 +569,27 @@ class GlazyContext:
         # I am allowing it for more of completeness at this point then anything else.
         # However, it might be more useful at some point.
         if parent is Default:
-            return GlazyContext.current()
+            return UContext.current()
 
         if parent in (_TreatAsRootParent, None):
             return None
 
         raise XynResourceError(
-            f"Somehow we have a GlazyContext that is not active "
+            f"Somehow we have a UContext that is not active "
             f"(ie: ever activated via decorator `@` or via `with` or via "
-            f"`GlazyContext.make_active`) but has a specific parent "
+            f"`UContext.make_active`) but has a specific parent "
             f"(ie: not None or _TreatAsRootParent or Default). "
-            f"This indicates some sort of programming error or bug with GlazyContext. "
-            f"A GlazyContext should only have an explicit parent if they have "
-            f"been activated via `@` or `with` or `GlazyContext.make_current()`; "
-            f"(side note: you can look at GlazyContext._is_active for more internal details)."
+            f"This indicates some sort of programming error or bug with UContext. "
+            f"A UContext should only have an explicit parent if they have "
+            f"been activated via `@` or `with` or `UContext.make_current()`; "
+            f"(side note: you can look at UContext._is_active for more internal details)."
         )
 
     @property
     def name(self) -> str:
         """ Name of context (for debugging purposes only).
             Right now this defaults to a unique number, that gets incremented each time a
-            `GlazyContext` is created (in it's init method).
+            `UContext` is created (in it's init method).
 
             May allow customization in the future.
         """
@@ -609,31 +609,31 @@ class GlazyContext:
 
         If you don't pass anything to parent, then the default value of `Default` will cause us
         to lookup the current context and use that for the parent automatically when the
-        GlazyContext is activated.
+        UContext is activated.
         For more information on activating a context see
-        [Activating A GlazyContext](#activating-a-context).
+        [Activating A UContext](#activating-a-context).
 
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
         method resources from other unit tests. Right now, the unit-test resource isolation
         happens automatically via an auto-use fixture (`glazy.ptest_plugin.glazy_test_context`).
 
-        A non-activated context will return `guards.default.Default` as it's `GlazyContext.parent`
+        A non-activated context will return `guards.default.Default` as it's `UContext.parent`
         if it was created with the default value;
         otherwise we return `None` (if it was created that way).
 
         Args:
             resources (Union[Dict[Type, Any], List[Any], Any]): If you wish to have the
-                `GlazyContext` your creating have an initial list of resources you can pass them
+                `UContext` your creating have an initial list of resources you can pass them
                 in here.
 
                 It can be a single resource, or a list of resources, or a mapping of resources.
 
                 Mainly useful for unit-testing, but could be useful elsewhere too.
 
-                They will be added to use via `GlazyContext.add_resource` for you.
+                They will be added to use via `UContext.add_resource` for you.
 
-                If you use a dict/mapping, we will use the following for `GlazyContext.add_resource`:
+                If you use a dict/mapping, we will use the following for `UContext.add_resource`:
 
                 - Dict-key as the `for_type' method parameter.
                 - Dict-value as the `resource` method parameter.
@@ -641,10 +641,10 @@ class GlazyContext:
                 This allows you to map some standard resource type into a completely different
                 type (useful for unit-testing).
 
-                By default, no resources are initially added to a new GlazyContext.
+                By default, no resources are initially added to a new UContext.
 
             parent (Union[guards.default.Default, _TreatAsRootParent, None]): If we should use
-                `guards.default.Default`, treat this as a root-like GlazyContext, or use None as
+                `guards.default.Default`, treat this as a root-like UContext, or use None as
                 parent.
 
                 Right now the only valid option is to do one of these three options:
@@ -658,12 +658,12 @@ class GlazyContext:
                     This means app-root, and any current thread-root will be ignored.
                 - Pass `_TreatAsRootParent`, indicating to not use any parent, but allow copies
                     or when used as decorator/with-statement to use the currently activate
-                    GlazyContext as the new copies parent.
+                    UContext as the new copies parent.
 
                     This option should **ONLY** be used internally in this module.
 
                     If you use `_TreatAsRootParent` as the value, keep in mind that a root-like
-                    GlazyContext is special, as it never has a parent and is also considered to have
+                    UContext is special, as it never has a parent and is also considered to have
                     a default parent if it's copied. A context is shallow copied, and the copy
                     activated when used as a decorator or in a `with` statement.
 
@@ -678,13 +678,13 @@ class GlazyContext:
 
                 If name is passed in, it will be appended to the unique sequential number.
 
-                When GlazyContext is printed in a string, it will include
+                When UContext is printed in a string, it will include
                 this as it's name to make debugging easier.
 
         """
 
         # This means we were used directly as a function decorator, ie:
-        # >>> @GlazyContext
+        # >>> @UContext
         # >>> def some_method():
         # ...     pass
         #
@@ -694,15 +694,15 @@ class GlazyContext:
             raise XynResourceError(
                 "First position argument was NOT a callable function; "
                 "The first positional argument `__func` is reserved for a decorated function "
-                "when you do use GlazyContext directly as a decorator, "
-                "ie: `@GlazyContext` (notice no parens at end)."
+                "when you do use UContext directly as a decorator, "
+                "ie: `@UContext` (notice no parens at end)."
             )
         self._func = __func
         if __func:
             # Make our class appear to be '__func', ie: we are wrapping __func
-            # due to using GlazyContext like this:
+            # due to using UContext like this:
             #
-            # >>> @GlazyContext  # <-- notice not parens at end "()"
+            # >>> @UContext  # <-- notice not parens at end "()"
             # >>> def some_method():
             # ...     pass
             functools.update_wrapper(self, __func)
@@ -729,7 +729,7 @@ class GlazyContext:
         else:
             raise XynResourceError(
                 "You must only pass in `Default` or `None` or `_TreatAsRootParentType` for parent "
-                f"when creating a new GlazyContext, got ({parent}) instead."
+                f"when creating a new UContext, got ({parent}) instead."
             )
 
         # Add any requested initial resources.
@@ -746,10 +746,10 @@ class GlazyContext:
             self.add_resource(resources)
 
     # todo: Make it so if there is a parent context, and the current config has no property
-    # todo: it can ask the GlazyContext for the parent config to see if it has what is needed.
+    # todo: it can ask the UContext for the parent config to see if it has what is needed.
     def add_resource(
             self, resource: Any, *, skip_if_present=False, for_type: Type = None
-    ) -> "GlazyContext":
+    ) -> "UContext":
         """
         Lets you add a resource to this context, you can only have one-resource per-type.
 
@@ -760,25 +760,25 @@ class GlazyContext:
         >>> # Only works on python 3.9+, it relaxes grammar restrictions
         >>> #    (https://www.python.org/dev/peps/pep-0614/)
         >>>
-        >>> @GlazyContext().add_resource(2)
+        >>> @UContext().add_resource(2)
         >>> def some_method()
-        ...     print(f"my int resource: {GlazyContext.resource(int)}")
+        ...     print(f"my int resource: {UContext.resource(int)}")
         Output: "my int resource: 2"
 
         As as side-note, you can easily add resources to a new `Context` via:
 
-        >>> @GlazyContext(resources=[2])
+        >>> @UContext(resources=[2])
         >>> def some_method()
-        ...     print(f"my int resource: {GlazyContext.resource(int)}")
+        ...     print(f"my int resource: {UContext.resource(int)}")
         Output: "my int resource: 2"
 
         With the `Context.add_resource` method, you can subsitute resource for other
         resource types, ie:
 
         >>> def some_method()
-        ...     context = GlazyContext()
+        ...     context = UContext()
         ...     context.add_resource(3, for_type=str)
-        ...     print(f"my str resource: {GlazyContext.resource(str)}")
+        ...     print(f"my str resource: {UContext.resource(str)}")
         Output: "my str resource: 3"
 
         If you need to override a resource, you can create a new context and set me as it's
@@ -878,8 +878,8 @@ class GlazyContext:
         custom-resource-class and placing it in the Context for the normal-resource-type
         the normal code asks for.
 
-        >>> GlazyContext().add_resource(20, for_type=str)
-        >>> GlazyContext().resource(str)
+        >>> UContext().add_resource(20, for_type=str)
+        >>> UContext().resource(str)
         Output: 20
 
         ## Specific Details
@@ -937,7 +937,7 @@ class GlazyContext:
         # then we check to see if resource is thread-sharable.
         # If it is then we continue as normal.
         # If NOT, then we always return None.
-        # This will indicate to the thread-specific GlazyContext that is calling us to allocate
+        # This will indicate to the thread-specific UContext that is calling us to allocate
         # the object in it's self.
         # If something else is asking us, we still return None because this Dependency does not
         # belong in us and so we should not accidently auto-create it in us.
@@ -958,10 +958,10 @@ class GlazyContext:
         # Sanity check: If we are active we should have a None or an explicit, non-default parent.
         if self._is_active and parent is Default:
             XynResourceError(
-                "We somehow have a GlazyContext that has been 'activated' but yet has "
-                "their parent still set to `Default`. This is a bug. Active GlazyContext's "
+                "We somehow have a UContext that has been 'activated' but yet has "
+                "their parent still set to `Default`. This is a bug. Active UContext's "
                 "should NEVER have their parent set at `Default`. It should either be None "
-                f"or an explict parent GlazyContext instance, problem instance: {self}"
+                f"or an explict parent UContext instance, problem instance: {self}"
             )
 
         # If we have a Default parent, then lookup current parent and use them for our 'Parent'.
@@ -970,7 +970,7 @@ class GlazyContext:
             # The current context is `active` along with it's parent-chain....
             # So this should be safe.
             # Doing an assert here to at least minimally double check this.
-            parent = GlazyContext.current()
+            parent = UContext.current()
             assert self is not parent, "Somehow have self and parent as same instance."
 
         if parent:
@@ -1069,15 +1069,15 @@ class GlazyContext:
             while they are copied if needed via
             `glazy.resource.Dependency.context_resource_for_copy`.
 
-            We copy `GlazyContext` implicitly and make that copy the 'active' context when it's made
+            We copy `UContext` implicitly and make that copy the 'active' context when it's made
             current/activated via a:
 
             - decorator `@`,
             - `with` statement,
-            - or `GlazyContext.make_current`;
+            - or `UContext.make_current`;
 
-            Using one of the above with a GlazyContext also makes it 'active'
-            (see GlazyContext._is_active for more internal details, if your interested ).
+            Using one of the above with a UContext also makes it 'active'
+            (see UContext._is_active for more internal details, if your interested ).
 
             When a context is made current, it's sort of used as a 'template'.
             That way it can be used over and over again without accumulating
@@ -1099,11 +1099,11 @@ class GlazyContext:
             parent = None
 
         # Blank context with the same parent configuration
-        new_context = GlazyContext(parent=parent)
+        new_context = UContext(parent=parent)
 
-        # Copy current resources from self into new GlazyContext;
-        # This uses `self` as a template for the new GlazyContext.
-        # See doc comment on: `GlazyContext.__call__` and
+        # Copy current resources from self into new UContext;
+        # This uses `self` as a template for the new UContext.
+        # See doc comment on: `UContext.__call__` and
         # `glazy.resource.Dependency.context_resource_for_copy`.
         new_resources = {}
         for k, v in self._resources.items():
@@ -1137,17 +1137,17 @@ class GlazyContext:
             Deep copied object.
         """
         raise XynResourceError(
-            "Deepcopy is currently disabled for glazy.context.GlazyContext. "
+            "Deepcopy is currently disabled for glazy.context.UContext. "
             "If there is a desire to use it again in the future, remove this exception "
             "as it should still work."
         )
         # return self.__copy__(deepcopy_resources=True, deepcopy_memo=memo)
 
     def copy(self):
-        """ Convenience method to easily shallow-copy a GlazyContext, calls `return copy.copy(self)`.
-            Used when you activate a GlazyContext via a decorator or `with` statement.
+        """ Convenience method to easily shallow-copy a UContext, calls `return copy.copy(self)`.
+            Used when you activate a UContext via a decorator or `with` statement.
 
-            When a GlazyContext is activate, it is copied and then the copy is set to active.
+            When a UContext is activate, it is copied and then the copy is set to active.
         """
         return copy(self)
 
@@ -1156,13 +1156,13 @@ class GlazyContext:
             We will copy self and then activate the copy, returning the copy as the
             output of the with statement.
 
-            >>> # Some pre-existing GlazyContext object.
-            >>> some_context: GlazyContext
+            >>> # Some pre-existing UContext object.
+            >>> some_context: UContext
             >>>
             >>> # Use it in `with` statement:
             >>> with some_context as copied_and_activated_context:
-            ...     assert GlazyContext.current() is copied_and_activated_context
-            ...     assert GlazyContext.current() is not some_context
+            ...     assert UContext.current() is copied_and_activated_context
+            ...     assert UContext.current() is not some_context
 
             Args:
                 use_a_copy_of_self: If True (default): will make a copy of self,
@@ -1185,11 +1185,11 @@ class GlazyContext:
         return new_ctx
 
     def __exit__(self, *args, **kwargs):
-        # Makes it possible to use a GlazyContext object in a `with GlazyContext():` statement.
+        # Makes it possible to use a UContext object in a `with UContext():` statement.
         token = self._reset_token_stack.pop()
-        current_context = GlazyContext.current()
+        current_context = UContext.current()
 
-        # Doing this to be extra-cautious, GlazyContext should dynamically lookup current
+        # Doing this to be extra-cautious, UContext should dynamically lookup current
         # context if it's not active anymore
         # (ie: outside of / not in python ContextVar: `_current_context_contextvar`).
         #
@@ -1206,13 +1206,13 @@ class GlazyContext:
         """
         This allows us to support using `Context` as a function decorator in a few ways:
 
-        >>> @GlazyContext
+        >>> @UContext
         >>> def some_method():
         ...     pass
 
         OR
 
-        >>> my_context = GlazyContext()
+        >>> my_context = UContext()
         >>> my_context.add_resource(Dependency())
         >>>
         >>> @my_context
@@ -1241,7 +1241,7 @@ class GlazyContext:
             # If we already have `self._func`,
             # it means we were used directly as a function decorator, ie:
             #
-            # >>> @GlazyContext
+            # >>> @UContext
             # >>> def some_method():
             # ...     pass
             # We always start with a new-blank context in this state
@@ -1254,7 +1254,7 @@ class GlazyContext:
             # If we have a `self._func`, that means we were used as a decorator without
             # using parens, like so:
             #
-            # @GlazyContext
+            # @UContext
             # def some_method():
             #    pass
             #
@@ -1265,13 +1265,13 @@ class GlazyContext:
         # If we don't already have an assigned self._func;
         # we have this situation:
         #
-        # @GlazyContext()
+        # @UContext()
         # def some_func():
         #     pass
         #
         # OR
         #
-        # some_context = GlazyContext()
+        # some_context = UContext()
         # @some_context
         # def some_func():
         #     pass
@@ -1295,7 +1295,7 @@ class GlazyContext:
 
         if fail_reason:
             raise XynResourceError(
-                f"Used directly as decorator `@GlazyContext` (without ending parens) which is"
+                f"Used directly as decorator `@UContext` (without ending parens) which is"
                 f"normally fine. This normally makes "
                 f"Python pass decorated function into `__init__` method and I don;t "
                 f"one of those. "
@@ -1308,7 +1308,7 @@ class GlazyContext:
         # This should be the originally decorated method;
         # ie: It should be `some_method` in the below small example:
         #
-        # @GlazyContext()
+        # @UContext()
         # def some_method():
         #    pass
 
@@ -1318,22 +1318,22 @@ class GlazyContext:
         return wrapper
 
     # todo: rename this to just 'chain' ?? or context_chain? [it includes 'self' is why].
-    def parent_chain(self) -> List["GlazyContext"]:
+    def parent_chain(self) -> List["UContext"]:
         """ A list of self + all parents in priority order.
 
             This is cached the first time we are called if we are currently active
-            since the `GlazyContext.parent` can't be changed after `GlazyContext` creation while active.
+            since the `UContext.parent` can't be changed after `UContext` creation while active.
 
-            See `GlazyContext._is_active` internal/private var for a bit more detail on what is 'active'
-            but suffice to say that active means GlazyContext is currently being used via a
-            decorator '@' or via `with` or via `GlazyContext.make_current` and the `with` or `@` has
+            See `UContext._is_active` internal/private var for a bit more detail on what is 'active'
+            but suffice to say that active means UContext is currently being used via a
+            decorator '@' or via `with` or via `UContext.make_current` and the `with` or `@` has
             not been exited yet, we are active.
 
             If we are not current active, we won't cache the list and the parent chain will
             start with `self` as the first item, and if the parent passed in to us when self
             was created was left/set at:
 
-            - `guards.default.Default`: Lookup current context via `GlazyContext.current` and that's
+            - `guards.default.Default`: Lookup current context via `UContext.current` and that's
                 our next parent (and we grab their parent and so forth and return the full list).
             - `None`: We don't look for more parents.
         """
@@ -1353,7 +1353,7 @@ class GlazyContext:
 
         if self._is_active:
             # It's safe to cache parent-chain if we are active, our parent won't change
-            # while we are active. See doc-comment on `GlazyContext._is_active` for more detials.
+            # while we are active. See doc-comment on `UContext._is_active` for more detials.
             self._cached_context_chain = chain
 
         return chain
@@ -1367,7 +1367,7 @@ class GlazyContext:
         else:
             types = f'resource_count={len(types_list)}'
 
-        str = f"GlazyContext(name='{self.name}', {types}"
+        str = f"UContext(name='{self.name}', {types}"
         if include_parent:
             str += f', parent={self.parent}'
         str += ')'
@@ -1383,15 +1383,15 @@ class GlazyContext:
     _is_active = None
     """ This means at some point in the past we were 'activated' via one of these methods:
 
-        `with` or `@` or `GlazyContext.make_current`.
+        `with` or `@` or `UContext.make_current`.
 
-        And we are still 'active' (or even the 'GlazyContext.current');
+        And we are still 'active' (or even the 'UContext.current');
 
         When we are active we have a set parent, and can cache specific things since
         our parent won't change while we are 'active'.
 
         This means the `self` is inside `_current_context_contextvar` somewhere and is part of
-        the parent-chain.  See `GlazyContext.parent_chain`.
+        the parent-chain.  See `UContext.parent_chain`.
     """
 
     _reset_token_stack: List[contextvars.Token] = None
@@ -1400,25 +1400,25 @@ class GlazyContext:
     _is_root_context_for_app = False
 
     _is_root_context_for_thread: bool = False
-    """ If True, this GlazyContext is the root-context for a thread
+    """ If True, this UContext is the root-context for a thread
         (or if only one thread, the only root context).
         This is mostly here for debugging purposes.
     """
 
     _is_root_like_context: bool = False
     """ If True, this context was originally created to be a root-like/root context.
-        The REAL thread-root context will have this AND `GlazyContext._is_root_context_for_thread`
+        The REAL thread-root context will have this AND `UContext._is_root_context_for_thread`
         both set to True.
     """
 
-    _parent: 'Union[GlazyContext, _TreatAsRootParent, None]' = None
+    _parent: 'Union[UContext, _TreatAsRootParent, None]' = None
     _originally_passed_none_for_parent = True
     """ Used internally to know if None was passed as my parent value originally. """
 
     _func = None
-    """ Used if GlazyContext is used as a function decorator directly, ie:
+    """ Used if UContext is used as a function decorator directly, ie:
 
-        >>> @GlazyContext
+        >>> @UContext
         >>> def some_method():
         ...     pass
     """
@@ -1427,14 +1427,14 @@ class GlazyContext:
 def _setup_blank_app_and_thread_root_contexts_globals():
     """
     Used to create initial global state of app/thread-root contexts containers,
-    which keep track of the visible `Contexts` on each thread, and for the app-root `GlazyContext`.
+    which keep track of the visible `Contexts` on each thread, and for the app-root `UContext`.
 
     Is also used by `glazy.pytest_plugin.glazy_test_context` auto-use fixture to blank/clear out
     all root/globally visible contexts by allocating the global-structures again and letting
     the old global structures deallocate.
 
     This allows for clean slate for each individual unit test run,
-    in a way that does not really alter how GlazyContext works.
+    in a way that does not really alter how UContext works.
 
     It should work exactly the same as the normal, non-uniting app.
     We simply clear and allocate new root/global contexts at the start/end of each
@@ -1443,13 +1443,13 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     global _app_root_context
     global _current_context_contextvar
 
-    _app_root_context = GlazyContext(parent=_TreatAsRootParent, name='AppRoot')
+    _app_root_context = UContext(parent=_TreatAsRootParent, name='AppRoot')
     _app_root_context._make_current_and_get_reset_token(is_app_root_context=True)
 
-    # Keeping this private for now, everything outside of this module should use the GlazyContext class
+    # Keeping this private for now, everything outside of this module should use the UContext class
     # as a ContextManager/ContextDecorator to get/set current context.
     #
-    # This is used to keep track of the current context when using a GlazyContext as a ContextManager.
+    # This is used to keep track of the current context when using a UContext as a ContextManager.
 
     _current_context_contextvar = contextvars.ContextVar(
         'xyn_sdk-current_context',
@@ -1457,9 +1457,9 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     )
 
 
-# Setup initial global GlazyContext objects/state/containers:
+# Setup initial global UContext objects/state/containers:
 _setup_blank_app_and_thread_root_contexts_globals()
 
 # These are globals that should be here at this point:
-_app_root_context: GlazyContext
-_current_context_contextvar: contextvars.ContextVar[Optional[GlazyContext]]
+_app_root_context: UContext
+_current_context_contextvar: contextvars.ContextVar[Optional[UContext]]
