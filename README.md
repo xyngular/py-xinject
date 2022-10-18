@@ -1,9 +1,9 @@
-# Xyngular Python Resource Library
+# Xyngular Python Dependency Library
 
 Provides way to lazy-load sharable singleton-like resources classes,
 while promoting code-decoupling.
 
-- [Xyngular Python Resource Library](#xyngular-python-resource-library)
+- [Xyngular Python Dependency Library](#xyngular-python-resource-library)
     * [Install in Python project](#install-in-python-project)
         + [Poetry](#poetry)
                 * [Gemfury](#gemfury)
@@ -15,9 +15,9 @@ while promoting code-decoupling.
         + [Overview](#overview)
         + [Quick Start Example Code](#quick-start-example-code)
     * [Advanced Use Cases](#advanced-use-cases)
-        + [Resource + Dataclasses](#resource--dataclasses)
+        + [Dependency + Dataclasses](#resource--dataclasses)
         + [Thread Safety](#thread-safety)
-        + [Active Resource Proxy](#active-resource-proxy)
+        + [Active Dependency Proxy](#active-resource-proxy)
     * [Unit Testing](#unit-testing)
     * [Backwards Breaking Change - v2.x to v3.x](#backwards-breaking-change---v2x-to-v3x)
         + Important info on what the backwards breaking change was.
@@ -35,9 +35,9 @@ poetry add glazy
 
 ## How To Use
 
-The main class used most of the time is `glazy.resource.Resource`.
+The main class used most of the time is `glazy.resource.Dependency`.
 Read the below/this-document first, but after your done here and need more details see
-`glazy.resource.Resource`, you can look at the doc-comment for that module and class for
+`glazy.resource.Dependency`, you can look at the doc-comment for that module and class for
 more detailed  reference-type documentation.
 
 Below is a high-level-overview of how to use this library
@@ -55,21 +55,21 @@ then this library could come in use for your situation.
   - Objects to wrap are 'client' like things, and allow you to communicate with some external system.
   - Very common for these objects to represent an already-open network connection,
     So there are performance considerations to try and keep connection open and to reuse it.
-  - See `xyn_aws` for a special Resource subclass that wraps boto clients/resources,
+  - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
     allows you to lazily get a shared aws client/resource.
     - It also uses a more advance feature, ActiveResourceProxy, to represent boto resources/clients
       that are importable into other modules and directly usable.
 - Common configuration or setting values
   - See also:
     - xyn_settings
-      - A Resource subclass that has extra features geared towards this use case.
+      - A Dependency subclass that has extra features geared towards this use case.
     - xyn_config
       - Way to get settings from SSM, Secrets Manager and other remote locations.
 - Anything that needs to be lazily allocated,
   especially if they need to be re-created for each unit-test run.
   - Example: things with moto, requests-mock
     - This use useful when session/clients needs to be created after a mock installed.
-      So if code-base uses Resource  to grab a requests session (for example),
+      So if code-base uses Dependency  to grab a requests session (for example),
       when a new unit-test runs it will allocate a new requests session, and mock will therefore work.
       While at the same time the code in prod/deployed code it will just use a shared session
       that sticks around  between lambda runs, etc. (which is what you want to happen in deployed code).
@@ -81,7 +81,7 @@ then this library could come in use for your situation.
 
 ### Overview
 
-The main class used most of the time is `glazy.resource.Resource`,
+The main class used most of the time is `glazy.resource.Dependency`,
 you can look at the doc-comment for that module and class for more details.
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
@@ -92,33 +92,36 @@ Also allows code to temporarily create, customize and activate a resource if you
 the customization to stick around permanently.
 You can do it without your or other code needing to be aware of each other.
 
-This helps promote code decoupling, since it's so easy to make a Resource activate it
+This helps promote code decoupling, since it's so easy to make a Dependency activate it
 as the 'current' version to use.
 
-The only coupling that takes place is to the Resource sub-class it's self.
+The only coupling that takes place is to the Dependency sub-class it's self.
 
 Each separate piece of code can be completely unaware of each other,
 and yet each one can take advantage of the shared resource.
 
-This means that Resource can also help with simple dependency injection use-case scenarios.
+This means that Dependency can also help with simple dependency injection use-case scenarios.
 
 ### Quick Start Example Code
 
 ```python
-from glazy import Resource
+from glazy import Dependency
 
-# This is a example Resource class, the intent with this class is to treat 
+
+# This is a example Dependency class, the intent with this class is to treat 
 # it as a semi-singleton shared resource.
-class MyResource(Resource):
-    
+class MyResource(Dependency):
+
     # It's important to allow resources to be allocated with
     # no required init arguments.
     # That way a default-instance/version of the class can
     # easily be created lazily.
-    def __init__(self, name = None):
+    def __init__(self, name=None):
         if name is not None:
             self.name = name
+
     name: str = 'my-default-value'
+
 
 # Gets currently active instance of `MyResource`, or lazily creates if needed.
 # If system creates a new instance of MyResource, it will save it and reuse it
@@ -141,7 +144,7 @@ with MyResource(name='my-temporary-name'):
     #
     # Now prints 'my-temporary-name'
     print(MyResource.resource().name)
-    
+
 # Object we created and temporary activated by above `with` statement
 # has been deactivated (ie: thrown out).
 # Old one that was the active one previously is the one that is now used when
@@ -154,22 +157,24 @@ print(MyResource.resource().name)
 
 ## Advanced Use Cases
 
-### Resource + Dataclasses
+### Dependency + Dataclasses
 
-You can use the built-in dataclasses with Resource without a problem.
+You can use the built-in dataclasses with Dependency without a problem.
 Just ensure all fields are optional (ie: they all have default values).
 
 Example:
 
 ```python
-from glazy import Resource
-from dataclasses import  dataclass
+from glazy import Dependency
+from dataclasses import dataclass
+
 
 @dataclass
-class DataResource(Resource):
+class DataResource(Dependency):
     # Making all fields optional, so DataResource can be created lazily:
     my_optional_field: str = None
     another_optional_field: str = "hello!"
+
 
 # Get current DataResource resource, print it's another_optional_field;
 # will print out `hello!`:
@@ -180,13 +185,13 @@ print(DataResource.resource().another_optional_field)
 
 There is a concept of an app-root, and thread-root contexts.
 
-By default, each Resource subclass will be shared between different threads,
+By default, each Dependency subclass will be shared between different threads,
 ie: it's assumed to be thread-safe.
 
-You can indicate a Resource subclass should not be shared between threads
+You can indicate a Dependency subclass should not be shared between threads
 by inheriting from `glazy.resource.ThreadUnsafeResource` instead,
-or by setting the **class attribute** (on your custom sub-class of Resource)
-`glazy.resource.Resource.resource_thread_sharable` to `False`.
+or by setting the **class attribute** (on your custom sub-class of Dependency)
+`glazy.resource.Dependency.resource_thread_sharable` to `False`.
 
 Things that are probably not thread-safe in general
 are resources that contain network/remote type connections/sessions/clients.
@@ -194,19 +199,19 @@ are resources that contain network/remote type connections/sessions/clients.
 Concrete Examples In Code Base:
 
 - Requests library session
-  - xyn_model_rest uses a Resource to wrap requests library session, so it can automatically
+  - xyn_model_rest uses a Dependency to wrap requests library session, so it can automatically
     reuse connections on same thread, but use new session if on different thread.
     Also helps with unit testing, when Mocking requests URL calls.
 - boto client/resource
   - Library says it's not thread-safe, you need to use a diffrent object per-thread.
   - Moto mocking library for AWS services needs you to allocate a client after it's setup,
     (so lazily allocate client/resource from boto).
-  - Use `xyn_aws` for easy to use Resource's that wrap boto client/resources that
+  - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
     accomplish being both lazy and will allocate a new one per-thread for you automatically.
 
-### Active Resource Proxy
+### Active Dependency Proxy
 
-You can use the convenience method `glazy.resource.Resource.resource_proxy` to easily get a
+You can use the convenience method `glazy.resource.Dependency.resource_proxy` to easily get a
 proxy object.
 
 Or you can use `glazy.proxy.ActiveResourceProxy.wrap` to create an object that will act
@@ -285,7 +290,7 @@ and a unit-test won't leak/let-slip any of the changes it makes to its
 Resources into another unit-test.
 
 This use useful when session/clients needs to be created after a mock installed.
-So if code-base uses Resource  to grab a requests session (for example),
+So if code-base uses Dependency  to grab a requests session (for example),
 when a new unit-test runs it will allocate a new requests session, and mock will therefore work.
 While at the same time the code in prod/deployed code it will just use a shared session
 that sticks around  between lambda runs, etc. (which is what you want to happen in deployed code).

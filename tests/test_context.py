@@ -1,4 +1,4 @@
-from glazy import GlazyContext, Resource
+from glazy import GlazyContext, Dependency
 import dataclasses
 import pytest
 from copy import deepcopy, copy
@@ -17,7 +17,7 @@ def test_decorator_on_direct_context_class(glazy_test_context):
 
 
 @dataclasses.dataclass
-class SomeResource(Resource):
+class SomeDependency(Dependency):
     my_name: str = 'hello!'
 
 
@@ -38,21 +38,21 @@ def test_ensure_pytest_plugin_context_autouse_fixture_working():
 
 # noinspection PyTypeChecker
 # NOTE: This is not how you would normally do this, normally you would do:
-#       >>> @SomeResource(my_name='first-name')
+#       >>> @SomeDependency(my_name='first-name')
 #       Doing it this way to test out giving initial resources to a new GlazyContext directly
 #       instead of indirectly.
-@GlazyContext(resources=[SomeResource(my_name='first-name')])
+@GlazyContext(resources=[SomeDependency(my_name='first-name')])
 def test_decorator_on_context_object():
-    first_resource = SomeResource.resource()
+    first_resource = SomeDependency.resource()
     assert first_resource.my_name == 'first-name'
     decorated_context = GlazyContext.current()
 
-    new_resource = SomeResource(my_name='new-name')
+    new_resource = SomeDependency(my_name='new-name')
     with GlazyContext(resources=[new_resource]) as with_context:
         assert with_context is not decorated_context, "Should be new context"
-        # I created new GlazyContext and manually added new instance of SomeResource;
+        # I created new GlazyContext and manually added new instance of SomeDependency;
         # check to see if it's the current resource and looks intact.
-        inside_resource = SomeResource.resource()
+        inside_resource = SomeDependency.resource()
         assert inside_resource is not first_resource
         assert inside_resource is new_resource
         assert inside_resource.my_name == 'new-name'
@@ -60,9 +60,9 @@ def test_decorator_on_context_object():
 
     with GlazyContext():
         assert with_context is not decorated_context, "Should be new context"
-        # Check to see if when adding new GlazyContext, we still get the same SomeResource
+        # Check to see if when adding new GlazyContext, we still get the same SomeDependency
         # instance, and that they still look intact with the correct values.
-        assert SomeResource.resource() is first_resource
+        assert SomeDependency.resource() is first_resource
         assert first_resource.my_name == 'first-name'
         assert new_resource.my_name == 'new-name'
 
@@ -103,7 +103,7 @@ module_level_context = GlazyContext(
     resources=[
         20,
         "hello-str",
-        SomeResource(my_name="start-name")
+        SomeDependency(my_name="start-name")
     ]
 )
 
@@ -128,20 +128,20 @@ def test_module_level_context(glazy_test_context):
     assert float not in module_level_context._resources
 
     # See if the copied-context has the same resources still
-    assert SomeResource.resource().my_name == "start-name"
+    assert SomeDependency.resource().my_name == "start-name"
     assert GlazyContext.current(for_type=int) == 20
     assert GlazyContext.current(for_type=str) == "hello-str"
 
 
 def test_initial_context_resources_with_dict():
     my_context = GlazyContext(
-        resources={int: 'string-as-int-resource', float: False, SomeResource: 'str-instead'}
+        resources={int: 'string-as-int-resource', float: False, SomeDependency: 'str-instead'}
     )
 
     with my_context:
-        # SomeResource was replaced by a direct-string 'str-instead', testing replacing
+        # SomeDependency was replaced by a direct-string 'str-instead', testing replacing
         # resources with a completely different type (if you want to mock/test something specific).
-        assert SomeResource.resource() == 'str-instead'
+        assert SomeDependency.resource() == 'str-instead'
         assert GlazyContext.current(for_type=int) == 'string-as-int-resource'
         assert GlazyContext.current(for_type=float) is False
 
@@ -153,11 +153,11 @@ def test_deepcopy_context():
 
 
 @dataclasses.dataclass
-class TestResource(Resource):
+class TestDependency(Dependency):
     my_name: str = 'hello!'
 
 
-module_level_test_resource = TestResource.resource()
+module_level_test_resource = TestDependency.resource()
 print(module_level_test_resource)
 module_level_test_resource.my_name = "module-level-change"
 
@@ -165,15 +165,15 @@ module_level_test_resource.my_name = "module-level-change"
 # We run unit-test twice, ensure that each run of a unit test runs in it's own blank root context.
 @pytest.mark.parametrize("test_run", [1, 2])
 def test_module_level_resource_in_unit_test(test_run):
-    # Make sure we have a different TestResource instance.
-    assert module_level_test_resource is not TestResource.resource()
+    # Make sure we have a different TestDependency instance.
+    assert module_level_test_resource is not TestDependency.resource()
 
     # Check values, see if they are still at the module-level value
-    assert TestResource.resource().my_name == "hello!"
+    assert TestDependency.resource().my_name == "hello!"
 
     # Do a unit-test change, ensure we don't see it in another unit test.
-    TestResource.resource().my_name = "unit-test-change"
-    assert TestResource.resource().my_name == "unit-test-change"
+    TestDependency.resource().my_name = "unit-test-change"
+    assert TestDependency.resource().my_name == "unit-test-change"
 
 
 def test_each_unit_test_starts_with_a_single_parentless_root_like_context():
@@ -196,14 +196,14 @@ def test_each_unit_test_starts_with_a_single_parentless_root_like_context():
         assert new_context.parent is unit_test_root_context
 
 
-class TestSkipAttrOnCopyResource(Resource):
+class TestSkipAttrOnCopyDependency(Dependency):
     attributes_to_skip_while_copying = ['my_attribute']
     my_attribute = "hello-1"  # Defined at class-level, not object-level
     my_other_attr = "hello-2"  # Defined at class-level, not object-level
 
 
 def test_skip_attrs_on_resource_copy():
-    r1 = TestSkipAttrOnCopyResource()
+    r1 = TestSkipAttrOnCopyDependency()
     assert r1.my_attribute == "hello-1"
     assert r1.my_other_attr == "hello-2"
 

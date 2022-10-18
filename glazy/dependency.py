@@ -38,7 +38,7 @@ There are various ways to get current resource.
 Let's say we have a resource called `SomeResourceType`:
 
 >>> next_identifier = 0
->>> class SomeResourceType(Resource):
+>>> class SomeResourceType(Dependency):
 ...     def __init__(self):
 ...         global next_identifier
 ...         self.some_value = "hello!"
@@ -70,10 +70,10 @@ You can do it via one of the below listed methods/examples below.
 For these examples, say I have this resource defined:
 
 >>> from dataclasses import dataclass
->>> from glazy import Resource
+>>> from glazy import Dependency
 >>>
 >>> @dataclass
->>> class MyResource(Resource):
+>>> class MyResource(Dependency):
 >>>     some_value = 'default-value'
 >>>
 >>> assert MyResource.resource().some_value == 'default-value'
@@ -115,7 +115,7 @@ R = TypeVar('R')
 ResourceTypeVar = TypeVar('ResourceTypeVar')
 
 
-class Resource:
+class Dependency:
     """
     If you have not already done so, you should also read the glazy project's
     [README.md](https://github.com/xyngular/py-glazy#active-resource-proxy) for an overview
@@ -160,8 +160,8 @@ class Resource:
     Get the current resource via `Resource.resource`, you can call it on sub-class/concreate
     resource type, like so:
 
-    >>> from glazy import Resource
-    >>> class MyConfig(Resource):
+    >>> from glazy import Dependency
+    >>> class MyConfig(Dependency):
     ...     some_setting: str = "default-setting-string"
     >>>
     >>> MyConfig.resource().some_setting
@@ -188,7 +188,7 @@ class Resource:
     for. Normally it will simply be a direct call the resource-type being requested,
     this is the normal way to create objects in python:
 
-    >>> class MyResource(Resource):
+    >>> class MyResource(Dependency):
     >>>     pass
     >>>
     >>> MyResource.resource()
@@ -254,7 +254,7 @@ class Resource:
 
     attributes_to_skip_while_copying: Iterable[str] = None
     """ If subclass sets this to a list/set of attribute names,
-        we will skip copying them for you (via `Resource.__copy__` and `Resource.__deepcopy__`).
+        we will skip copying them for you (via `Dependency.__copy__` and `Dependency.__deepcopy__`).
 
         We ourselves need to skip copying a specific internal property,
         and there are other resources that need to do the same thing.
@@ -262,52 +262,52 @@ class Resource:
         This is an easy way to accomplish that goal.
 
         As a side note, we will always skip copying `_context_manager_stack` in addition to
-        what's set on `Resource.attributes_to_skip_while_copying`.
+        what's set on `Dependency.attributes_to_skip_while_copying`.
 
         This can be dynamic if needed, by default it's consulted on the object each time it's
         copied
-        (to see where it's used, look at `glazy.resource.Resource.__copy__` and
-        `glazy.resource.Resource.__deepcopy__`)
+        (to see where it's used, look at `glazy.resource.Dependency.__copy__` and
+        `glazy.resource.Dependency.__deepcopy__`)
     """
 
     resource_thread_safe = True
     """ If True, we can be put in the app-root context, and can be potentially used in
         multiple threads.  If False, we will only be lazily allocated in the pre-thread GlazyContext
         and always be used in a single-thread. If another thread needs us and this is False,
-        a new Resource instance will be created for that thread.
+        a new Dependency instance will be created for that thread.
 
         ## Details on Mechanism
 
         It accomplishes this by the lazy-creation mechanism.
-        When something asks for a Resource that does not currently exist,
+        When something asks for a Dependency that does not currently exist,
         the parent-GlazyContext is asked for the resource, and then the parent's parent will be
         asked and so on.
 
-        Eventually the app-root context will be asked for the Resource.
+        Eventually the app-root context will be asked for the Dependency.
 
-        If the app-root already has the Resource, it will return it.
+        If the app-root already has the Dependency, it will return it.
 
         When app-root does not have the resource, it potentially needs to lazily create the
-        resource depending on if Resource is thread-safe.
+        resource depending on if Dependency is thread-safe.
 
         So at this point, if `resource_thread_safe` value is (as a class attribute):
 
-        - `False`: The app-root context will return `None` instead of lazily creating the Resource.
+        - `False`: The app-root context will return `None` instead of lazily creating the Dependency.
             It's expected a thread-root GlazyContext is the thing that asked the app-root context
             and the thread-root context when getting back a None should just go and lazily create
             it.
-            This results in a new Resource being lazily allocated for each thread that needs it.
-        - `True`: If it does not have one it will lazily create a new Resource store it in self
-            and return it. Other thread-roots that ask for this Resource in the future will
-            get the one from the app-root, and therefore the Resource will be shared between
+            This results in a new Dependency being lazily allocated for each thread that needs it.
+        - `True`: If it does not have one it will lazily create a new Dependency store it in self
+            and return it. Other thread-roots that ask for this Dependency in the future will
+            get the one from the app-root, and therefore the Dependency will be shared between
             threads and needs to be thread-safe.
 
         Each context then stores this value in it's self as it goes up the chain.
-        Finally the code that orginally asked for the Resource will have it returned to it
+        Finally the code that orginally asked for the Dependency will have it returned to it
         and they can then use it.
 
-        We store it in each GlazyContext that Resource pases though so in the future it can just
-        directly answer the question and return the Resource quickly.
+        We store it in each GlazyContext that Dependency pases though so in the future it can just
+        directly answer the question and return the Dependency quickly.
 
 
         ## How thread-safe
@@ -325,7 +325,7 @@ class Resource:
             [example: like passing in a hash-key of some sort]. Although, latley I've been using
             a Manager resource for things like this, example:
 
-            >>> class SomeResourceManager(Resource):
+            >>> class SomeResourceManager(Dependency):
             ...     def get_resource_via(self, some_key: str) -> SomeResourceType:
             ...         # Lookup and return something
             ...         pass
@@ -348,16 +348,16 @@ class Resource:
         Called by `Context` when it does not have a resource of a particular type but it does
         have a value from a parent-context (via it's parent-chain).
 
-        Gives opportunity for the `Resource` to do something special if it wants.
+        Gives opportunity for the `Dependency` to do something special if it wants.
 
         Default implementation of this method is to simply return `self` when we get asked.
         That way by default, we simply use the same object for every `Context` on the same thread.
 
-        This way it will make a `Resource` subclass by default a sort of 'singleton`; where we try
+        This way it will make a `Dependency` subclass by default a sort of 'singleton`; where we try
         and reuse the same instance.
         In this way, the child-context will get the same instance of me as the parent normally.
 
-        You can think of this as making a `Resource` act like a singleton by default,
+        You can think of this as making a `Dependency` act like a singleton by default,
         as only one instance (at the root-context) would ever 'normally' be created.
 
         It's still possible to get a second instance of the resource, however:
@@ -365,9 +365,9 @@ class Resource:
         - If someone created a new resource themselves manually and adds it to a new Context
             and then activates the context,
             that resource they created and added themselves could be a second instance.
-            (for more details, see [Activating New Resource](#activating-new-resource))
+            (for more details, see [Activating New Dependency](#activating-new-resource))
 
-            THis is because the Resource that was manually created was not given an opportunity
+            THis is because the Dependency that was manually created was not given an opportunity
             to reused the parent value.
 
             However, this is usually desirable as whatever manually created the object probably
@@ -385,7 +385,7 @@ class Resource:
 
     def context_resource_for_copy(
             self, *, current_context: GlazyContext, copied_context: GlazyContext
-    ) -> "Resource":
+    ) -> "Dependency":
         """
         When an existing `GlazyContext` instance is used via a `with` statement or as a function
         decorator it will copy it's self for use during the `with` statement
@@ -395,9 +395,9 @@ class Resource:
         By default we simply return self
         (by default, GlazyContext resources generally try to maintain themselves as singletons).
 
-        If a `Resource` needs to do more, they can override us
+        If a `Dependency` needs to do more, they can override us
 
-        - `Resource.context_resource_for_copy`: Overridable by a resource if non-singleton
+        - `Dependency.context_resource_for_copy`: Overridable by a resource if non-singleton
             (or other behavior) is desired.
         """
         return self
@@ -407,7 +407,7 @@ class Resource:
         Basic shallow copy protection
         (I am wondering if I should just remove this default copy code).
 
-        `Resource` overrides the default copy operation to shallow copy everything,
+        `Dependency` overrides the default copy operation to shallow copy everything,
         except it will make a new instance for dict/lists
         (so old an new resources don't share the same list/dict instance).
 
@@ -466,7 +466,7 @@ class Resource:
         return copy
 
     _context_manager_stack: List[GlazyContext] = None
-    """ Keeps track of context's we created when self (ie: `Resource`) is used in a `with`
+    """ Keeps track of context's we created when self (ie: `Dependency`) is used in a `with`
         statement.  This MUST be reset when doing a copy of the resource.
     """
 
@@ -486,7 +486,7 @@ class Resource:
             raise XynResourceError(
                 f"While using ({self}) as a context manager via a `with` statement,"
                 f"somehow we did not have an internal context from the initial entering "
-                f"(see `glazy.context.Resource.__enter__`). "
+                f"(see `glazy.context.Dependency.__enter__`). "
                 f"Indicates a very strange bug."
             )
 
@@ -503,7 +503,7 @@ class Resource:
         to be function decorators.
         Something like this:
 
-        >>> class MyResource(Resource):
+        >>> class MyResource(Dependency):
         ...     some_param = None
         ...     def __init__(self, some_param = None):
         ...         self.some_param = some_param
@@ -545,10 +545,10 @@ class Resource:
         """
         if not callable(func):
             raise XynResourceError(
-                f"Attempt to calling a Resource of type ({self}) as a callable function. "
+                f"Attempt to calling a Dependency of type ({self}) as a callable function. "
                 f"By default (unless resource subclass does/says otherwise) you need to use "
                 f"it as a decorator when calling it. "
-                f"When using a Resource subclass as a decorator, Python will call the Resource "
+                f"When using a Dependency subclass as a decorator, Python will call the Dependency "
                 f"and pass in a callable function. The resource will then make self the current "
                 f"resource via `with self` and call the passed in function inside that with "
                 f"statement, returning the result of calling the passed in function."
@@ -561,9 +561,9 @@ class Resource:
         return wrapper
 
 
-class PerThreadResource(Resource):
+class PerThreadDependency(Dependency):
     """
-    Same as `Resource`, except we set the `Resource.resource_thread_safe` flag to False,
+    Same as `Dependency`, except we set the `Dependency.resource_thread_safe` flag to False,
     this means when an instance of us is created by the system lazily,
     it will not be shared between threads.
 
@@ -576,17 +576,17 @@ class PerThreadResource(Resource):
 
     ## Details
 
-    Normally, when a new `Resource` subclass needs to be created on-demand for the first time
-    the new Resource will be placed in the app's root `glazy.context.GlazyContext`,
+    Normally, when a new `Dependency` subclass needs to be created on-demand for the first time
+    the new Dependency will be placed in the app's root `glazy.context.GlazyContext`,
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
-    When a resource makes a subclass from `PerThreadResource` or otherwise set's
-    the `Resource.resource_thread_safe` to False at the Resource class-level.
+    When a resource makes a subclass from `PerThreadDependency` or otherwise set's
+    the `Dependency.resource_thread_safe` to False at the Dependency class-level.
     When a thread asks for that resource for first time it will be lazily created like expected,
     but the resulting object is placed in the root-context instead (and NOT the app-root-context).
 
-    That way, only the specific thread the Resource was lazily created on will see the object;
+    That way, only the specific thread the Dependency was lazily created on will see the object;
     no other thread will.
 
     Therefore, when other threads also ask for the resource, they will each create their own

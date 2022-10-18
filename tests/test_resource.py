@@ -1,10 +1,10 @@
 import pytest as pytest
 
-from glazy import ActiveResourceProxy, GlazyContext, Resource
-from glazy.resource import PerThreadResource
+from glazy import ActiveResourceProxy, GlazyContext, Dependency
+from glazy.dependency import PerThreadDependency
 
 
-class MyClass(Resource):
+class MyClass(Dependency):
     def __init__(self):
         self._my_value = "b"
 
@@ -53,16 +53,16 @@ def test_shared_threaded_resource():
     # Test to ensure that the app-root and thread-root work correctly with
     # thread safe/unsafe resources.
 
-    class ThreadSharableResource(Resource):
+    class ThreadSharableDependency(Dependency):
         hello = "1"
 
-    class NonThreadSharableResource(PerThreadResource):
+    class NonThreadSharableResource(PerThreadDependency):
         hello2 = "a"
 
-    ThreadSharableResource.resource().hello = "3"
+    ThreadSharableDependency.resource().hello = "3"
     NonThreadSharableResource.resource().hello2 = "b"
 
-    assert ThreadSharableResource.resource().hello == "3"
+    assert ThreadSharableDependency.resource().hello == "3"
     assert NonThreadSharableResource.resource().hello2 == "b"
 
     thread_out_sharable = None
@@ -75,7 +75,7 @@ def test_shared_threaded_resource():
         nonlocal thread_out_nonsharable
 
         # This should produce an '3', since resource can be shared between threads.
-        thread_out_sharable = ThreadSharableResource.resource().hello
+        thread_out_sharable = ThreadSharableDependency.resource().hello
 
         # This should produce an 'a', since the resource is NOT shared between threads;
         # the setting of it to 'b' above is in another thread and is NOT shared.

@@ -29,7 +29,7 @@ resource of the inherited type from the current context as a convenience.
 
 So normally, code would do this to get the current object instance for a Resource:
 
->>> class SomeResource(Resource):
+>>> class SomeResource(Dependency):
 >>>    my_attribute = "default-value"
 >>>
 >>> # Normally code would do this to interact with current resource object:
@@ -97,7 +97,7 @@ There are various ways to get resources from the current context. Let's say we h
 a resource called `SomeResourceType`:
 
 >>> next_identifier = 0
->>> class SomeResourceType(Resource):
+>>> class SomeResourceType(Dependency):
 ...     def __init__(self):
 ...         global next_identifier
 ...         self.some_value = "hello!"
@@ -151,10 +151,10 @@ You can do it via one of the below listed methods/examples below.
 For these examples, say I have this resource defined:
 
 >>> from dataclasses import dataclass
->>> from glazy import Resource
+>>> from glazy import Dependency
 >>>
 >>> @dataclass
->>> class MyResource(Resource):
+>>> class MyResource(Dependency):
 >>>     some_value = 'default-value'
 >>>
 >>> assert MyResource.resource().some_value == 'default-value'
@@ -278,7 +278,7 @@ See [Activating New Resource](#activating-new-resource) for more details.
 I create a new class that uses our previous [SomeResourceType][resources] but adds in a
 `glazy.resource.Resource`.
 
->>> class MySingleton(SomeResourceType, Resource):
+>>> class MySingleton(SomeResourceType, Dependency):
 ...     pass
 >>> MySingleton.resource().ident
 5
@@ -323,8 +323,8 @@ Some sort of resource, I am usuallyemphasizingg with this that you need to pass 
 __pdoc__ = {
     "GlazyContext.__call__": True,
     "GlazyContext.__copy__": True,
-    "Resource.__call__": True,
-    "Resource.__copy__": True
+    "Dependency.__call__": True,
+    "Dependency.__copy__": True
 }
 
 # Thread-safe / Lock-Free counter
@@ -846,7 +846,7 @@ class GlazyContext:
 
         So normally, code would do this to get a Resource:
 
-        >>> class SomeResource(Resource):
+        >>> class SomeResource(Dependency):
         >>>    pass
         >>> # Normally code would do this to get current resource object:
         >>> SomeResource.resource()
@@ -939,17 +939,17 @@ class GlazyContext:
         # If NOT, then we always return None.
         # This will indicate to the thread-specific GlazyContext that is calling us to allocate
         # the object in it's self.
-        # If something else is asking us, we still return None because this Resource does not
+        # If something else is asking us, we still return None because this Dependency does not
         # belong in us and so we should not accidently auto-create it in us.
         # ie: Whoever is calling is should handle the None case.
         #
         # In Reality, the only thing that should be calling the app-root context
         # is a thread-root context.  Thread root-contexts should never return None when asked
         # for a resource.
-        # So, code using a Resource in general should never have to worry about this None case.
+        # So, code using a Dependency in general should never have to worry about this None case.
         if self._is_root_context_for_app:
-            from glazy import Resource
-            if issubclass(for_type, Resource) and not for_type.resource_thread_safe:
+            from glazy import Dependency
+            if issubclass(for_type, Dependency) and not for_type.resource_thread_safe:
                 return None
 
         parent_value = None
@@ -994,7 +994,7 @@ class GlazyContext:
             self,
             *,
             for_type: Type[T],
-            parent_value: Union['Resource', Any, None] = None
+            parent_value: Union['Dependency', Any, None] = None
     ) -> T:
         """
         This tries to reuse parent_value if possible;
@@ -1002,25 +1002,25 @@ class GlazyContext:
 
         Args:
             for_type: A class/type to create if needed.
-            parent_value: If `parent_value` is not None and inherits from `Resource`
+            parent_value: If `parent_value` is not None and inherits from `Dependency`
                 will ask parent_value to decide if it wants to reuse it's self or create a
                 new resource object.
 
-                See `glazy.resource.Resource.context_resource_for_child`
+                See `glazy.resource.Dependency.context_resource_for_child`
                 for more details if you want to customize this behavior.
         """
-        from glazy import Resource
+        from glazy import Dependency
         try:
             # Allocate a blank object if we have no parent-value to use.
             if parent_value is None:
                 return for_type()
 
             # If we have a context-resource AND a parent_value;
-            # then ask parent_value Resource to do whatever it wants to do.
-            # By default, `glazy.resource.Resource.context_resource_for_child`
+            # then ask parent_value Dependency to do whatever it wants to do.
+            # By default, `glazy.resource.Dependency.context_resource_for_child`
             # returns `self`
             #   to reuse resource value.
-            if parent_value and isinstance(parent_value, Resource):
+            if parent_value and isinstance(parent_value, Dependency):
                 return parent_value.context_resource_for_child(child_context=self)
         except TypeError as e:
             # Python will add the `e` as the `from` exception to this new one.
@@ -1028,7 +1028,7 @@ class GlazyContext:
                 f"I had trouble creating/getting resource ({for_type}) due to TypeError({e})."
             )
 
-        # If we have a parent value that is not a `glazy.resource.Resource`;
+        # If we have a parent value that is not a `glazy.resource.Dependency`;
         # default to reusing it:
         return parent_value
 
@@ -1042,10 +1042,10 @@ class GlazyContext:
         This won't create a resource if none exist unless you pass True into `create`, so it's
         possible for no results to be yielded if it's never been created and `create` == False.
 
-        .. warning:: This is mostly used by `glazy.resource.Resource` subclasses
+        .. warning:: This is mostly used by `glazy.resource.Dependency` subclasses
             (internally).
 
-            Not normally used elsewhere. It can help the glazy.resource.Resource`
+            Not normally used elsewhere. It can help the glazy.resource.Dependency`
             subclass to find it's
             list of parent resources to consult on it's own.
 
@@ -1067,7 +1067,7 @@ class GlazyContext:
     def __copy__(self):
         """ Makes a copy of self, gives an opportunity for resources to do something special
             while they are copied if needed via
-            `glazy.resource.Resource.context_resource_for_copy`.
+            `glazy.resource.Dependency.context_resource_for_copy`.
 
             We copy `GlazyContext` implicitly and make that copy the 'active' context when it's made
             current/activated via a:
@@ -1088,7 +1088,7 @@ class GlazyContext:
             to how their parent values in their copies are treated.
             See `_TreatAsRootParent` for more details on this aspect.
         """
-        from glazy import Resource
+        from glazy import Dependency
         # Use None for parent if we were originally created with a `None` parent.
         parent = Default
         if self._parent is _TreatAsRootParent:
@@ -1104,10 +1104,10 @@ class GlazyContext:
         # Copy current resources from self into new GlazyContext;
         # This uses `self` as a template for the new GlazyContext.
         # See doc comment on: `GlazyContext.__call__` and
-        # `glazy.resource.Resource.context_resource_for_copy`.
+        # `glazy.resource.Dependency.context_resource_for_copy`.
         new_resources = {}
         for k, v in self._resources.items():
-            if isinstance(v, Resource):
+            if isinstance(v, Dependency):
                 v = v.context_resource_for_copy(current_context=self, copied_context=new_context)
             else:
                 v = copy(v)
@@ -1172,7 +1172,7 @@ class GlazyContext:
                         You MUST ensure that a context that is directly activated and with no
                         copy made is not currently active right now.
 
-                    Generally, `glazy.resource.Resource.__enter__` will set to this
+                    Generally, `glazy.resource.Dependency.__enter__` will set to this
                     False because it always creates a blank context just for it's self.
                     No need to create two context's.
         """
@@ -1213,7 +1213,7 @@ class GlazyContext:
         OR
 
         >>> my_context = GlazyContext()
-        >>> my_context.add_resource(Resource())
+        >>> my_context.add_resource(Dependency())
         >>>
         >>> @my_context
         >>> def some_method():

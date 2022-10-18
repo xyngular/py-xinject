@@ -4,5 +4,5 @@ Used to lazily created shared singleton-like objects in a decoupled way.
 """
 
 from .context import GlazyContext
-from .resource import Resource, PerThreadResource
+from .dependency import Dependency, PerThreadDependency
 from .proxy import ActiveResourceProxy

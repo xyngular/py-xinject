@@ -1,7 +1,7 @@
 """
 Used to have a normal looking object that can be imported directly into other modules and used.
 
-It will in reality, always lookup currently active version of a Resource and use that each
+It will in reality, always lookup currently active version of a Dependency and use that each
 time it's asked anything.
 
 This makes it 'act' like the current version of some resource,
@@ -9,13 +9,13 @@ code and just use it like a normal object.
 
 See one of these for more details:
 
-- [Active Resource Proxy - pydoc](./#active-resource-proxy)
-- [Active Resource Proxy - github]
+- [Active Dependency Proxy - pydoc](./#active-resource-proxy)
+- [Active Dependency Proxy - github]
   (https://github.com/xyngular/py-glazy#active-resource-proxy)
 
 """
 from typing import TypeVar, Type, Generic, Callable, Any
-from .resource import Resource
+from .dependency import Dependency
 
 R = TypeVar('R')
 
@@ -27,7 +27,7 @@ class ActiveResourceProxy(Generic[R]):
     normal (non-private) attribute/method it will grab you the one from the currenly active
     resource.
 
-    >>> class MyClass(Resource):
+    >>> class MyClass(Dependency):
     ...   def my_method(self):
     ...      pass
 
@@ -65,8 +65,8 @@ class ActiveResourceProxy(Generic[R]):
             what's returned from here should act like an instance of the `resource_type` passed
             into this method.
 
-            A simpler/alternate way to wrap a Resource with a `ActiveResourceProxy` is via the
-            `glazy.resource.Resource.resource_proxy` convenience method.
+            A simpler/alternate way to wrap a Dependency with a `ActiveResourceProxy` is via the
+            `glazy.resource.Dependency.resource_proxy` convenience method.
         """
         # noinspection PyTypeChecker
         return cls(resource_type=resource_type)
@@ -80,7 +80,7 @@ class ActiveResourceProxy(Generic[R]):
         When you create a ActiveResourceProxy, you pass in the resource_type you want
         it to proxy.
 
-        Will act like the current/active object of Resource type `resource_type`.
+        Will act like the current/active object of Dependency type `resource_type`.
         you can optionally provide a grabber function, that will be called with the current
         resource passed to it.  You can then grab something from that resource and return it.
         If you pass in a grabber function, this ProxyActive will act like a proxy of whatever
@@ -94,9 +94,9 @@ class ActiveResourceProxy(Generic[R]):
         """
 
         # Would give unusual error later on, lets just check right now!
-        if not issubclass(resource_type, Resource):
+        if not issubclass(resource_type, Dependency):
             raise Exception(
-                f"Must pass a glazy.Resource subtype to glazy.ProxyActive.wrap, "
+                f"Must pass a glazy.Dependency subtype to glazy.ProxyActive.wrap, "
                 f"I was given a ({resource_type}) instead."
             )
 
