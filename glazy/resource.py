@@ -106,7 +106,7 @@ import functools
 from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any
 from copy import copy, deepcopy
 from guards import Default
-from glazy import Context
+from glazy import GlazyContext
 from glazy.errors import XynResourceError
 
 T = TypeVar('T')
@@ -145,14 +145,14 @@ class Resource:
 
     ## Overview
 
-    A `Resource` represents an object in a `glazy.context.Context`.
-    Generally, resources that are added/created inside a `Context` inherit from this abstract base
+    A `Resource` represents an object in a `glazy.context.GlazyContext`.
+    Generally, resources that are added/created inside a `GlazyContext` inherit from this abstract base
     `Resource` class, but are not required too. `Resource` just adds some class-level
     conveince methods and configuratino options. Inheriting from Resource also helps
     self-document that it's a Resource.
 
     See [Resources](#resources) at top of this module for a general overview of how resources
-    and `Context`'s work. You should also read the glazy project's
+    and `GlazyContext`'s work. You should also read the glazy project's
     [README.md](https://github.com/xyngular/py-glazy#active-resource-proxy) for a high-level
     overview.  The text below is more like plain refrence matrial.
 
@@ -174,13 +174,13 @@ class Resource:
     we will do our best to ensure that the same object instance is returned every time
     (there are two exceptions, keep reading).
 
-    These resources are stored in the current `Context`'s parent.  What happens is:
+    These resources are stored in the current `GlazyContext`'s parent.  What happens is:
 
-    If the current `Context` and none of their parents have this object and it's asked for
+    If the current `GlazyContext` and none of their parents have this object and it's asked for
     (like what happens when `Resource.resource` is called on it)...
-    It will be created in the deepest/oldest parent Context.
+    It will be created in the deepest/oldest parent GlazyContext.
 
-    This is the first parent `Context` who's `Context.parent` is None.
+    This is the first parent `GlazyContext` who's `GlazyContext.parent` is None.
     That way it should be visible to everyone on the current thread since it will normally be
     created in the root-context.
 
@@ -194,18 +194,18 @@ class Resource:
     >>> MyResource.resource()
 
     When that last line is executed, and the current or any parent context has a `MyResource`
-    resource; `Context` will simply create one via calling the resource type:
+    resource; `GlazyContext` will simply create one via calling the resource type:
 
     >>> MyResource()
 
-    You can allocate the resource yourself with custom options and add it to the Context your self.
+    You can allocate the resource yourself with custom options and add it to the GlazyContext your self.
 
     Here are the various ways to do that, via:
 
 
-    - `Context.add_resource`
-        (you will get an error if that Context currently has a resource
-        of that type, so do that as you create the Context object).
+    - `GlazyContext.add_resource`
+        (you will get an error if that GlazyContext currently has a resource
+        of that type, so do that as you create the GlazyContext object).
 
     - Decorator, ie: `@MyResource()`
 
@@ -226,7 +226,7 @@ class Resource:
 
     ## Background on Unit Testing
 
-    By default, unit tests always create a new blank `Context` with `parent=None`.
+    By default, unit tests always create a new blank `GlazyContext` with `parent=None`.
     THis is done by an autouse fixture (`glazy.fixtures.context`)
     THis forces every unit test run to create new resources when they are asked for (lazily).
 
@@ -248,7 +248,7 @@ class Resource:
     This is exactly what we want for each unit test run.
 
     When the application runs for real though, we do generally want to use the resources in a
-    shared fashion.  So normally we only allocate a new blank-root `@Context(parent=None)`
+    shared fashion.  So normally we only allocate a new blank-root `@GlazyContext(parent=None)`
     either at the start of a normal application run, or during a unit-test.
     """
 
@@ -272,7 +272,7 @@ class Resource:
 
     resource_thread_safe = True
     """ If True, we can be put in the app-root context, and can be potentially used in
-        multiple threads.  If False, we will only be lazily allocated in the pre-thread Context
+        multiple threads.  If False, we will only be lazily allocated in the pre-thread GlazyContext
         and always be used in a single-thread. If another thread needs us and this is False,
         a new Resource instance will be created for that thread.
 
@@ -280,7 +280,7 @@ class Resource:
 
         It accomplishes this by the lazy-creation mechanism.
         When something asks for a Resource that does not currently exist,
-        the parent-Context is asked for the resource, and then the parent's parent will be
+        the parent-GlazyContext is asked for the resource, and then the parent's parent will be
         asked and so on.
 
         Eventually the app-root context will be asked for the Resource.
@@ -293,7 +293,7 @@ class Resource:
         So at this point, if `resource_thread_safe` value is (as a class attribute):
 
         - `False`: The app-root context will return `None` instead of lazily creating the Resource.
-            It's expected a thread-root Context is the thing that asked the app-root context
+            It's expected a thread-root GlazyContext is the thing that asked the app-root context
             and the thread-root context when getting back a None should just go and lazily create
             it.
             This results in a new Resource being lazily allocated for each thread that needs it.
@@ -306,7 +306,7 @@ class Resource:
         Finally the code that orginally asked for the Resource will have it returned to it
         and they can then use it.
 
-        We store it in each Context that Resource pases though so in the future it can just
+        We store it in each GlazyContext that Resource pases though so in the future it can just
         directly answer the question and return the Resource quickly.
 
 
@@ -316,8 +316,8 @@ class Resource:
     """
 
     @classmethod
-    def resource(cls: Type[T], for_context: Context = Default) -> T:
-        """ Gets a potentially shared resource from the current `Context`.
+    def resource(cls: Type[T], for_context: GlazyContext = Default) -> T:
+        """ Gets a potentially shared resource from the current `GlazyContext`.
 
             If context is Default/False [default], uses the current context.
             Resource may add additional kwargs when overriding this method if needed [rare]
@@ -333,7 +333,7 @@ class Resource:
             SomeResourceType(ident: ...)
         """
         if not for_context:
-            for_context = Context.current()
+            for_context = GlazyContext.current()
 
         return for_context.resource(for_type=cls)
 
@@ -343,7 +343,7 @@ class Resource:
         from .proxy import ActiveResourceProxy
         return ActiveResourceProxy.wrap(cls)
 
-    def context_resource_for_child(self, child_context: Context):
+    def context_resource_for_child(self, child_context: GlazyContext):
         """
         Called by `Context` when it does not have a resource of a particular type but it does
         have a value from a parent-context (via it's parent-chain).
@@ -379,21 +379,21 @@ class Resource:
             (for more details, see [Activating New Context](#activating-new-context))
 
         Args:
-            child_context (Context): A child context that is needing the resource.
+            child_context (GlazyContext): A child context that is needing the resource.
         """
         return self
 
     def context_resource_for_copy(
-            self, *, current_context: Context, copied_context: Context
+            self, *, current_context: GlazyContext, copied_context: GlazyContext
     ) -> "Resource":
         """
-        When an existing `Context` instance is used via a `with` statement or as a function
+        When an existing `GlazyContext` instance is used via a `with` statement or as a function
         decorator it will copy it's self for use during the `with` statement
         (ie: it will act as sort of a `template`).
 
         It will go though and call this method on each resource in the original 'template' context.
         By default we simply return self
-        (by default, Context resources generally try to maintain themselves as singletons).
+        (by default, GlazyContext resources generally try to maintain themselves as singletons).
 
         If a `Resource` needs to do more, they can override us
 
@@ -465,7 +465,7 @@ class Resource:
 
         return copy
 
-    _context_manager_stack: List[Context] = None
+    _context_manager_stack: List[GlazyContext] = None
     """ Keeps track of context's we created when self (ie: `Resource`) is used in a `with`
         statement.  This MUST be reset when doing a copy of the resource.
     """
@@ -474,8 +474,8 @@ class Resource:
         if self._context_manager_stack is None:
             self._context_manager_stack = []
 
-        # We make a new Context object, and delegate context-management duties to it.
-        context = Context(resources=self)
+        # We make a new GlazyContext object, and delegate context-management duties to it.
+        context = GlazyContext(resources=self)
         self._context_manager_stack.append(context)
         context.__enter__(use_a_copy_of_self=False)
         return self
@@ -577,7 +577,7 @@ class PerThreadResource(Resource):
     ## Details
 
     Normally, when a new `Resource` subclass needs to be created on-demand for the first time
-    the new Resource will be placed in the app's root `glazy.context.Context`,
+    the new Resource will be placed in the app's root `glazy.context.GlazyContext`,
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
@@ -591,6 +591,6 @@ class PerThreadResource(Resource):
 
     Therefore, when other threads also ask for the resource, they will each create their own
     the first time they ask for it, and place it in their thread-root
-    `glazy.context.Context`.
+    `glazy.context.GlazyContext`.
     """
     resource_thread_safe = False

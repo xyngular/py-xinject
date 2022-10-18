@@ -1,19 +1,19 @@
-from glazy import Context, Resource
+from glazy import GlazyContext, Resource
 import dataclasses
 import pytest
 from copy import deepcopy, copy
 from glazy.errors import XynResourceError
 
 
-@Context
+@GlazyContext
 def test_decorator_on_direct_context_class(glazy_test_context):
-    """ Test using Context class directly as a decorator (not a Context instance). """
-    # This should be the Context that was created via `@Context`.
-    assert Context.current() is not glazy_test_context
+    """ Test using GlazyContext class directly as a decorator (not a GlazyContext instance). """
+    # This should be the GlazyContext that was created via `@GlazyContext`.
+    assert GlazyContext.current() is not glazy_test_context
 
-    # Since the `@Context` would have been created AFTER the standard unit-test `context` fixture,
-    # the parent of my `@Context` would be the standard unit-test context fixture.
-    assert Context.current().parent is glazy_test_context
+    # Since the `@GlazyContext` would have been created AFTER the standard unit-test `context`
+    # fixture, the parent of my `@GlazyContext` would be the standard unit-test context fixture.
+    assert GlazyContext.current().parent is glazy_test_context
 
 
 @dataclasses.dataclass
@@ -21,36 +21,36 @@ class SomeResource(Resource):
     my_name: str = 'hello!'
 
 
-module_level_context = Context.current()
+module_level_context = GlazyContext.current()
 
 
 def test_ensure_pytest_plugin_context_autouse_fixture_working():
     # Ensure by default every unit test that has glazy as a dependency will use
     # the context auto-use fixture; which makes a blank root-like context.
-    assert Context.current() is not module_level_context
+    assert GlazyContext.current() is not module_level_context
 
-    # Ensure we have no items in the Context, that it is indeed blank.
-    assert len(Context.current()._resources) == 0
+    # Ensure we have no items in the GlazyContext, that it is indeed blank.
+    assert len(GlazyContext.current()._resources) == 0
 
     # Ensure app-root context also has no items in it, that it's blank.
-    assert len(Context.current().parent._resources) == 0
+    assert len(GlazyContext.current().parent._resources) == 0
 
 
 # noinspection PyTypeChecker
 # NOTE: This is not how you would normally do this, normally you would do:
 #       >>> @SomeResource(my_name='first-name')
-#       Doing it this way to test out giving initial resources to a new Context directly
+#       Doing it this way to test out giving initial resources to a new GlazyContext directly
 #       instead of indirectly.
-@Context(resources=[SomeResource(my_name='first-name')])
+@GlazyContext(resources=[SomeResource(my_name='first-name')])
 def test_decorator_on_context_object():
     first_resource = SomeResource.resource()
     assert first_resource.my_name == 'first-name'
-    decorated_context = Context.current()
+    decorated_context = GlazyContext.current()
 
     new_resource = SomeResource(my_name='new-name')
-    with Context(resources=[new_resource]) as with_context:
+    with GlazyContext(resources=[new_resource]) as with_context:
         assert with_context is not decorated_context, "Should be new context"
-        # I created new Context and manually added new instance of SomeResource;
+        # I created new GlazyContext and manually added new instance of SomeResource;
         # check to see if it's the current resource and looks intact.
         inside_resource = SomeResource.resource()
         assert inside_resource is not first_resource
@@ -58,37 +58,37 @@ def test_decorator_on_context_object():
         assert inside_resource.my_name == 'new-name'
         assert first_resource.my_name == 'first-name'
 
-    with Context():
+    with GlazyContext():
         assert with_context is not decorated_context, "Should be new context"
-        # Check to see if when adding new Context, we still get the same SomeResource instance,
-        # and that they still look intact with the correct values.
+        # Check to see if when adding new GlazyContext, we still get the same SomeResource
+        # instance, and that they still look intact with the correct values.
         assert SomeResource.resource() is first_resource
         assert first_resource.my_name == 'first-name'
         assert new_resource.my_name == 'new-name'
 
 
 def test_context_and_with():
-    root_context = Context.current()
+    root_context = GlazyContext.current()
 
-    context_1 = Context(resources=[2])
+    context_1 = GlazyContext(resources=[2])
 
     def verify_current_context_is_copy():
-        copied_context = Context.current()
+        copied_context = GlazyContext.current()
         # ensure they are not the same object (ie: it got copied), and the parent is correct.
         assert context_1 is not copied_context
         assert copied_context.parent is root_context
 
         # See if the non-active `context_1` can dynamically lookup it's parent as the
-        # currently active Context.
+        # currently active GlazyContext.
         assert context_1.parent is copied_context
 
         # Ensure resources at copied.
         assert copied_context._resources == {int: 2}
 
     with context_1 as copied_context:
-        # When we use Context via `@` or `with` or `make_current`, they should copy the context
-        # and activate/make-current that copied context.
-        assert Context.current() is copied_context
+        # When we use GlazyContext via `@` or `with` or `make_current`, they should copy the
+        # context and activate/make-current that copied context.
+        assert GlazyContext.current() is copied_context
         verify_current_context_is_copy()
 
     # check to make sure same behavior happens when using context as a decorator.
@@ -99,7 +99,7 @@ def test_context_and_with():
     my_method()
 
 
-module_level_context = Context(
+module_level_context = GlazyContext(
     resources=[
         20,
         "hello-str",
@@ -115,26 +115,26 @@ module_level_context = Context(
 @module_level_context
 def test_module_level_context(glazy_test_context):
     # `context` is the base-context
-    Context.current().add_resource(1.2)
-    assert Context.current(for_type=float) == 1.2
+    GlazyContext.current().add_resource(1.2)
+    assert GlazyContext.current(for_type=float) == 1.2
 
     # Ensure that when we used the module-level-context, ensure it still uses the current
     # context as it's first parent. the `create=False` will ensure it won't add this looked
     # up resource to it's self.
     assert module_level_context.resource(for_type=float, create=False) == 1.2
-    assert module_level_context is not Context.current()
+    assert module_level_context is not GlazyContext.current()
 
     # Ensure that we have not float resource in the outer-module version (since create=False).
     assert float not in module_level_context._resources
 
     # See if the copied-context has the same resources still
     assert SomeResource.resource().my_name == "start-name"
-    assert Context.current(for_type=int) == 20
-    assert Context.current(for_type=str) == "hello-str"
+    assert GlazyContext.current(for_type=int) == 20
+    assert GlazyContext.current(for_type=str) == "hello-str"
 
 
 def test_initial_context_resources_with_dict():
-    my_context = Context(
+    my_context = GlazyContext(
         resources={int: 'string-as-int-resource', float: False, SomeResource: 'str-instead'}
     )
 
@@ -142,12 +142,12 @@ def test_initial_context_resources_with_dict():
         # SomeResource was replaced by a direct-string 'str-instead', testing replacing
         # resources with a completely different type (if you want to mock/test something specific).
         assert SomeResource.resource() == 'str-instead'
-        assert Context.current(for_type=int) == 'string-as-int-resource'
-        assert Context.current(for_type=float) is False
+        assert GlazyContext.current(for_type=int) == 'string-as-int-resource'
+        assert GlazyContext.current(for_type=float) is False
 
 
 def test_deepcopy_context():
-    c1 = Context()
+    c1 = GlazyContext()
     with pytest.raises(XynResourceError):
         deepcopy(c1)
 
@@ -178,12 +178,12 @@ def test_module_level_resource_in_unit_test(test_run):
 
 def test_each_unit_test_starts_with_a_single_parentless_root_like_context():
     # Ensure we have no parent.
-    unit_test_root_context = Context.current()
+    unit_test_root_context = GlazyContext.current()
 
     # We should only have a thread-root context that is pointing to a single parent app-root.
     assert unit_test_root_context.parent.parent is None
 
-    # Ensure we have no items in the Context, that it is indeed blank.
+    # Ensure we have no items in the GlazyContext, that it is indeed blank.
     assert len(unit_test_root_context._resources) == 0
 
     # Ensure app-root context also has no items in it, that it's blank

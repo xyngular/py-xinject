@@ -16,7 +16,7 @@ Auto-loaded common fixtures for helping with unit-testing.
     so it's automatically used anyway.
 
     I would probably just get the current context like you normally would
-    (via `glazy.context.Context.current`), rather than use this fixture directly
+    (via `glazy.context.GlazyContext.current`), rather than use this fixture directly
     in your unit-test.
 """
 import pytest
@@ -29,12 +29,12 @@ def glazy_test_context():
     Will blank-out the app and root contexts by allocating new containers
     for the root contexts.
 
-    This means that, the first time a thread asks/needs a Context, one will be created lazily
+    This means that, the first time a thread asks/needs a GlazyContext, one will be created lazily
     after the unit test starts since we removed all of them from the global state.
 
     This fixture is also using the `autouse=True` feature of pytest, to ensure this always runs.
     You don't need to use it directly,
-    simply call `glazy.context.Context.current` like you normally would if you need the
+    simply call `glazy.context.GlazyContext.current` like you normally would if you need the
     current context during your unit-test.
 
     After the unit test is finished, this auto-use fixture will clean up the state again.
@@ -48,7 +48,7 @@ def glazy_test_context():
 
     # Want to keep global-module slate clean, import stuff we need privately.
     from .context import (
-        Context, _setup_blank_app_and_thread_root_contexts_globals
+        GlazyContext, _setup_blank_app_and_thread_root_contexts_globals
     )
 
     # Ensure we have a blank slate for the unit-test.
@@ -56,7 +56,7 @@ def glazy_test_context():
     _setup_blank_app_and_thread_root_contexts_globals()
 
     # Yield the current thread-root context as the fixture-value.
-    yield Context.current()
+    yield GlazyContext.current()
 
     # Ensure app+thread root-contexts do not have leftover resource objects from unit test.
     _setup_blank_app_and_thread_root_contexts_globals()
