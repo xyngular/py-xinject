@@ -8,15 +8,15 @@ Auto-loaded common fixtures for helping with unit-testing.
     `ValueError: duplicate 'glazy_test_context'`
 
     You should be able to use any of these fixtures without importing them.
-    This is accomplished via the setup.py file in glazy, it tells pytest about the
-    `glazy.fixtures` module so it can load them automatically.
+    This is accomplished via the setup.py file in udepend, it tells pytest about the
+    `udepend.fixtures` module so it can load them automatically.
 
 
     For `glazy_test_context` fixture it's self... it's an auto-use fixture,
     so it's automatically used anyway.
 
     I would probably just get the current context like you normally would
-    (via `glazy.context.UContext.current`), rather than use this fixture directly
+    (via `udepend.context.UContext.current`), rather than use this fixture directly
     in your unit-test.
 """
 import pytest
@@ -34,7 +34,7 @@ def glazy_test_context():
 
     This fixture is also using the `autouse=True` feature of pytest, to ensure this always runs.
     You don't need to use it directly,
-    simply call `glazy.context.UContext.current` like you normally would if you need the
+    simply call `udepend.context.UContext.current` like you normally would if you need the
     current context during your unit-test.
 
     After the unit test is finished, this auto-use fixture will clean up the state again.

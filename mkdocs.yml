@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: Docs for glazy
+site_name: Docs for udepend
 dev_addr: 127.0.0.1:7000
 
 nav:
   - Homepage: index.md
   - Changelog: changelog.md
-  - API Reference: api/glazy/" target="_blank
+  - API Reference: api/udepend/" target="_blank
 
 theme:
   name: material

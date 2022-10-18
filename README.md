@@ -27,10 +27,10 @@ while promoting code-decoupling.
 
 ```bash
 # via pip
-pip install glazy
+pip install udepend
 
 # via poetry
-poetry add glazy
+poetry add udepend
 ```
 
 ## How To Use
@@ -105,7 +105,7 @@ This means that Dependency can also help with simple dependency injection use-ca
 ### Quick Start Example Code
 
 ```python
-from glazy import Dependency
+from udepend import Dependency
 
 
 # This is a example Dependency class, the intent with this class is to treat 
@@ -165,7 +165,7 @@ Just ensure all fields are optional (ie: they all have default values).
 Example:
 
 ```python
-from glazy import Dependency
+from udepend import Dependency
 from dataclasses import dataclass
 
 
@@ -229,7 +229,7 @@ when using the proxy object.
 A real-world example is `xyn_config.config.config`, it uses this code for that object:
 
 ```python
-from glazy import ActiveResourceProxy
+from udepend import ActiveResourceProxy
 from xyn_config import Config
 
 # The `xny_resource.proxy.ActiveResourceProxy.wrap` method to get a correctly type-hinted (for IDE)

@@ -1,7 +1,7 @@
 import pytest as pytest
 
-from glazy import ActiveResourceProxy, UContext, Dependency
-from glazy.dependency import PerThreadDependency
+from udepend import ActiveResourceProxy, UContext, Dependency
+from udepend.dependency import PerThreadDependency
 
 
 class MyClass(Dependency):

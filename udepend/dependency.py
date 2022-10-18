@@ -70,7 +70,7 @@ You can do it via one of the below listed methods/examples below.
 For these examples, say I have this resource defined:
 
 >>> from dataclasses import dataclass
->>> from glazy import Dependency
+>>> from udepend import Dependency
 >>>
 >>> @dataclass
 >>> class MyResource(Dependency):
@@ -106,8 +106,8 @@ import functools
 from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any
 from copy import copy, deepcopy
 from guards import Default
-from glazy import UContext
-from glazy.errors import XynResourceError
+from udepend import UContext
+from udepend.errors import XynResourceError
 
 T = TypeVar('T')
 C = TypeVar('C')
@@ -160,7 +160,7 @@ class Dependency:
     Get the current resource via `Resource.resource`, you can call it on sub-class/concreate
     resource type, like so:
 
-    >>> from glazy import Dependency
+    >>> from udepend import Dependency
     >>> class MyConfig(Dependency):
     ...     some_setting: str = "default-setting-string"
     >>>
@@ -266,8 +266,8 @@ class Dependency:
 
         This can be dynamic if needed, by default it's consulted on the object each time it's
         copied
-        (to see where it's used, look at `glazy.resource.Dependency.__copy__` and
-        `glazy.resource.Dependency.__deepcopy__`)
+        (to see where it's used, look at `udepend.resource.Dependency.__copy__` and
+        `udepend.resource.Dependency.__deepcopy__`)
     """
 
     resource_thread_safe = True
@@ -486,7 +486,7 @@ class Dependency:
             raise XynResourceError(
                 f"While using ({self}) as a context manager via a `with` statement,"
                 f"somehow we did not have an internal context from the initial entering "
-                f"(see `glazy.context.Dependency.__enter__`). "
+                f"(see `udepend.context.Dependency.__enter__`). "
                 f"Indicates a very strange bug."
             )
 
@@ -577,7 +577,7 @@ class PerThreadDependency(Dependency):
     ## Details
 
     Normally, when a new `Dependency` subclass needs to be created on-demand for the first time
-    the new Dependency will be placed in the app's root `glazy.context.UContext`,
+    the new Dependency will be placed in the app's root `udepend.context.UContext`,
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
@@ -591,6 +591,6 @@ class PerThreadDependency(Dependency):
 
     Therefore, when other threads also ask for the resource, they will each create their own
     the first time they ask for it, and place it in their thread-root
-    `glazy.context.UContext`.
+    `udepend.context.UContext`.
     """
     resource_thread_safe = False

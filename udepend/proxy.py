@@ -66,7 +66,7 @@ class ActiveResourceProxy(Generic[R]):
             into this method.
 
             A simpler/alternate way to wrap a Dependency with a `ActiveResourceProxy` is via the
-            `glazy.resource.Dependency.resource_proxy` convenience method.
+            `udepend.resource.Dependency.resource_proxy` convenience method.
         """
         # noinspection PyTypeChecker
         return cls(resource_type=resource_type)
@@ -96,7 +96,7 @@ class ActiveResourceProxy(Generic[R]):
         # Would give unusual error later on, lets just check right now!
         if not issubclass(resource_type, Dependency):
             raise Exception(
-                f"Must pass a glazy.Dependency subtype to glazy.ProxyActive.wrap, "
+                f"Must pass a udepend.Dependency subtype to udepend.ProxyActive.wrap, "
                 f"I was given a ({resource_type}) instead."
             )
 

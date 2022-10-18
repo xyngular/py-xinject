@@ -151,7 +151,7 @@ You can do it via one of the below listed methods/examples below.
 For these examples, say I have this resource defined:
 
 >>> from dataclasses import dataclass
->>> from glazy import Dependency
+>>> from udepend import Dependency
 >>>
 >>> @dataclass
 >>> class MyResource(Dependency):
@@ -222,7 +222,7 @@ have the resource.
 With the context test fixture, it creates a brand new parent-less context every time a test runs
 (see `Context.parent` for more about parents). You can use it like so:
 
->>> from glazy.fixtures import context
+>>> from udepend.fixtures import context
 >>> def test_some_text(context):
 ...    SomeResourceType.resource()
 
@@ -308,7 +308,7 @@ import functools
 from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable
 from copy import copy
 from guards.default import Default, DefaultType, Singleton
-from glazy.errors import XynResourceError
+from udepend.errors import XynResourceError
 
 T = TypeVar('T')
 C = TypeVar('C')
@@ -373,7 +373,7 @@ _TreatAsRootParent = _TreatAsRootParentType()
 # todo: Remove ContextType
 class UContext:
     """
-    See [Quick Start](#quick-start) in the `glazy.context` module if your new to the UContext
+    See [Quick Start](#quick-start) in the `udepend.context` module if your new to the UContext
     class.
     """
 
@@ -616,7 +616,7 @@ class UContext:
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
         method resources from other unit tests. Right now, the unit-test resource isolation
-        happens automatically via an auto-use fixture (`glazy.ptest_plugin.glazy_test_context`).
+        happens automatically via an auto-use fixture (`udepend.ptest_plugin.glazy_test_context`).
 
         A non-activated context will return `guards.default.Default` as it's `UContext.parent`
         if it was created with the default value;
@@ -786,7 +786,7 @@ class UContext:
         uses the new `Context`.
 
         .. warning:: If you attempt to add a second resource of the same type...
-            ...a `glazy.XynResourceError` will be
+            ...a `udepend.XynResourceError` will be
             raised. This is because other objects have already gotten this resource and are
             relying on it now.  You need to configure any special resources you want to add
             to this context early enough before anything else will need it.
@@ -840,8 +840,8 @@ class UContext:
 
         Normally, code will use some other convenience methods, as an example:
 
-        Normally a resource will inherit from `glazy.resource.Resource` and that
-        class provides a class method `glazy.resource.Resource.resource` to easily get a
+        Normally a resource will inherit from `udepend.resource.Resource` and that
+        class provides a class method `udepend.resource.Resource.resource` to easily get a
         resource of the inherited type from the current context as a convenience.
 
         So normally, code would do this to get a Resource:
@@ -852,7 +852,7 @@ class UContext:
         >>> SomeResource.resource()
 
         Another convenient way to get the current resource is via the
-        `glazy.resource.ActiveResourceProxy`. This class lets you create an object
+        `udepend.resource.ActiveResourceProxy`. This class lets you create an object
         that always acts like the current/active object for some Resource.
         So you can define it at the top-level of some module, and code can import it
         and use it directly.
@@ -861,7 +861,7 @@ class UContext:
         and want to learn more about how it works.
 
         Most of the time, you interact with Context indrectly via
-        `glazy.context.Resource`.  So getting familure with Context is more about
+        `udepend.context.Resource`.  So getting familure with Context is more about
         utilize more advance use-cases. I get into some of these advanced use-cases below.
 
         ## Advanced Usage for Unit Tests
@@ -884,14 +884,14 @@ class UContext:
 
         ## Specific Details
 
-        Given a type of `glazy.resource.Resource`, or any other type;
+        Given a type of `udepend.resource.Resource`, or any other type;
         we will return an instance of it.
 
         If we currently don't have one, we will create a new one of type passe in and return that.
         We will continue to return the one created in the future for the type passed in.
 
         You can customize this process a bit by having your custom resource inherit from
-        `glazy.resource.Resource`.
+        `udepend.resource.Resource`.
 
         Otherwise, no other parameters will be sent to init method.
 
@@ -948,7 +948,7 @@ class UContext:
         # for a resource.
         # So, code using a Dependency in general should never have to worry about this None case.
         if self._is_root_context_for_app:
-            from glazy import Dependency
+            from udepend import Dependency
             if issubclass(for_type, Dependency) and not for_type.resource_thread_safe:
                 return None
 
@@ -1006,10 +1006,10 @@ class UContext:
                 will ask parent_value to decide if it wants to reuse it's self or create a
                 new resource object.
 
-                See `glazy.resource.Dependency.context_resource_for_child`
+                See `udepend.resource.Dependency.context_resource_for_child`
                 for more details if you want to customize this behavior.
         """
-        from glazy import Dependency
+        from udepend import Dependency
         try:
             # Allocate a blank object if we have no parent-value to use.
             if parent_value is None:
@@ -1017,7 +1017,7 @@ class UContext:
 
             # If we have a context-resource AND a parent_value;
             # then ask parent_value Dependency to do whatever it wants to do.
-            # By default, `glazy.resource.Dependency.context_resource_for_child`
+            # By default, `udepend.resource.Dependency.context_resource_for_child`
             # returns `self`
             #   to reuse resource value.
             if parent_value and isinstance(parent_value, Dependency):
@@ -1028,7 +1028,7 @@ class UContext:
                 f"I had trouble creating/getting resource ({for_type}) due to TypeError({e})."
             )
 
-        # If we have a parent value that is not a `glazy.resource.Dependency`;
+        # If we have a parent value that is not a `udepend.resource.Dependency`;
         # default to reusing it:
         return parent_value
 
@@ -1042,10 +1042,10 @@ class UContext:
         This won't create a resource if none exist unless you pass True into `create`, so it's
         possible for no results to be yielded if it's never been created and `create` == False.
 
-        .. warning:: This is mostly used by `glazy.resource.Dependency` subclasses
+        .. warning:: This is mostly used by `udepend.resource.Dependency` subclasses
             (internally).
 
-            Not normally used elsewhere. It can help the glazy.resource.Dependency`
+            Not normally used elsewhere. It can help the udepend.resource.Dependency`
             subclass to find it's
             list of parent resources to consult on it's own.
 
@@ -1067,7 +1067,7 @@ class UContext:
     def __copy__(self):
         """ Makes a copy of self, gives an opportunity for resources to do something special
             while they are copied if needed via
-            `glazy.resource.Dependency.context_resource_for_copy`.
+            `udepend.resource.Dependency.context_resource_for_copy`.
 
             We copy `UContext` implicitly and make that copy the 'active' context when it's made
             current/activated via a:
@@ -1088,7 +1088,7 @@ class UContext:
             to how their parent values in their copies are treated.
             See `_TreatAsRootParent` for more details on this aspect.
         """
-        from glazy import Dependency
+        from udepend import Dependency
         # Use None for parent if we were originally created with a `None` parent.
         parent = Default
         if self._parent is _TreatAsRootParent:
@@ -1104,7 +1104,7 @@ class UContext:
         # Copy current resources from self into new UContext;
         # This uses `self` as a template for the new UContext.
         # See doc comment on: `UContext.__call__` and
-        # `glazy.resource.Dependency.context_resource_for_copy`.
+        # `udepend.resource.Dependency.context_resource_for_copy`.
         new_resources = {}
         for k, v in self._resources.items():
             if isinstance(v, Dependency):
@@ -1137,7 +1137,7 @@ class UContext:
             Deep copied object.
         """
         raise XynResourceError(
-            "Deepcopy is currently disabled for glazy.context.UContext. "
+            "Deepcopy is currently disabled for udepend.context.UContext. "
             "If there is a desire to use it again in the future, remove this exception "
             "as it should still work."
         )
@@ -1172,7 +1172,7 @@ class UContext:
                         You MUST ensure that a context that is directly activated and with no
                         copy made is not currently active right now.
 
-                    Generally, `glazy.resource.Dependency.__enter__` will set to this
+                    Generally, `udepend.resource.Dependency.__enter__` will set to this
                     False because it always creates a blank context just for it's self.
                     No need to create two context's.
         """
@@ -1429,7 +1429,7 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     Used to create initial global state of app/thread-root contexts containers,
     which keep track of the visible `Contexts` on each thread, and for the app-root `UContext`.
 
-    Is also used by `glazy.pytest_plugin.glazy_test_context` auto-use fixture to blank/clear out
+    Is also used by `udepend.pytest_plugin.glazy_test_context` auto-use fixture to blank/clear out
     all root/globally visible contexts by allocating the global-structures again and letting
     the old global structures deallocate.
 

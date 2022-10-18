@@ -1,8 +1,8 @@
-from glazy import UContext, Dependency
+from udepend import UContext, Dependency
 import dataclasses
 import pytest
 from copy import deepcopy, copy
-from glazy.errors import XynResourceError
+from udepend.errors import XynResourceError
 
 
 @UContext
@@ -25,7 +25,7 @@ module_level_context = UContext.current()
 
 
 def test_ensure_pytest_plugin_context_autouse_fixture_working():
-    # Ensure by default every unit test that has glazy as a dependency will use
+    # Ensure by default every unit test that has udepend as a dependency will use
     # the context auto-use fixture; which makes a blank root-like context.
     assert UContext.current() is not module_level_context
 
