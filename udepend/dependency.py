@@ -493,7 +493,7 @@ class Dependency:
         context = stack.pop()
         context.__exit__(*args, **kwargs)
 
-    def __call__(self, func):
+    def __call__(self, func = None):
         """
         This makes Resource subclasses have an ability to be used as function decorators
         by default unless this method is overriden to provide some other funcionality.
@@ -543,6 +543,13 @@ class Dependency:
 
         Returns: We execute decorated method and return whatever it returns.
         """
+        # If we are called without any arguments, return self to support using this either as:
+        #   `DependencySubclass.depend()`
+        #   OR
+        #   `DependencySubclass.depend`
+        if not func:
+            return self
+
         if not callable(func):
             raise XynResourceError(
                 f"Attempt to calling a Dependency of type ({self}) as a callable function. "
