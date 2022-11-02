@@ -1,4 +1,4 @@
-# Install
+## Install
 
 ```bash
 # via pip
@@ -10,33 +10,39 @@ poetry add udepend
 
 # Introduction
 
-Glazy is short for "Global Lazy", ie: a globally lazy resource.
+Library's main focus is an easy way to create lazy universally injectable dependencies;
+in less magical way. It also leans more on the side of making it easier to get
+the dependency you need anywhere in the codebase.
 
-Galzy allows you to easily inject global resource dependencies into whatever code that needs them,
+u-depend allows you to easily inject universal resource dependencies into whatever code that needs them,
 in an easy to understand and self-documenting way.
 
-???+ note
-  Read this document first to get a general overview before reading the API reference
-  documentation.
-  
-  When you're done here and want more details go to [API Reference](api/glazy)
-  or directly to [`Dependency API Refrence`](api/glazy/resource.html#glazy.resource.Resource)
-  for more detailed reference-type documentation.
+??? note "udepend is short for "Universal Dependency""
+    ie: a lazy universally injectable dependency
 
+
+
+???+ note
+    Read this document first to get a general overview before reading the API reference
+    documentation.
+    
+    When you're done here and want more details go to [API Reference](api/udepend)
+    or directly to [`Dependency API Refrence`](api/udepend/dependency.html#udepend.dependency.Dependency)
+    for more detailed reference-type documentation.
 
 # How To Use
 
 ## Quick Start Example Code
 
-Although it's not required, most of the time you subclass `Dependency`. A subclass will inherit some nice features.
+Although it's not required, most of the time you'll want to subclass [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
+Tge subclass will inherit some nice features that make it easier to use.
 
 ```python
 from udepend import Dependency
 
-
-# This is an example Dependency class, the intent with this class is to treat 
-# it as a semi-singleton shared resource.
-class MyGlobalResource(Dependency):
+# This is an example Dependency class, the intent with this class
+# is to treat it as a semi-singleton shared resource.
+class MyUniversalDependency(Dependency):
 
   # It's important to allow resources to be allocated with
   # no required init arguments.
@@ -46,68 +52,99 @@ class MyGlobalResource(Dependency):
     if name is not None:
       self.name = name
 
-  name: str = 'my-default-value'
+  name: str = 'original-value'
 
 
-# Gets currently active instance of `MyResource`, or lazily creates if needed.
-# If system creates a new instance of MyResource, it will save it and reuse it
-# in the future when it's asked for.
+# Gets currently active instance of `MyResource`, or lazily creates if
+# needed. If system creates a new instance of MyResource, it will save
+# it and reuse it in the future when it's asked for.
 #
-# Next, we get value of `some_attribute` off of it.
-# Prints 'my-default-value'
-print(MyGlobalResource.resource().name)
+# Next, we get value of it's `name` attribute:
+
+assert MyUniversalDependency.resource().name == 'original-value'
 
 # Change the value of the name attribute on current resource
-MyGlobalResource.resource().name = 'changing-the-value'
+MyUniversalDependency.resource().name = 'changed-value'
 
-# Now prints 'changing-the-value'
-print(MyGlobalResource.resource().name)
+# We still have access to the same object, so it has the new value:
+assert MyUniversalDependency.resource().name == 'changed-value'
 
-# You can temporarily override a resource via a python context manager:
-with MyGlobalResource(name='my-temporary-name'):
+# Inherit from Dependency allows you to use them as a context manager.
+# This allows you to easily/temporarily inject dependencies:
+
+with MyUniversalDependency(name='injected-value'):
   # When someone asks for the current resource of `MyResource`,
-  # they will get back the one I created in `with` statement above.
+  # they will get the one I created in `with` statement above.
 
-  assert MyGlobalResource.resource().name == 'my-temporary-name'
+  assert MyUniversalDependency.resource().name == 'injected-value'
 
-# Object we created and temporary activated by above `with` statement
-# has been deactivated (ie: thrown out).
-# Old one that was the active one previously is the one that is now used when
-# the current resource for `MyResource` is asked for.
+# Object we created and temporary activated/injected
+# by above `with` statement has been deactivated/uninjected.
+# So, the previous object is what is now used:
 
-assert MyGlobalResource.resource().name == 'changing-the-value'
-
-
-
+assert MyUniversalDependency.resource().name == 'changed-value'
 ```
 
-In the above example, `MyGlobalResource` is a global 
+There is also a way to get a proxy-object that represents the
+currently used object.
 
-You can also easily get a basic proxy-object that represents the currently used object:
+This allows you to have an object that is directly importable/usable
+and still have it be injectable.
 
 ```python
-my_global_resource = MyGlobalResource.resource_proxy()
+from udepend import Dependency
 
-assert my_global_resource.name == 'changing-the-value'
+class MyUniversalDependency(Dependency):
+  def __init__(self, name='default-value'):
+    self.name = name
 
-with MyGlobalResource(name='my-temporary-name'):
-    # When someone asks for the current resource of `MyResource`,
-    # they will get back the one I created in `with` statement above
-    # via the proxy object (which proxies to the currently used/activated MyGlobalResource).
-    
-    assert my_global_resource.name == 'my-temporary-name'
+my_universal_dependency = MyUniversalDependency.resource_proxy()
+
+assert my_universal_dependency.name == 'changing-the-value'
+
+with MyUniversalDependency(name='injected-value'):
+    # The proxy object proxies to the currently activated/injected
+    # version of the dependency:
+    assert my_universal_dependency.name == 'injected-value'
 ```
 
+# Overview
+
+The main class used most of the time is `udepend.resource.Dependency`,
+you can look at the doc-comment for that module and class for more details.
+
+Allows you to create sub-classes that act as sharable singleton-type objects that
+we are calling resources here.
+These are also typically objects that should generally stick around and should be created lazily.
+
+Also allows code to temporarily create, customize and activate a resource if you don't want
+the customization to stick around permanently.
+You can do it without your or other code needing to be aware of each other.
+
+This helps promote code decoupling, since it's so easy to make a Dependency activate it
+as the 'current' version to use.
+
+The only coupling that takes place is to the Dependency sub-class it's self.
+
+Each separate piece of code can be completely unaware of each other,
+and yet each one can take advantage of the shared resource.
+
+This means that Dependency can also help with simple dependency injection use-case scenarios.
+
+## What It's Used For
+
+- Lazily created singleton-type objects that you can still override/inject as needed in a decoupled fashion.
+- Supports foster decoupled code by making it easy to use dependency injection code patterns.
+    - Lazily created resources, like api clients.
+    - Helps with unit testing mock frameworks.
+        - Example: moto needs boto clients to be created after unit test starts, so it can intercept and mock it.
+        - Using a dependency to get boto client allows them to be lazily created/mocked during each unit-test run.
+- Lazily create sharable objects on demand when/where needed.
+    - Things that need to be shared in many locations, without having to pass them everywhere, or couple the code together.
+    - Example: session from requests library, so code can re-use already open TCP connections to an API.
 
 
-
-### What It's Used For
-
-If you need a lazily created singleton-type object
-(but can still temporary override in a decoupled fashion if needed)
-then this library could come in use for your situation.
-
-#### Example Use Cases
+## Example Use Cases
 
 - Network connection and/or a remote resource/client.
   - You can wrap these objects in a `resource`, the resource provides the object.
@@ -138,147 +175,14 @@ then this library could come in use for your situation.
   - Promotes code-decoupling, since there is less-temptation to couple them if it's easy to share
     what they need between each-other, without having each piece of code having to know about each-other.
 
-### Overview
-
-The main class used most of the time is `glazy.resource.Dependency`,
-you can look at the doc-comment for that module and class for more details.
-
-Allows you to create sub-classes that act as sharable singleton-type objects that
-we are calling resources here.
-These are also typically objects that should generally stick around and should be created lazily.
-
-Also allows code to temporarily create, customize and activate a resource if you don't want
-the customization to stick around permanently.
-You can do it without your or other code needing to be aware of each other.
-
-This helps promote code decoupling, since it's so easy to make a Dependency activate it
-as the 'current' version to use.
-
-The only coupling that takes place is to the Dependency sub-class it's self.
-
-Each separate piece of code can be completely unaware of each other,
-and yet each one can take advantage of the shared resource.
-
-This means that Dependency can also help with simple dependency injection use-case scenarios.
 
 
-## Advanced Use Cases
-
-### Dependency + Dataclasses
-
-You can use the built-in dataclasses with Dependency without a problem.
-Just ensure all fields are optional (ie: they all have default values).
-
-Example:
-
-```python
-from udepend import Dependency
-from dataclasses import dataclass
 
 
-@dataclass
-class DataResource(Dependency):
-  # Making all fields optional, so DataResource can be created lazily:
-  my_optional_field: str = None
-  another_optional_field: str = "hello!"
-
-
-# Get current DataResource resource, print it's another_optional_field;
-# will print out `hello!`:
-print(DataResource.resource().another_optional_field)
-```
-
-### Thread Safety
-
-There is a concept of an app-root, and thread-root contexts.
-
-By default, each Dependency subclass will be shared between different threads,
-ie: it's assumed to be thread-safe.
-
-You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `glazy.resource.ThreadUnsafeResource` instead,
-or by setting the **class attribute** (on your custom sub-class of Dependency)
-`glazy.resource.Dependency.resource_thread_sharable` to `False`.
-
-Things that are probably not thread-safe in general
-are resources that contain network/remote type connections/sessions/clients.
-
-Concrete Examples In Code Base:
-
-- Requests library session
-  - xyn_model_rest uses a Dependency to wrap requests library session, so it can automatically
-    reuse connections on same thread, but use new session if on different thread.
-    Also helps with unit testing, when Mocking requests URL calls.
-- boto client/resource
-  - Library says it's not thread-safe, you need to use a diffrent object per-thread.
-  - Moto mocking library for AWS services needs you to allocate a client after it's setup,
-    (so lazily allocate client/resource from boto).
-  - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
-    accomplish being both lazy and will allocate a new one per-thread for you automatically.
-
-### Active Dependency Proxy
-
-You can use the convenience method `glazy.resource.Dependency.resource_proxy` to easily get a
-proxy object.
-
-Or you can use `glazy.proxy.ActiveResourceProxy.wrap` to create an object that will act
-like the current resource.
-All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
-
-This means you can call all non-special methods and access normal attributes,
-as if the object was really the currently active resource instance.
-
-Any methods/attributes that start with a `_` will not be used on the proxied object,
-but will be used on only the proxy-object it's self.
-This means, you should not ask/set any attributes that start with `_` (underscore)
-when using the proxy object.
-
-A real-world example is `xyn_config.config.config`, it uses this code for that object:
-
-```python
-from udepend import ActiveResourceProxy
-from xyn_config import Config
-
-# The `xny_resource.proxy.ActiveResourceProxy.wrap` method to get a correctly type-hinted (for IDE)
-# proxy back:
-config = ActiveResourceProxy.wrap(Config)
-
-# This is a simpler way to get the same proxy
-# (no imports are needed, just call the class method on any resource class):
-config = Config.resource_proxy()
-```
-
-Now someone can import and use it as-if it's the current config object:
-
-```python
-from xyn_config import config
-
-value = config.get('some_config_var')
-```
-
-When you ask `config` for it's `get` attribute, it will get it from the current
-active resource for `Config`. So it's the equivalent of doing this:
-
-```python
-from xyn_config import Config
-
-get_method = Config.resource().get
-value = get_method('some_config_var')
-```
-
-The code then executes the method that was attached to the `get` attribute.
-This makes the call-stack clean, if an error happens it won't be going through
-the ActiveResourceProxy.
-The `glazy.proxy.ActiveResourceProxy` already return the `get` method  and is finished.
-The outer-code is the one that executed/called the method.
-
-Another read-world example is in the `xyn_aws`.
-
-See `glazy.proxy.ActiveResourceProxy` for more ref-doc type details.
 
 ## Unit Testing
 
-The `glazys.pytest_plugin.xyn_context` fixture in particular will be automatically used 
+The `udepends.pytest_plugin.xyn_context` fixture in particular will be automatically used 
 for every unit test. This is important, it ensures a blank root-context is used each time
 a unit test executes.
 
@@ -286,7 +190,7 @@ This is accomplished via an `autouse=True` fixture.
 The fixture is in a pytest plugin module.
 This plugin module is automatically found and loaded by pytest.
 pytest checks all installed dependencies in the environment it runs in,
-so as long as glazy is installed in the environment as a dependency it will find this
+so as long as udepend is installed in the environment as a dependency it will find this
 and autoload this fixture for each unit test.
 
 This means for each unit test executed via pytest, it will always start with no resources

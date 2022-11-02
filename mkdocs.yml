@@ -6,6 +6,8 @@ dev_addr: 127.0.0.1:7000
 nav:
   - Homepage: index.md
   - Changelog: changelog.md
+  - Data Classes: dataclasses.md
+  - Advanced Use Cases: advanced.md
   - API Reference: api/udepend/" target="_blank
 
 theme:
