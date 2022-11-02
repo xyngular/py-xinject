@@ -41,7 +41,7 @@ Tge subclass will inherit some nice features that make it easier to use.
 from udepend import Dependency
 
 # This is an example Dependency class, the intent with this class
-# is to treat it as a semi-singleton shared resource.
+# is to treat it as a semi-singleton shared dependency.
 class MyUniversalDependency(Dependency):
 
   # It's important to allow resources to be allocated with
@@ -61,28 +61,28 @@ class MyUniversalDependency(Dependency):
 #
 # Next, we get value of it's `name` attribute:
 
-assert MyUniversalDependency.resource().name == 'original-value'
+assert MyUniversalDependency.grab().name == 'original-value'
 
-# Change the value of the name attribute on current resource
-MyUniversalDependency.resource().name = 'changed-value'
+# Change the value of the name attribute on current dependency
+MyUniversalDependency.grab().name = 'changed-value'
 
 # We still have access to the same object, so it has the new value:
-assert MyUniversalDependency.resource().name == 'changed-value'
+assert MyUniversalDependency.grab().name == 'changed-value'
 
 # Inherit from Dependency allows you to use them as a context manager.
 # This allows you to easily/temporarily inject dependencies:
 
 with MyUniversalDependency(name='injected-value'):
-  # When someone asks for the current resource of `MyResource`,
+  # When someone asks for the current dependency of `MyResource`,
   # they will get the one I created in `with` statement above.
 
-  assert MyUniversalDependency.resource().name == 'injected-value'
+  assert MyUniversalDependency.grab().name == 'injected-value'
 
 # Object we created and temporary activated/injected
 # by above `with` statement has been deactivated/uninjected.
 # So, the previous object is what is now used:
 
-assert MyUniversalDependency.resource().name == 'changed-value'
+assert MyUniversalDependency.grab().name == 'changed-value'
 ```
 
 There is also a way to get a proxy-object that represents the

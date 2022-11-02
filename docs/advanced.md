@@ -56,7 +56,7 @@ from xyn_config import Config
 config = ActiveResourceProxy.wrap(Config)
 
 # This is a simpler way to get the same proxy
-# (no imports are needed, just call the class method on any resource class):
+# (no imports are needed, just call the class method on any Dependency class):
 config = Config.resource_proxy()
 ```
 
@@ -74,7 +74,7 @@ active resource for `Config`. So it's the equivalent of doing this:
 ```python
 from xyn_config import Config
 
-get_method = Config.resource().get
+get_method = Config.grab().get
 value = get_method('some_config_var')
 ```
 

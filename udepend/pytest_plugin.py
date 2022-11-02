@@ -58,6 +58,6 @@ def glazy_test_context():
     # Yield the current thread-root context as the fixture-value.
     yield UContext.current()
 
-    # Ensure app+thread root-contexts do not have leftover resource objects from unit test.
+    # Ensure app+thread root-contexts do not have leftover dependency objects from unit test.
     _setup_blank_app_and_thread_root_contexts_globals()
 

@@ -32,8 +32,8 @@ So normally, code would do this to get the current object instance for a Resourc
 >>> class SomeResource(Dependency):
 >>>    my_attribute = "default-value"
 >>>
->>> # Normally code would do this to interact with current resource object:
->>> SomeResource.resource().my_attribute = "change-value"
+>>> # Normally code would do this to interact with current Dependency subclass object:
+>>> SomeResource.grab().my_attribute = "change-value"
 
 Another convenient way to get the current resource is via the
 `glazy.resource.ActiveResourceProxy`. This class lets you create an object
@@ -113,9 +113,9 @@ returns the current resource.
 The easiest way to get the current resource for the type in this case is
 to call `glazy.resource.Resource.resource` on it's type like so:
 
->>> SomeResourceType.resource().some_value
+>>> SomeResourceType.grab().some_value
 'hello!'
->>> SomeResourceType.resource().ident
+>>> SomeResourceType.grab().ident
 0
 
 When a Context does not have the resource, by default it will create it for you, as you
@@ -128,7 +128,7 @@ This means another way to grab resources is to get the current `Context.current`
 and then ask it for the resource like below. This works for any type, including
 types that don't inherit from `glazy.resource.Resource`:
 
->>> UContext.current().resource(SomeResourceType).some_value
+>>> UContext.current().grab(SomeResourceType).some_value
 'hello!'
 
 If you pass a type into `Context.current`, it will do the above ^ for you:
@@ -157,13 +157,13 @@ For these examples, say I have this resource defined:
 >>> class MyResource(Dependency):
 >>>     some_value = 'default-value'
 >>>
->>> assert MyResource.resource().some_value == 'default-value'
+>>> assert MyResource.grab().some_value == 'default-value'
 
 - Use desired `glazy.resource.Resource` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
-        >>>     assert MyResource.resource().some_value == 'new-value'
+        >>>     assert MyResource.grab().some_value == 'new-value'
 
 ## Activating New Context
 
@@ -186,7 +186,7 @@ the copy is what is made current/activated (see `Context.__copy__` for more deta
 Here are examples of the four ways to create/activate a new context:
 
 >>> with UContext():
-...     SomeResourceType.resource().ident
+...     SomeResourceType.grab().ident
 1
 
 This is stack-able as well; as in this can keep track of a stack of contexts, in a
@@ -198,12 +198,12 @@ be the default once more.
 
 >>> @UContext():
 >>> def a_decorated_method():
-...     return SomeResourceType.resource().ident
+...     return SomeResourceType.grab().ident
 >>> a_decorated_method()
 2
 >>> a_decorated_method()
 3
->>> SomeResourceType.resource().ident
+>>> SomeResourceType.grab().ident
 0
 
 As you can see, after the method exits the old context takes over, and it already had the
@@ -216,7 +216,7 @@ have the resource.
 
 
 >>> UContext().make_current()
->>> SomeResourceType.resource().ident
+>>> SomeResourceType.grab().ident
 4
 
 With the context test fixture, it creates a brand new parent-less context every time a test runs
@@ -224,7 +224,7 @@ With the context test fixture, it creates a brand new parent-less context every 
 
 >>> from udepend.fixtures import context
 >>> def test_some_text(context):
-...    SomeResourceType.resource()
+...    SomeResourceType.grab()
 
 
 
@@ -280,20 +280,20 @@ I create a new class that uses our previous [SomeResourceType][resources] but ad
 
 >>> class MySingleton(SomeResourceType, Dependency):
 ...     pass
->>> MySingleton.resource().ident
+>>> MySingleton.grab().ident
 5
 
 Now watch as I do this:
 
 >>> with UContext():
-...     MySingleton.resource().ident
+...     MySingleton.grab().ident
 5
 
 The same resource is kept when making a child-context. However, if you make a parent-less
 context:
 
 >>> with UContext(parent=None):
-...     MySingleton.resource().ident
+...     MySingleton.grab().ident
 6
 
 The `glazy.resource.Resource` will not see pased the parent-less context,
@@ -314,8 +314,8 @@ T = TypeVar('T')
 C = TypeVar('C')
 ResourceTypeVar = TypeVar('ResourceTypeVar')
 """
-Some sort of resource, I am usuallyemphasizingg with this that you need to pass in the
-`Type` or `Class` of the resource you want.
+Some sort of Dependency, I am usually emphasizing with this that you need to pass in the
+`Type` or `Class` of the Dependency you want.
 """
 
 
@@ -615,7 +615,7 @@ class UContext:
 
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
-        method resources from other unit tests. Right now, the unit-test resource isolation
+        method resources from other unit tests. Right now, the unit-test Dependency isolation
         happens automatically via an auto-use fixture (`udepend.ptest_plugin.glazy_test_context`).
 
         A non-activated context will return `guards.default.Default` as it's `UContext.parent`
@@ -627,7 +627,7 @@ class UContext:
                 `UContext` your creating have an initial list of resources you can pass them
                 in here.
 
-                It can be a single resource, or a list of resources, or a mapping of resources.
+                It can be a single Dependency, or a list of resources, or a mapping of resources.
 
                 Mainly useful for unit-testing, but could be useful elsewhere too.
 
@@ -636,9 +636,9 @@ class UContext:
                 If you use a dict/mapping, we will use the following for `UContext.add_resource`:
 
                 - Dict-key as the `for_type' method parameter.
-                - Dict-value as the `resource` method parameter.
+                - Dict-value as the `Dependency` method parameter.
 
-                This allows you to map some standard resource type into a completely different
+                This allows you to map some standard Dependency type into a completely different
                 type (useful for unit-testing).
 
                 By default, no resources are initially added to a new UContext.
@@ -738,11 +738,11 @@ class UContext:
             for for_type, resource in resources.items():
                 self.add_resource(resource, for_type=for_type)
         elif isinstance(resources, list):
-            # We have one or more resource values, add each one.
+            # We have one or more Dependency values, add each one.
             for resource in resources:
                 self.add_resource(resource)
         elif resources is not None:
-            # Otherwise, we have a single resource value.
+            # Otherwise, we have a single Dependency value.
             self.add_resource(resources)
 
     # todo: Make it so if there is a parent context, and the current config has no property
@@ -762,14 +762,14 @@ class UContext:
         >>>
         >>> @UContext().add_resource(2)
         >>> def some_method()
-        ...     print(f"my int resource: {UContext.resource(int)}")
+        ...     print(f"my int dependency: {UContext.dependency(int)}")
         Output: "my int resource: 2"
 
         As as side-note, you can easily add resources to a new `Context` via:
 
         >>> @UContext(resources=[2])
         >>> def some_method()
-        ...     print(f"my int resource: {UContext.resource(int)}")
+        ...     print(f"my int dependency: {UContext.dependency(int)}")
         Output: "my int resource: 2"
 
         With the `Context.add_resource` method, you can subsitute resource for other
@@ -778,7 +778,7 @@ class UContext:
         >>> def some_method()
         ...     context = UContext()
         ...     context.add_resource(3, for_type=str)
-        ...     print(f"my str resource: {UContext.resource(str)}")
+        ...     print(f"my str dependency: {UContext.dependency(str)}")
         Output: "my str resource: 3"
 
         If you need to override a resource, you can create a new context and set me as it's
@@ -823,7 +823,7 @@ class UContext:
                 return self
             # todo: complete/figure out comment!
             # if not rep
-            raise XynResourceError(f"Trying to add resource ({resource}), but already have one!")
+            raise XynResourceError(f"Trying to add dependency ({resource}), but already have one!")
 
         self._resources[resource_type] = resource
         return self
@@ -848,8 +848,8 @@ class UContext:
 
         >>> class SomeResource(Dependency):
         >>>    pass
-        >>> # Normally code would do this to get current resource object:
-        >>> SomeResource.resource()
+        >>> # Normally code would do this to get current Dependency object:
+        >>> SomeResource.grab()
 
         Another convenient way to get the current resource is via the
         `udepend.resource.ActiveResourceProxy`. This class lets you create an object
@@ -934,7 +934,7 @@ class UContext:
             return obj
 
         # If we are the root context for the entire app (ie: app-root between all threads)
-        # then we check to see if resource is thread-sharable.
+        # then we check to see if dependency is thread-sharable.
         # If it is then we continue as normal.
         # If NOT, then we always return None.
         # This will indicate to the thread-specific UContext that is calling us to allocate
@@ -945,7 +945,7 @@ class UContext:
         #
         # In Reality, the only thing that should be calling the app-root context
         # is a thread-root context.  Thread root-contexts should never return None when asked
-        # for a resource.
+        # for a dependency.
         # So, code using a Dependency in general should never have to worry about this None case.
         if self._is_root_context_for_app:
             from udepend import Dependency
@@ -976,14 +976,14 @@ class UContext:
         if parent:
             parent_value = parent.resource(for_type, create=create)
 
-        # If we can't create the resource, we can ask the resoruce to potetially create more of
+        # If we can't create the dependency, we can ask the resoruce to potetially create more of
         # it's self.
         # We should also not put any value we find in self either.
         # Simply return the parent_value, whatever it is (None or otherwise)
         if not create:
             return parent_value
 
-        # We next create resource if we don't have an existing one.
+        # We next create dependency if we don't have an existing one.
         obj = self._create_or_reuse_resource(for_type=for_type, parent_value=parent_value)
 
         # Store in self for future reuse.
@@ -998,15 +998,15 @@ class UContext:
     ) -> T:
         """
         This tries to reuse parent_value if possible;
-        otherwise will create new resource of `for_type` and returns it.
+        otherwise will create new dependency of `for_type` and returns it.
 
         Args:
             for_type: A class/type to create if needed.
             parent_value: If `parent_value` is not None and inherits from `Dependency`
                 will ask parent_value to decide if it wants to reuse it's self or create a
-                new resource object.
+                new dependency object.
 
-                See `udepend.resource.Dependency.context_resource_for_child`
+                See `udepend.dependency.Dependency.context_resource_for_child`
                 for more details if you want to customize this behavior.
         """
         from udepend import Dependency
@@ -1015,20 +1015,20 @@ class UContext:
             if parent_value is None:
                 return for_type()
 
-            # If we have a context-resource AND a parent_value;
+            # If we have a context-dependency AND a parent_value;
             # then ask parent_value Dependency to do whatever it wants to do.
-            # By default, `udepend.resource.Dependency.context_resource_for_child`
+            # By default, `udepend.dependency.Dependency.context_resource_for_child`
             # returns `self`
-            #   to reuse resource value.
+            #   to reuse dependency value.
             if parent_value and isinstance(parent_value, Dependency):
                 return parent_value.context_resource_for_child(child_context=self)
         except TypeError as e:
             # Python will add the `e` as the `from` exception to this new one.
             raise XynResourceError(
-                f"I had trouble creating/getting resource ({for_type}) due to TypeError({e})."
+                f"I had trouble creating/getting dependency ({for_type}) due to TypeError({e})."
             )
 
-        # If we have a parent value that is not a `udepend.resource.Dependency`;
+        # If we have a parent value that is not a `udepend.dependency.Dependency`;
         # default to reusing it:
         return parent_value
 
@@ -1039,21 +1039,21 @@ class UContext:
         Returns a python generator yielding resources in self and in each parent;
         returns them in order.
 
-        This won't create a resource if none exist unless you pass True into `create`, so it's
+        This won't create a dependency if none exist unless you pass True into `create`, so it's
         possible for no results to be yielded if it's never been created and `create` == False.
 
-        .. warning:: This is mostly used by `udepend.resource.Dependency` subclasses
+        .. warning:: This is mostly used by `udepend.dependency.Dependency` subclasses
             (internally).
 
-            Not normally used elsewhere. It can help the udepend.resource.Dependency`
+            Not normally used elsewhere. It can help the udepend.dependency.Dependency`
             subclass to find it's
             list of parent resources to consult on it's own.
 
             Real Example: `xyn_config.config.Config` uses this to construct it's parent-chain.
 
         Args:
-            for_type (Type[ResourceTypeVar]): The resource type to look for.
-            create (bool): If we should create resource at each context if it does not already
+            for_type (Type[ResourceTypeVar]): The dependency type to look for.
+            create (bool): If we should create dependency at each context if it does not already
                 exist.
         Yields:
             Generator[ResourceTypeVar, None, None]: Resources that were found in the self/parent
@@ -1067,7 +1067,7 @@ class UContext:
     def __copy__(self):
         """ Makes a copy of self, gives an opportunity for resources to do something special
             while they are copied if needed via
-            `udepend.resource.Dependency.context_resource_for_copy`.
+            `udepend.dependency.Dependency.context_resource_for_copy`.
 
             We copy `UContext` implicitly and make that copy the 'active' context when it's made
             current/activated via a:
@@ -1104,7 +1104,7 @@ class UContext:
         # Copy current resources from self into new UContext;
         # This uses `self` as a template for the new UContext.
         # See doc comment on: `UContext.__call__` and
-        # `udepend.resource.Dependency.context_resource_for_copy`.
+        # `udepend.dependency.Dependency.context_resource_for_copy`.
         new_resources = {}
         for k, v in self._resources.items():
             if isinstance(v, Dependency):
@@ -1172,7 +1172,7 @@ class UContext:
                         You MUST ensure that a context that is directly activated and with no
                         copy made is not currently active right now.
 
-                    Generally, `udepend.resource.Dependency.__enter__` will set to this
+                    Generally, `udepend.dependency.Dependency.__enter__` will set to this
                     False because it always creates a blank context just for it's self.
                     No need to create two context's.
         """

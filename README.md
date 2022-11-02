@@ -109,7 +109,7 @@ from udepend import Dependency
 
 
 # This is a example Dependency class, the intent with this class is to treat 
-# it as a semi-singleton shared resource.
+# it as a semi-singleton shared dependency/resource.
 class MyResource(Dependency):
 
     # It's important to allow resources to be allocated with
@@ -129,29 +129,29 @@ class MyResource(Dependency):
 #
 # Next, we get value of `some_attribute` off of it.
 # Prints 'my-default-value'
-print(MyResource.resource().name)
+print(MyResource.grab().name)
 
-# Change the value of the name attribute on current resource
-MyResource.resource().name = 'changing-the-value'
+# Change the value of the name attribute on current dependency
+MyResource.grab().name = 'changing-the-value'
 
 # Now prints 'changing-the-value'
-print(MyResource.resource().name)
+print(MyResource.grab().name)
 
-# You can temporarily override a resource via a python context manager:
+# You can temporarily inject your own version of a dependency via a python context manager:
 with MyResource(name='my-temporary-name'):
-    # When someone askes for the current resource of `MyResource`,
+    # When someone asks for the current dependency of `MyResource`,
     # they will get back the one I created in `with` statement above.
     #
     # Now prints 'my-temporary-name'
-    print(MyResource.resource().name)
+    print(MyResource.grab().name)
 
 # Object we created and temporary activated by above `with` statement
 # has been deactivated (ie: thrown out).
 # Old one that was the active one previously is the one that is now used when
-# the current resource for `MyResource` is asked for.
+# the current dependency for `MyResource` is asked for.
 #
 # prints 'changing-the-value'
-print(MyResource.resource().name)
+print(MyResource.grab().name)
 ```
 
 
@@ -176,9 +176,9 @@ class DataResource(Dependency):
     another_optional_field: str = "hello!"
 
 
-# Get current DataResource resource, print it's another_optional_field;
+# Get current DataResource dependency, print it's another_optional_field;
 # will print out `hello!`:
-print(DataResource.resource().another_optional_field)
+print(DataResource.grab().another_optional_field)
 ```
 
 ### Thread Safety
@@ -237,7 +237,7 @@ from xyn_config import Config
 config = ActiveResourceProxy.wrap(Config)
 
 # This is a simpler way to get the same proxy
-# (no imports are needed, just call the class method on any resource class):
+# (no imports are needed, just call the class method on any Dependency subclass):
 config = Config.resource_proxy()
 ```
 
@@ -255,7 +255,7 @@ active resource for `Config`. So it's the equivalent of doing this:
 ```python
 from xyn_config import Config
 
-get_method = Config.resource().get
+get_method = Config.grab().get
 value = get_method('some_config_var')
 ```
 

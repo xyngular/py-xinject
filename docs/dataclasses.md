@@ -20,20 +20,19 @@ from dataclasses import dataclass
 
 @dataclass
 class DataResource(Dependency):
-  # Making all fields optional, so DataResource can be created lazily:
-  my_optional_field: str = None
-  another_optional_field: str = "hello!"
+    # Making all fields optional, so DataResource can be created lazily:
+    my_optional_field: str = None
+    another_optional_field: str = "hello!"
 
 
-# Get current DataResource resource, print it's another_optional_field;
+# Get current DataResource dependency, print it's another_optional_field;
 # will print out `hello!`:
-print(DataResource.resource().another_optional_field)
+print(DataResource.grab().another_optional_field)
 
+DataResource.grab()
 
-DataResource.depend()
+DataResource.grab()
 
-DataResource.dependency()
-
-DataResource.resource()
+DataResource.grab()
 
 ```

@@ -43,7 +43,7 @@ def test_ensure_pytest_plugin_context_autouse_fixture_working():
 #       instead of indirectly.
 @UContext(resources=[SomeDependency(my_name='first-name')])
 def test_decorator_on_context_object():
-    first_resource = SomeDependency.resource()
+    first_resource = SomeDependency.grab()
     assert first_resource.my_name == 'first-name'
     decorated_context = UContext.current()
 
@@ -51,8 +51,8 @@ def test_decorator_on_context_object():
     with UContext(resources=[new_resource]) as with_context:
         assert with_context is not decorated_context, "Should be new context"
         # I created new UContext and manually added new instance of SomeDependency;
-        # check to see if it's the current resource and looks intact.
-        inside_resource = SomeDependency.resource()
+        # check to see if it's the current dependency and looks intact.
+        inside_resource = SomeDependency.grab()
         assert inside_resource is not first_resource
         assert inside_resource is new_resource
         assert inside_resource.my_name == 'new-name'
@@ -62,7 +62,7 @@ def test_decorator_on_context_object():
         assert with_context is not decorated_context, "Should be new context"
         # Check to see if when adding new UContext, we still get the same SomeDependency
         # instance, and that they still look intact with the correct values.
-        assert SomeDependency.resource() is first_resource
+        assert SomeDependency.grab() is first_resource
         assert first_resource.my_name == 'first-name'
         assert new_resource.my_name == 'new-name'
 
@@ -120,29 +120,29 @@ def test_module_level_context(glazy_test_context):
 
     # Ensure that when we used the module-level-context, ensure it still uses the current
     # context as it's first parent. the `create=False` will ensure it won't add this looked
-    # up resource to it's self.
+    # up dependency to it's self.
     assert module_level_context.resource(for_type=float, create=False) == 1.2
     assert module_level_context is not UContext.current()
 
-    # Ensure that we have not float resource in the outer-module version (since create=False).
+    # Ensure that we have not float dependency in the outer-module version (since create=False).
     assert float not in module_level_context._resources
 
     # See if the copied-context has the same resources still
-    assert SomeDependency.resource().my_name == "start-name"
+    assert SomeDependency.grab().my_name == "start-name"
     assert UContext.current(for_type=int) == 20
     assert UContext.current(for_type=str) == "hello-str"
 
 
 def test_initial_context_resources_with_dict():
     my_context = UContext(
-        resources={int: 'string-as-int-resource', float: False, SomeDependency: 'str-instead'}
+        resources={int: 'string-as-int-dependency', float: False, SomeDependency: 'str-instead'}
     )
 
     with my_context:
         # SomeDependency was replaced by a direct-string 'str-instead', testing replacing
         # resources with a completely different type (if you want to mock/test something specific).
-        assert SomeDependency.resource() == 'str-instead'
-        assert UContext.current(for_type=int) == 'string-as-int-resource'
+        assert SomeDependency.grab() == 'str-instead'
+        assert UContext.current(for_type=int) == 'string-as-int-dependency'
         assert UContext.current(for_type=float) is False
 
 
@@ -157,7 +157,7 @@ class TestDependency(Dependency):
     my_name: str = 'hello!'
 
 
-module_level_test_resource = TestDependency.resource()
+module_level_test_resource = TestDependency.grab()
 print(module_level_test_resource)
 module_level_test_resource.my_name = "module-level-change"
 
@@ -166,14 +166,14 @@ module_level_test_resource.my_name = "module-level-change"
 @pytest.mark.parametrize("test_run", [1, 2])
 def test_module_level_resource_in_unit_test(test_run):
     # Make sure we have a different TestDependency instance.
-    assert module_level_test_resource is not TestDependency.resource()
+    assert module_level_test_resource is not TestDependency.grab()
 
     # Check values, see if they are still at the module-level value
-    assert TestDependency.resource().my_name == "hello!"
+    assert TestDependency.grab().my_name == "hello!"
 
     # Do a unit-test change, ensure we don't see it in another unit test.
-    TestDependency.resource().my_name = "unit-test-change"
-    assert TestDependency.resource().my_name == "unit-test-change"
+    TestDependency.grab().my_name = "unit-test-change"
+    assert TestDependency.grab().my_name == "unit-test-change"
 
 
 def test_each_unit_test_starts_with_a_single_parentless_root_like_context():

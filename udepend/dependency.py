@@ -54,9 +54,9 @@ returns the current resource.
 An easy way to get the current resource for the type in this case is
 to call the class method `Resource.resource` on its type like so:
 
->>> SomeResourceType.resource().some_value
+>>> SomeResourceType.grab().some_value
 'hello!'
->>> SomeResourceType.resource().ident
+>>> SomeResourceType.grab().ident
 0
 
 ### Activating New Resource
@@ -76,13 +76,13 @@ For these examples, say I have this resource defined:
 >>> class MyResource(Dependency):
 >>>     some_value = 'default-value'
 >>>
->>> assert MyResource.resource().some_value == 'default-value'
+>>> assert MyResource.grab().some_value == 'default-value'
 
 - Use desired `glazy.resource.Resource` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
-        >>>     assert MyResource.resource().some_value == 'new-value'
+        >>>     assert MyResource.grab().some_value == 'new-value'
 
 
 ## Active Resource Proxy
@@ -164,7 +164,7 @@ class Dependency:
     >>> class MyConfig(Dependency):
     ...     some_setting: str = "default-setting-string"
     >>>
-    >>> MyConfig.resource().some_setting
+    >>> MyConfig.grab().some_setting
 
     By default, Resource's act like a singletons; in that child contexs will simply get the same
     instance of the resource that the parent context has.
@@ -191,7 +191,7 @@ class Dependency:
     >>> class MyResource(Dependency):
     >>>     pass
     >>>
-    >>> MyResource.resource()
+    >>> MyResource.grab()
 
     When that last line is executed, and the current or any parent context has a `MyResource`
     resource; `UContext` will simply create one via calling the resource type:
@@ -266,8 +266,8 @@ class Dependency:
 
         This can be dynamic if needed, by default it's consulted on the object each time it's
         copied
-        (to see where it's used, look at `udepend.resource.Dependency.__copy__` and
-        `udepend.resource.Dependency.__deepcopy__`)
+        (to see where it's used, look at `udepend.dependency.Dependency.__copy__` and
+        `udepend.dependency.Dependency.__deepcopy__`)
     """
 
     resource_thread_safe = True
@@ -280,15 +280,15 @@ class Dependency:
 
         It accomplishes this by the lazy-creation mechanism.
         When something asks for a Dependency that does not currently exist,
-        the parent-UContext is asked for the resource, and then the parent's parent will be
+        the parent-UContext is asked for the dependency, and then the parent's parent will be
         asked and so on.
 
         Eventually the app-root context will be asked for the Dependency.
 
         If the app-root already has the Dependency, it will return it.
 
-        When app-root does not have the resource, it potentially needs to lazily create the
-        resource depending on if Dependency is thread-safe.
+        When app-root does not have the dependency, it potentially needs to lazily create the
+        dependency depending on if Dependency is thread-safe.
 
         So at this point, if `resource_thread_safe` value is (as a class attribute):
 
@@ -316,7 +316,7 @@ class Dependency:
     """
 
     @classmethod
-    def resource(cls: Type[T], for_context: UContext = Default) -> T:
+    def grab(cls: Type[T], for_context: UContext = Default) -> T:
         """ Gets a potentially shared resource from the current `UContext`.
 
             If context is Default/False [default], uses the current context.
@@ -329,7 +329,7 @@ class Dependency:
             ...     def get_resource_via(self, some_key: str) -> SomeResourceType:
             ...         # Lookup and return something
             ...         pass
-            >>> SomeResourceManager.resource().get_resource_via("some-hash-key")
+            >>> SomeResourceManager.grab().get_resource_via("some-hash-key")
             SomeResourceType(ident: ...)
         """
         if not for_context:
@@ -345,7 +345,7 @@ class Dependency:
 
     def context_resource_for_child(self, child_context: UContext):
         """
-        Called by `Context` when it does not have a resource of a particular type but it does
+        Called by `Context` when it does not have a dependency of a particular type but it does
         have a value from a parent-context (via it's parent-chain).
 
         Gives opportunity for the `Dependency` to do something special if it wants.
@@ -360,26 +360,26 @@ class Dependency:
         You can think of this as making a `Dependency` act like a singleton by default,
         as only one instance (at the root-context) would ever 'normally' be created.
 
-        It's still possible to get a second instance of the resource, however:
+        It's still possible to get a second instance of the dependency, however:
 
-        - If someone created a new resource themselves manually and adds it to a new Context
+        - If someone created a new dependency themselves manually and adds it to a new Context
             and then activates the context,
-            that resource they created and added themselves could be a second instance.
-            (for more details, see [Activating New Dependency](#activating-new-resource))
+            that dependency they created and added themselves could be a second instance.
+            (for more details, see [Activating New Dependency](#activating-new-dependency))
 
             THis is because the Dependency that was manually created was not given an opportunity
             to reused the parent value.
 
             However, this is usually desirable as whatever manually created the object probably
-            wants to override the resource with it's own configured object.
+            wants to override the dependency with it's own configured object.
 
         - If a new `Context` was created at some point later via `Context(parent=None)`
-            and then activated. When a resource is next asked for, it must create a new one as
+            and then activated. When a dependency is next asked for, it must create a new one as
             any previous `Context` would be unreachable until the context was deactivated.
             (for more details, see [Activating New Context](#activating-new-context))
 
         Args:
-            child_context (UContext): A child context that is needing the resource.
+            child_context (UContext): A child context that is needing the dependency.
         """
         return self
 
@@ -391,13 +391,13 @@ class Dependency:
         decorator it will copy it's self for use during the `with` statement
         (ie: it will act as sort of a `template`).
 
-        It will go though and call this method on each resource in the original 'template' context.
+        It will go though and call this method on each dependency in the original 'template' context.
         By default we simply return self
         (by default, UContext resources generally try to maintain themselves as singletons).
 
         If a `Dependency` needs to do more, they can override us
 
-        - `Dependency.context_resource_for_copy`: Overridable by a resource if non-singleton
+        - `Dependency.context_resource_for_copy`: Overridable by a dependency if non-singleton
             (or other behavior) is desired.
         """
         return self
@@ -413,10 +413,10 @@ class Dependency:
 
         If you want different behavior, then override.
 
-        A resource could also use `deepcopy` instead when making a copy, if desirable.
+        A dependency could also use `deepcopy` instead when making a copy, if desirable.
 
-        Copying a resource may be useful if you want activate a new resource but have it's
-        configuration similar to a current resource (with some tweaks/modifications).
+        Copying a dependency may be useful if you want activate a new dependency but have it's
+        configuration similar to a current dependency (with some tweaks/modifications).
         """
         clone = type(self)()
         dict_copy = self.__dict__.copy()
@@ -467,7 +467,7 @@ class Dependency:
 
     _context_manager_stack: List[UContext] = None
     """ Keeps track of context's we created when self (ie: `Dependency`) is used in a `with`
-        statement.  This MUST be reset when doing a copy of the resource.
+        statement.  This MUST be reset when doing a copy of the dependency.
     """
 
     def __enter__(self: R) -> R:
@@ -516,9 +516,9 @@ class Dependency:
         I will raise an error with a descriptive error message if we don't get a callable.
 
         We should get a callable if Resource subclass is used like in the example below.
-        (Config being a resource subclass).
+        (Config being a dependency subclass).
 
-        In this example, a new Config resource is being created and we tell it to only use
+        In this example, a new Config dependency is being created and we tell it to only use
         the `EnvironmentalProvider` and we use it as a function decorator.
         This means while the `some_method` function is executing,
         that Config object is made the current one.
@@ -553,11 +553,11 @@ class Dependency:
         if not callable(func):
             raise XynResourceError(
                 f"Attempt to calling a Dependency of type ({self}) as a callable function. "
-                f"By default (unless resource subclass does/says otherwise) you need to use "
+                f"By default (unless dependency subclass does/says otherwise) you need to use "
                 f"it as a decorator when calling it. "
                 f"When using a Dependency subclass as a decorator, Python will call the Dependency "
-                f"and pass in a callable function. The resource will then make self the current "
-                f"resource via `with self` and call the passed in function inside that with "
+                f"and pass in a callable function. The dependency will then make self the current "
+                f"dependency via `with self` and call the passed in function inside that with "
                 f"statement, returning the result of calling the passed in function."
             )
 
@@ -574,12 +574,12 @@ class PerThreadDependency(Dependency):
     this means when an instance of us is created by the system lazily,
     it will not be shared between threads.
 
-    Basically, when some other thread asks for this resource,
+    Basically, when some other thread asks for this dependency,
     the system will lazily create another one just for that thread to use.
-    This happens when a particular thread asks for the resource for the first time.
+    This happens when a particular thread asks for the dependency for the first time.
 
-    When the same thread asks for the resource a second time, it will not create a new one but
-    return the resource instance that was originally created just for that thread.
+    When the same thread asks for the dependency a second time, it will not create a new one but
+    return the dependency instance that was originally created just for that thread.
 
     ## Details
 
@@ -588,15 +588,15 @@ class PerThreadDependency(Dependency):
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
-    When a resource makes a subclass from `PerThreadDependency` or otherwise set's
+    When a dependency makes a subclass from `PerThreadDependency` or otherwise set's
     the `Dependency.resource_thread_safe` to False at the Dependency class-level.
-    When a thread asks for that resource for first time it will be lazily created like expected,
+    When a thread asks for that dependency for first time it will be lazily created like expected,
     but the resulting object is placed in the root-context instead (and NOT the app-root-context).
 
     That way, only the specific thread the Dependency was lazily created on will see the object;
     no other thread will.
 
-    Therefore, when other threads also ask for the resource, they will each create their own
+    Therefore, when other threads also ask for the dependency, they will each create their own
     the first time they ask for it, and place it in their thread-root
     `udepend.context.UContext`.
     """

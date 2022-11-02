@@ -45,8 +45,8 @@ def assert_myclass(param):
     assert my_class.my_method() == param
     assert my_class_via_proxy_method.my_prop == param
     assert my_class_via_proxy_method.my_method() == param
-    assert MyClass.resource().my_prop == param
-    assert MyClass.resource().my_method() == param
+    assert MyClass.grab().my_prop == param
+    assert MyClass.grab().my_method() == param
 
 
 def test_shared_threaded_resource():
@@ -59,11 +59,11 @@ def test_shared_threaded_resource():
     class NonThreadSharableResource(PerThreadDependency):
         hello2 = "a"
 
-    ThreadSharableDependency.resource().hello = "3"
-    NonThreadSharableResource.resource().hello2 = "b"
+    ThreadSharableDependency.grab().hello = "3"
+    NonThreadSharableResource.grab().hello2 = "b"
 
-    assert ThreadSharableDependency.resource().hello == "3"
-    assert NonThreadSharableResource.resource().hello2 == "b"
+    assert ThreadSharableDependency.grab().hello == "3"
+    assert NonThreadSharableResource.grab().hello2 == "b"
 
     thread_out_sharable = None
     thread_out_nonsharable = None
@@ -74,12 +74,12 @@ def test_shared_threaded_resource():
         nonlocal thread_out_sharable
         nonlocal thread_out_nonsharable
 
-        # This should produce an '3', since resource can be shared between threads.
-        thread_out_sharable = ThreadSharableDependency.resource().hello
+        # This should produce an '3', since dependency can be shared between threads.
+        thread_out_sharable = ThreadSharableDependency.grab().hello
 
-        # This should produce an 'a', since the resource is NOT shared between threads;
+        # This should produce an 'a', since the dependency is NOT shared between threads;
         # the setting of it to 'b' above is in another thread and is NOT shared.
-        thread_out_nonsharable = NonThreadSharableResource.resource().hello2
+        thread_out_nonsharable = NonThreadSharableResource.grab().hello2
 
     import threading
 

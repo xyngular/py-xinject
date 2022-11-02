@@ -4,12 +4,12 @@ Used to have a normal looking object that can be imported directly into other mo
 It will in reality, always lookup currently active version of a Dependency and use that each
 time it's asked anything.
 
-This makes it 'act' like the current version of some resource,
+This makes it 'act' like the current version of some dependency,
 code and just use it like a normal object.
 
 See one of these for more details:
 
-- [Active Dependency Proxy - pydoc](./#active-resource-proxy)
+- [Active Dependency Proxy - pydoc](./#active-dependency-proxy)
 - [Active Dependency Proxy - github]
   (https://github.com/xyngular/py-glazy#active-resource-proxy)
 
@@ -33,7 +33,7 @@ class ActiveResourceProxy(Generic[R]):
 
     Typically, to access attributes of a particular Rsource subclass you would have to do this:
 
-    >>> MyClass.resource().my_method()
+    >>> MyClass.dependency().my_method()
 
     With ProxyActive you can do this instead:
 
@@ -66,7 +66,7 @@ class ActiveResourceProxy(Generic[R]):
             into this method.
 
             A simpler/alternate way to wrap a Dependency with a `ActiveResourceProxy` is via the
-            `udepend.resource.Dependency.resource_proxy` convenience method.
+            `udepend.dependency.Dependency.resource_proxy` convenience method.
         """
         # noinspection PyTypeChecker
         return cls(resource_type=resource_type)
@@ -82,13 +82,13 @@ class ActiveResourceProxy(Generic[R]):
 
         Will act like the current/active object of Dependency type `resource_type`.
         you can optionally provide a grabber function, that will be called with the current
-        resource passed to it.  You can then grab something from that resource and return it.
+        dependency passed to it.  You can then grab something from that dependency and return it.
         If you pass in a grabber function, this ProxyActive will act like a proxy of whatever
         is returned from the grabber method.
 
         Args:
-            resource_type: Type of resource to proxy.
-            grabber: Optional callable, if you wish to grab a specific attribute off the resource
+            resource_type: Type of dependency to proxy.
+            grabber: Optional callable, if you wish to grab a specific attribute off the dependency
                 and act like a proxy for that, you can pass in a method here to do so.
                 Whatever is returned from the grabber is what is used to as the object to 'proxy'.
         """
@@ -105,8 +105,8 @@ class ActiveResourceProxy(Generic[R]):
         pass
 
     def _get_active(self):
-        # Get current/active instance of resource type
-        value = self._resource_type.resource()
+        # Get current/active instance of dependency type
+        value = self._resource_type.grab()
         if self._grabber:
             return self._grabber(value)
         return value
@@ -125,5 +125,5 @@ class ActiveResourceProxy(Generic[R]):
             # and not on the current config object.
             return super().__setattr__(key, value)
 
-        # Otherwise, we set it on the current/active resource object.
+        # Otherwise, we set it on the current/active dependency object.
         return setattr(self._get_active(), key, value)
