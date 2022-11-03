@@ -106,7 +106,7 @@ import functools
 from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any
 from copy import copy, deepcopy
 from guards import Default
-from udepend import UContext
+from udepend import UContext, _private
 from udepend.errors import XynResourceError
 import sys
 
@@ -327,6 +327,33 @@ class Dependency:
         ## How thread-safe
 
         This is consulted
+    """
+
+    obj: Self
+    """ 
+    class property/attribute that will return the current dependency for the subclass
+    it's asked on by calling `Dependency.grab`, passing no extra arguments and returning the
+    result.
+    
+    >>> class MyDependency(Dependency):
+    >>>     my_attribute: str = "default-value"
+    >>>
+    >>> # `.obj` calls `.grab()` and returns it's result, so they are equivalent;
+    >>> # but type-hinting for `.obj` will only work property on the newest IDE's
+    >>> # (it's a new feature in Python 3.11):
+    >>>
+    >>> assert MyDependency.obj.my_attribute == "default-value"
+    >>> assert MyDependency.grab().my_attribute == "default-value"
+    
+    Background Details (only if interested in implementation details):
+    
+    This is implemented via a `setattr` later on in the module that sets a
+    `_private.classproperty.classproperty` on it. This is a private class and should not be
+    used outside. I use a `setattr` to try and hide from IDE that a classproperty is being used,
+    which can add confusing details to the resulting type-hint the IDE comes up with for `.obj`.
+    
+    This way, we hide that detail and the type-hint is cleaner, while at the same time not having
+    to implement a `__getattribute__` (which would slow down attribute access to the class).
     """
 
     @classmethod
@@ -583,7 +610,14 @@ class Dependency:
         return wrapper
 
 
-class PerThreadDependency(Dependency):
+# Keeps type-hinting in pycharm (and hopefully other IDE's) cleaner.
+# This is just an implementation detail, IDE should be using the explicit type-hints on class
+# to know what type the `obj` property/attribute will be.
+#
+# Details: We set a classproperty on `obj` that simply calls the `grab()` method on the
+#   Dependency subclass the user is asking for `obj` on and returns the result.
+setattr(Dependency, 'obj', _private.classproperty(fget=lambda cls: cls.grab()))
+
 
 class DependencyPerThread(Dependency):
     """
