@@ -17,7 +17,7 @@ See one of these for more details:
 from typing import TypeVar, Type, Generic, Callable, Any
 from .dependency import Dependency
 
-R = TypeVar('R')
+D = TypeVar('D')
 
 
 class CurrentDependencyProxy(Generic[R]):
@@ -58,7 +58,7 @@ class CurrentDependencyProxy(Generic[R]):
     """
 
     @classmethod
-    def wrap(cls, resource_type: Type[R]) -> R:
+    def wrap(cls, resource_type: Type[D]) -> D:
         """ Just like init'ing a new object with `resource_type`....
             Except this will preserve
             the type-hinting, and tell things that care about the type (like an IDE) that
@@ -71,7 +71,7 @@ class CurrentDependencyProxy(Generic[R]):
         # noinspection PyTypeChecker
         return cls(resource_type=resource_type)
 
-    def __init__(self, resource_type: Type[R], grabber: Callable[[R], Any] = None):
+    def __init__(self, resource_type: Type[D], grabber: Callable[[D], Any] = None):
         """
         See `CurrentDependencyProxy` for and overview. Init method doc below.
 
