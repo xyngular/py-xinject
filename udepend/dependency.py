@@ -13,7 +13,7 @@ If you have not already, to get a nice high-level overview of library see either
 
 ## Resource Refrence Summary
 
-Allows you to create sub-classes that act as sharable resources.
+Allows you to create subclasses that act as sharable resources.
 Things that should stick around and should be created lazily.
 
 Also allows code to temporarily create, customize and activate a resource if you don't want
@@ -108,11 +108,25 @@ from copy import copy, deepcopy
 from guards import Default
 from udepend import UContext
 from udepend.errors import XynResourceError
+import sys
 
 T = TypeVar('T')
 C = TypeVar('C')
 R = TypeVar('R')
 ResourceTypeVar = TypeVar('ResourceTypeVar')
+
+if sys.version_info >= (3, 11):
+    # If we are using Python 3.11, can use this new `Self` type that means current class/subclass
+    # that is being used.
+    # (it does appear that PyCharm >=2022.3 knows what `Self` is even if you use python < 3.11)
+    # This is the only way I know to have a class-property/attribute that type-hints as the
+    # subclass.
+    from typing import Self
+else:
+    # This is the best we can do for a `Self` class-property when using python version < 3.11;
+    # Newer >=2022.3 will see the above Self typing import and still work even if local project
+    # is using an older version of Python!.
+    Self = 'Dependency'
 
 
 class Dependency:
@@ -123,7 +137,7 @@ class Dependency:
 
     ## Summary
 
-    Allows you to create sub-classes that act as sharable resources.
+    Allows you to create subclasses that act as sharable resources.
     Things that should stick around and should be created lazily.
 
     Also allows code to temporarily create, customize and activate a resource if you don't want
@@ -316,26 +330,26 @@ class Dependency:
     """
 
     @classmethod
-    def grab(cls: Type[T], for_context: UContext = Default) -> T:
-        """ Gets a potentially shared resource from the current `UContext`.
-
-            If context is Default/False [default], uses the current context.
-            Resource may add additional kwargs when overriding this method if needed [rare]
-            to customize things or return alternate resource based on passed-in info
-            [example: like passing in a hash-key of some sort]. Although, latley I've been using
-            a Manager resource for things like this, example:
-
-            >>> class SomeResourceManager(Dependency):
-            ...     def get_resource_via(self, some_key: str) -> SomeResourceType:
-            ...         # Lookup and return something
-            ...         pass
-            >>> SomeResourceManager.grab().get_resource_via("some-hash-key")
-            SomeResourceType(ident: ...)
+    def grab(cls: Type[T]) -> T:
         """
-        if not for_context:
-            for_context = UContext.current()
+        Gets a potentially shared resource from the current `udpend.context.UContext`.
 
-        return for_context.resource(for_type=cls)
+        Dependency subclass may add override to have additional args/kwargs when overriding this
+        method if needed [rare] to customize things or return alternate resource based on
+        some passed-in value(s).
+
+        (example: like passing in a hash-key of some sort).
+
+        As an alterative to overriding `grab` with addtional arguments,
+        you could use a type of Manager for this sort of thing, example:
+
+        >>> class SomeDependencyManager(Dependency):
+        ...     def get_resource_via(self, some_key_or_value: str) -> SomeResourceType:
+        ...         # Lookup and return some sort of related resource.
+        ...         pass
+        >>> SomeResourceManager.obj.get_resource_via("some-key-or-value")
+        """
+        return UContext.current().resource(for_type=cls)
 
     @classmethod
     def resource_proxy(cls: Type[R]) -> R:
@@ -389,11 +403,12 @@ class Dependency:
         """
         When an existing `UContext` instance is used via a `with` statement or as a function
         decorator it will copy it's self for use during the `with` statement
-        (ie: it will act as sort of a `template`).
+        (ie: it will act as sort of `template`).
 
-        It will go though and call this method on each dependency in the original 'template' context.
-        By default we simply return self
-        (by default, UContext resources generally try to maintain themselves as singletons).
+        It will go through and call this method on each dependency in the original 'template' context.
+        By default, we simply return self
+        (generally, UContext resources are usually treated as singletons, and UContext tries to
+        maintain that).
 
         If a `Dependency` needs to do more, they can override us
 
@@ -409,13 +424,13 @@ class Dependency:
 
         `Dependency` overrides the default copy operation to shallow copy everything,
         except it will make a new instance for dict/lists
-        (so old an new resources don't share the same list/dict instance).
+        (so old a new resources don't share the same list/dict instance).
 
         If you want different behavior, then override.
 
         A dependency could also use `deepcopy` instead when making a copy, if desirable.
 
-        Copying a dependency may be useful if you want activate a new dependency but have it's
+        Copying a dependency may be useful if you want to activate a new dependency but have it's
         configuration similar to a current dependency (with some tweaks/modifications).
         """
         clone = type(self)()
@@ -569,6 +584,8 @@ class Dependency:
 
 
 class PerThreadDependency(Dependency):
+
+class DependencyPerThread(Dependency):
     """
     Same as `Dependency`, except we set the `Dependency.resource_thread_safe` flag to False,
     this means when an instance of us is created by the system lazily,
@@ -588,7 +605,7 @@ class PerThreadDependency(Dependency):
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
-    When a dependency makes a subclass from `PerThreadDependency` or otherwise set's
+    When a dependency makes a subclass from `DependencyPerThread` or otherwise set's
     the `Dependency.resource_thread_safe` to False at the Dependency class-level.
     When a thread asks for that dependency for first time it will be lazily created like expected,
     but the resulting object is placed in the root-context instead (and NOT the app-root-context).

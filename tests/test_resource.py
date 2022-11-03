@@ -1,7 +1,7 @@
 import pytest as pytest
 
 from udepend import ActiveResourceProxy, UContext, Dependency
-from udepend.dependency import PerThreadDependency
+from udepend.dependency import DependencyPerThread
 
 
 class MyClass(Dependency):
@@ -56,14 +56,14 @@ def test_shared_threaded_resource():
     class ThreadSharableDependency(Dependency):
         hello = "1"
 
-    class NonThreadSharableResource(PerThreadDependency):
+    class NonThreadSharableDependency(DependencyPerThread):
         hello2 = "a"
 
     ThreadSharableDependency.grab().hello = "3"
-    NonThreadSharableResource.grab().hello2 = "b"
+    NonThreadSharableDependency.grab().hello2 = "b"
 
     assert ThreadSharableDependency.grab().hello == "3"
-    assert NonThreadSharableResource.grab().hello2 == "b"
+    assert NonThreadSharableDependency.grab().hello2 == "b"
 
     thread_out_sharable = None
     thread_out_nonsharable = None
@@ -79,7 +79,7 @@ def test_shared_threaded_resource():
 
         # This should produce an 'a', since the dependency is NOT shared between threads;
         # the setting of it to 'b' above is in another thread and is NOT shared.
-        thread_out_nonsharable = NonThreadSharableResource.grab().hello2
+        thread_out_nonsharable = NonThreadSharableDependency.grab().hello2
 
     import threading
 

@@ -829,7 +829,7 @@ class UContext:
         return self
 
     def resource(
-            self, for_type: Type[ResourceTypeVar], create: bool = True
+            self, for_type: Type[ResourceTypeVar], *, create: bool = True
     ) -> ResourceTypeVar:
         """
 
