@@ -127,3 +127,9 @@ class CurrentDependencyProxy(Generic[R]):
 
         # Otherwise, we set it on the current/active dependency object.
         return setattr(self._get_active(), key, value)
+
+    def __repr__(self):
+        return f'CurrentDependencyProxy<{self._get_active().__repr__()}>'
+
+    def __str__(self):
+        return self._get_active().__str__()
