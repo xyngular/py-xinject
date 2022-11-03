@@ -379,7 +379,7 @@ class Dependency:
         return UContext.current().resource(for_type=cls)
 
     @classmethod
-    def resource_proxy(cls: Type[R]) -> R:
+    def proxy(cls: Type[R]) -> R:
         """ Convenience method to easily get a wrapped ActiveResourceProxy for cls/self. """
         from .proxy import ActiveResourceProxy
         return ActiveResourceProxy.wrap(cls)
@@ -568,7 +568,7 @@ class Dependency:
         `some_method` and any other method called from within `some_method` will
         only be using the `EnvironmentalProvider` for looking up configuration by default.
 
-        >>> my_resource = MyResource.resource_proxy()
+        >>> my_resource = MyResource.proxy()
         >>> assert my_resource.some_param is None
         >>>
         >>> @MyResource(some_param="alternate-value")

@@ -211,7 +211,7 @@ Concrete Examples In Code Base:
 
 ### Active Dependency Proxy
 
-You can use the convenience method `glazy.resource.Dependency.resource_proxy` to easily get a
+You can use the convenience method `glazy.resource.Dependency.proxy` to easily get a
 proxy object.
 
 Or you can use `glazy.proxy.ActiveResourceProxy.wrap` to create an object that will act
@@ -238,7 +238,7 @@ config = ActiveResourceProxy.wrap(Config)
 
 # This is a simpler way to get the same proxy
 # (no imports are needed, just call the class method on any Dependency subclass):
-config = Config.resource_proxy()
+config = Config.proxy()
 ```
 
 Now someone can import and use it as-if it's the current config object:

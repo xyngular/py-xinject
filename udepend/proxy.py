@@ -43,9 +43,9 @@ class ActiveResourceProxy(Generic[R]):
     This will always call the active/current resource without having to use the boilerplate
     `.resource()` method on the resource class/type.
 
-    >>> # You can use the `resource_proxy`
-    >>> # convenience method to also accomplish this:
-    >>> my_class = MyClass.resource_proxy()
+    >>> # You can use the `proxy` convenience
+    >>> # method to also accomplish this:
+    >>> my_class = MyClass.proxy()
 
     It's sometimes useful to put at the top-level of a module the proxy-version of the resource
     so it can be directly imported into other modules, and used directly like a normal object.
@@ -66,7 +66,7 @@ class ActiveResourceProxy(Generic[R]):
             into this method.
 
             A simpler/alternate way to wrap a Dependency with a `ActiveResourceProxy` is via the
-            `udepend.dependency.Dependency.resource_proxy` convenience method.
+            `udepend.dependency.Dependency.proxy` convenience method.
         """
         # noinspection PyTypeChecker
         return cls(resource_type=resource_type)

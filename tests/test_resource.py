@@ -21,7 +21,7 @@ class MyClass(Dependency):
 
 
 my_class = ActiveResourceProxy.wrap(MyClass)
-my_class_via_proxy_method = MyClass.resource_proxy()
+my_class_via_proxy_method = MyClass.proxy()
 
 
 def test_proxy_wrapper():

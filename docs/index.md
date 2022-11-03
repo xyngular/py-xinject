@@ -94,11 +94,13 @@ and still have it be injectable.
 ```python
 from udepend import Dependency
 
-class MyUniversalDependency(Dependency):
-  def __init__(self, name='default-value'):
-    self.name = name
 
-my_universal_dependency = MyUniversalDependency.resource_proxy()
+class MyUniversalDependency(Dependency):
+    def __init__(self, name='default-value'):
+        self.name = name
+
+
+my_universal_dependency = MyUniversalDependency.proxy()
 
 assert my_universal_dependency.name == 'changing-the-value'
 
