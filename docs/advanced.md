@@ -33,7 +33,7 @@ Concrete Examples In Code Base:
 You can use the convenience method `udepend.resource.Dependency.proxy` to easily get a
 proxy object.
 
-Or you can use `udepend.proxy.ActiveResourceProxy.wrap` to create an object that will act
+Or you can use `udepend.proxy.CurrentDependencyProxy.wrap` to create an object that will act
 like the current resource.
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
@@ -48,12 +48,12 @@ when using the proxy object.
 A real-world example is `xyn_config.config.config`, it uses this code for that object:
 
 ```python
-from udepend import ActiveResourceProxy
+from udepend import CurrentDependencyProxy
 from xyn_config import Config
 
-# The `xny_resource.proxy.ActiveResourceProxy.wrap` method to get a correctly type-hinted (for IDE)
+# The `xny_resource.proxy.CurrentDependencyProxy.wrap` method to get a correctly type-hinted (for IDE)
 # proxy back:
-config = ActiveResourceProxy.wrap(Config)
+config = CurrentDependencyProxy.wrap(Config)
 
 # This is a simpler way to get the same proxy
 # (no imports are needed, just call the class method on any Dependency class):
@@ -80,10 +80,10 @@ value = get_method('some_config_var')
 
 The code then executes the method that was attached to the `get` attribute.
 This makes the call-stack clean, if an error happens it won't be going through
-the ActiveResourceProxy.
-The `udepend.proxy.ActiveResourceProxy` already return the `get` method  and is finished.
+the CurrentDependencyProxy.
+The `udepend.proxy.CurrentDependencyProxy` already return the `get` method  and is finished.
 The outer-code is the one that executed/called the method.
 
 Another read-world example is in the `xyn_aws`.
 
-See `udepend.proxy.ActiveResourceProxy` for more ref-doc type details.
+See `udepend.proxy.CurrentDependencyProxy` for more ref-doc type details.

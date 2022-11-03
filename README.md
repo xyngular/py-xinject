@@ -57,7 +57,7 @@ then this library could come in use for your situation.
     So there are performance considerations to try and keep connection open and to reuse it.
   - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
     allows you to lazily get a shared aws client/resource.
-    - It also uses a more advance feature, ActiveResourceProxy, to represent boto resources/clients
+    - It also uses a more advance feature, CurrentDependencyProxy, to represent boto resources/clients
       that are importable into other modules and directly usable.
 - Common configuration or setting values
   - See also:
@@ -214,7 +214,7 @@ Concrete Examples In Code Base:
 You can use the convenience method `glazy.resource.Dependency.proxy` to easily get a
 proxy object.
 
-Or you can use `glazy.proxy.ActiveResourceProxy.wrap` to create an object that will act
+Or you can use `glazy.proxy.CurrentDependencyProxy.wrap` to create an object that will act
 like the current resource.
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
@@ -229,12 +229,12 @@ when using the proxy object.
 A real-world example is `xyn_config.config.config`, it uses this code for that object:
 
 ```python
-from udepend import ActiveResourceProxy
+from udepend import CurrentDependencyProxy
 from xyn_config import Config
 
-# The `xny_resource.proxy.ActiveResourceProxy.wrap` method to get a correctly type-hinted (for IDE)
+# The `xny_resource.proxy.CurrentDependencyProxy.wrap` method to get a correctly type-hinted (for IDE)
 # proxy back:
-config = ActiveResourceProxy.wrap(Config)
+config = CurrentDependencyProxy.wrap(Config)
 
 # This is a simpler way to get the same proxy
 # (no imports are needed, just call the class method on any Dependency subclass):
@@ -261,13 +261,13 @@ value = get_method('some_config_var')
 
 The code then executes the method that was attached to the `get` attribute.
 This makes the call-stack clean, if an error happens it won't be going through
-the ActiveResourceProxy.
-The `glazy.proxy.ActiveResourceProxy` already return the `get` method  and is finished.
+the CurrentDependencyProxy.
+The `glazy.proxy.CurrentDependencyProxy` already return the `get` method  and is finished.
 The outer-code is the one that executed/called the method.
 
 Another read-world example is in the `xyn_aws`.
 
-See `glazy.proxy.ActiveResourceProxy` for more ref-doc type details.
+See `glazy.proxy.CurrentDependencyProxy` for more ref-doc type details.
 
 ## Unit Testing
 

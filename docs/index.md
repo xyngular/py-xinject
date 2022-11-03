@@ -155,7 +155,7 @@ This means that Dependency can also help with simple dependency injection use-ca
     So there are performance considerations to try and keep connection open and to reuse it.
   - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
     allows you to lazily get a shared aws client/resource.
-    - It also uses a more advance feature, ActiveResourceProxy, to represent boto resources/clients
+    - It also uses a more advance feature, CurrentDependencyProxy, to represent boto resources/clients
       that are importable into other modules and directly usable.
 - Common configuration or setting values
   - See also:

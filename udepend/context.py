@@ -36,7 +36,7 @@ So normally, code would do this to get the current object instance for a Resourc
 >>> SomeResource.grab().my_attribute = "change-value"
 
 Another convenient way to get the current resource is via the
-`glazy.resource.ActiveResourceProxy`. This class lets you create an object
+`glazy.resource.CurrentDependencyProxy`. This class lets you create an object
 that always acts like the current/active object for some Resource.
 So you can define it at the top-level of some module, and code can import it
 and use it directly.
@@ -852,7 +852,7 @@ class UContext:
         >>> SomeResource.grab()
 
         Another convenient way to get the current resource is via the
-        `udepend.resource.ActiveResourceProxy`. This class lets you create an object
+        `udepend.resource.CurrentDependencyProxy`. This class lets you create an object
         that always acts like the current/active object for some Resource.
         So you can define it at the top-level of some module, and code can import it
         and use it directly.

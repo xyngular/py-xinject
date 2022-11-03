@@ -1,6 +1,6 @@
 import pytest as pytest
 
-from udepend import ActiveResourceProxy, UContext, Dependency
+from udepend import CurrentDependencyProxy, UContext, Dependency
 from udepend.dependency import DependencyPerThread
 
 
@@ -20,7 +20,7 @@ class MyClass(Dependency):
         self._my_value = value
 
 
-my_class = ActiveResourceProxy.wrap(MyClass)
+my_class = CurrentDependencyProxy.wrap(MyClass)
 my_class_via_proxy_method = MyClass.proxy()
 
 

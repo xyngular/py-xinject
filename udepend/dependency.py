@@ -87,7 +87,7 @@ For these examples, say I have this resource defined:
 
 ## Active Resource Proxy
 
-You can use `glazy.proxy.ActiveResourceProxy` to create an object that will act
+You can use `glazy.proxy.CurrentDependencyProxy` to create an object that will act
 like the current resource.
 All non-dunder attributes will be grabbed/set on the current object instead of the proxy.
 
@@ -380,9 +380,9 @@ class Dependency:
 
     @classmethod
     def proxy(cls: Type[R]) -> R:
-        """ Convenience method to easily get a wrapped ActiveResourceProxy for cls/self. """
-        from .proxy import ActiveResourceProxy
-        return ActiveResourceProxy.wrap(cls)
+        """ Convenience method to easily get a wrapped CurrentDependencyProxy for cls/self. """
+        from .proxy import CurrentDependencyProxy
+        return CurrentDependencyProxy.wrap(cls)
 
     def context_resource_for_child(self, child_context: UContext):
         """

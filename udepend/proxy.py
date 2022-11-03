@@ -20,7 +20,7 @@ from .dependency import Dependency
 R = TypeVar('R')
 
 
-class ActiveResourceProxy(Generic[R]):
+class CurrentDependencyProxy(Generic[R]):
     """
     Used to simplify accessing the current resource class via proxy object,
     so you can use the object like a normal global-object, but every time you access a
@@ -37,7 +37,7 @@ class ActiveResourceProxy(Generic[R]):
 
     With ProxyActive you can do this instead:
 
-    >>> my_class = ActiveResourceProxy.wrap(MyClass)
+    >>> my_class = CurrentDependencyProxy.wrap(MyClass)
     >>> my_class.my_method()
 
     This will always call the active/current resource without having to use the boilerplate
@@ -65,7 +65,7 @@ class ActiveResourceProxy(Generic[R]):
             what's returned from here should act like an instance of the `resource_type` passed
             into this method.
 
-            A simpler/alternate way to wrap a Dependency with a `ActiveResourceProxy` is via the
+            A simpler/alternate way to wrap a Dependency with a `CurrentDependencyProxy` is via the
             `udepend.dependency.Dependency.proxy` convenience method.
         """
         # noinspection PyTypeChecker
@@ -73,11 +73,11 @@ class ActiveResourceProxy(Generic[R]):
 
     def __init__(self, resource_type: Type[R], grabber: Callable[[R], Any] = None):
         """
-        See `ActiveResourceProxy` for and overview. Init method doc below.
+        See `CurrentDependencyProxy` for and overview. Init method doc below.
 
         ## Init Method
 
-        When you create a ActiveResourceProxy, you pass in the resource_type you want
+        When you create a CurrentDependencyProxy, you pass in the resource_type you want
         it to proxy.
 
         Will act like the current/active object of Dependency type `resource_type`.
