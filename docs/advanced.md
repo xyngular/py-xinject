@@ -22,7 +22,7 @@ Concrete Examples In Code Base:
     reuse connections on same thread, but use new session if on different thread.
     Also helps with unit testing, when Mocking requests URL calls.
 - boto client/resource
-  - Library says it's not thread-safe, you need to use a diffrent object per-thread.
+  - Library says it's not thread-safe, you need to use a different object per-thread.
   - Moto mocking library for AWS services needs you to allocate a client after it's setup,
     (so lazily allocate client/resource from boto).
   - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
