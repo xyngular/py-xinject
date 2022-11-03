@@ -386,7 +386,7 @@ class Dependency:
 
     def dependency_for_child_context(self, child_context: UContext):
         """
-        Called by `Context` when it does not have a dependency of a particular type but it does
+        Called by `udepend.context.UContext` when it does not have a dependency of a particular type but it does
         have a value from a parent-context (via it's parent-chain).
 
         Gives opportunity for the `Dependency` to do something special if it wants.
@@ -416,9 +416,9 @@ class Dependency:
             However, this is usually desirable as whatever manually created the object probably
             wants to override the dependency with its own configured object.
 
-        - If a new `Context` was created at some point later via `Context(parent=None)`
+        - If a new `udepend.context.UContext` was created at some point later via `Context(parent=None)`
             and then activated. When a dependency is next asked for, it must create a new one as
-            any previous `Context` would be unreachable until the context was deactivated.
+            any previous `udepend.context.UContext` would be unreachable until the context was deactivated.
             (for more details, see [Activating New Context](#activating-new-context))
 
         Args:

@@ -19,7 +19,7 @@ If you have not already, to get a nice high-level overview of library see either
 If your looking for a simple example/use of singltone-like resources,
 go to `glazy.resource.Resource`.
 
-The whole point of the `Context` is to have a place to get shared resources.
+The whole point of the `udepend.context.UContext` is to have a place to get shared resources.
 
 Normally, code will use some other convenience methods, as an example:
 
@@ -41,7 +41,7 @@ that always acts like the current/active object for some Resource.
 So you can define it at the top-level of some module, and code can import it
 and use it directly.
 
-I would start with [Fundamentals](#fundamentals) if you know nothing of how `Context` works
+I would start with [Fundamentals](#fundamentals) if you know nothing of how `udepend.context.UContext` works
 and want to learn more about how it works.
 
 Most of the time, you interact with Context indrectly via
@@ -59,7 +59,7 @@ type. IE: One resource per-context per-resource-type.
 
 Main Classes:
 
-- `Context`: Container of resources, mapped by type.
+- `udepend.context.UContext`: Container of resources, mapped by type.
 - For Resource Subclasses:
     - `glazy.resource.Resource`: Nice interface to easily get the current resource.
         Used to implment a something that should shared and not generally duplicated,
@@ -67,7 +67,7 @@ Main Classes:
 
 # Fundamentals
 
-`Context` is like a container, used to store various objects we are calling resources.
+`udepend.context.UContext` is like a container, used to store various objects we are calling resources.
 
 Used to store various resources of any type  in general [ie: configs, auths, clients, etc].
 All of these resources together represent a sort of "context" from which various pieces of code
@@ -79,7 +79,7 @@ The values are mapped by their type.  When a resource of a specific type is aske
 the Context will return it if it find it. If not found it will create it, add it to it's self
 and return it. Future calls will return this new resource.
 
-`Context` can optionally have a parent. By default, a newly created/used Context will use
+`udepend.context.UContext` can optionally have a parent. By default, a newly created/used Context will use
  the current context Normally, resources are still normally created even if a
 parent has a value, as long as the current context does not have one yet.
 
@@ -211,7 +211,7 @@ older version of the resource and so returns that one.
 
 By default, a context will create a resource when it's asked for it and it does not have it
 already. As you saw above, every time a blank Context was created, it also created a new
-SomeResourceType when it was asked for it because the new blank `Context` did not already
+SomeResourceType when it was asked for it because the new blank `udepend.context.UContext` did not already
 have the resource.
 
 
@@ -263,7 +263,7 @@ a new parent-less context and activates it while the fixture is used.
 You can implment the singleton-pattern easily by inherting from the
 `glazy.resource.Resource` class.
 This will try it's best to ensure only one resource is used amoung a chain/tree of parents.
-It does this by returning `self` when `Context` asks it what it wants to do when a child-context
+It does this by returning `self` when `udepend.context.UContext` asks it what it wants to do when a child-context
 asks for the resource of a specific type.
 Since `glazy.resource.Resource` can be shared amoung many diffrent child Context objects,
 and makes the same instance always 'look' like it's the current one;
@@ -299,7 +299,7 @@ context:
 The `glazy.resource.Resource` will not see pased the parent-less context,
 and so won't see the old resource.
 It will create a new one. The `glazy.resource.Resource` will still create it in the
-furtherest parent it can... which in this case was the `Context` activated by the with statement.
+furtherest parent it can... which in this case was the `udepend.context.UContext` activated by the with statement.
 
 """
 import contextvars
@@ -401,7 +401,7 @@ class UContext:
 
     def make_current(self) -> 'UContext':
         """
-        Read [Quick Start](#quick-start) first if you don't know anything about how `Context`
+        Read [Quick Start](#quick-start) first if you don't know anything about how `udepend.context.UContext`
         works.
 
         Makes a **copy** of this Context object (which I will return), and makes that copy the
@@ -765,7 +765,7 @@ class UContext:
         ...     print(f"my int dependency: {UContext.dependency(int)}")
         Output: "my int resource: 2"
 
-        As as side-note, you can easily add resources to a new `Context` via:
+        As as side-note, you can easily add resources to a new `udepend.context.UContext` via:
 
         >>> @UContext(resources=[2])
         >>> def some_method()
@@ -783,7 +783,7 @@ class UContext:
 
         If you need to override a resource, you can create a new context and set me as it's
         parent. At that point you can add whatever resources you want before anyone else
-        uses the new `Context`.
+        uses the new `udepend.context.UContext`.
 
         .. warning:: If you attempt to add a second resource of the same type...
             ...a `udepend.UDependError` will be
@@ -835,7 +835,7 @@ class UContext:
 
         ## Summary
 
-        The whole point of the `Context` is to have a place to get shared resources. This method
+        The whole point of the `udepend.context.UContext` is to have a place to get shared resources. This method
         is the primary way to get a shared resource from a Contet directly
 
         Normally, code will use some other convenience methods, as an example:
@@ -857,7 +857,7 @@ class UContext:
         So you can define it at the top-level of some module, and code can import it
         and use it directly.
 
-        I would start with [Quick Start](#quick-start) if you know nothing of how `Context` works
+        I would start with [Quick Start](#quick-start) if you know nothing of how `udepend.context.UContext` works
         and want to learn more about how it works.
 
         Most of the time, you interact with Context indrectly via
@@ -871,7 +871,7 @@ class UContext:
         resource you made temporarily active is forgotten.
 
         You can inject/replace resources as needed for unit-testing purposes as well by simply
-        adding the resource to a new/blank `Context` as a diffrent type, see example below.
+        adding the resource to a new/blank `udepend.context.UContext` as a diffrent type, see example below.
 
         In this example, we add a value of int(20) for the `str` resource type.
         I used built-int types to simplify this, but you can image using your own
@@ -919,7 +919,7 @@ class UContext:
                 more knowledge about what it's situation is and can make a more informed decision.
 
                 If `True`: and the resource is not directly in `self`, we will ask the parent
-                `Context`; if we have a parent for the resource and return that if it's found.
+                `udepend.context.UContext`; if we have a parent for the resource and return that if it's found.
                 If a resource is found this way, we won't add it to `self` directly,
                 only return it for you to use.
 
@@ -1204,7 +1204,7 @@ class UContext:
 
     def __call__(self, *args, **kwargs):
         """
-        This allows us to support using `Context` as a function decorator in a few ways:
+        This allows us to support using `udepend.context.UContext` as a function decorator in a few ways:
 
         >>> @UContext
         >>> def some_method():
@@ -1228,8 +1228,8 @@ class UContext:
         In the case of a pre-allocated context, such as `my_context` in the above example;
         we will use that as the template/starting-point each time `some_method` is called;
 
-        What this means is that when `some_method` is called, and we create this new `Context`
-        to use. The next `Context` will get the same resources that are/were assigned to it;
+        What this means is that when `some_method` is called, and we create this new `udepend.context.UContext`
+        to use. The next `udepend.context.UContext` will get the same resources that are/were assigned to it;
         whatever it is at the time `some_method` is called.
 
         This allows for more fine-control of what is in the `template` context, without
