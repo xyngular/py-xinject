@@ -1,3 +1,3 @@
 
-class XynResourceError(Exception):
+class UDependError(Exception):
     pass

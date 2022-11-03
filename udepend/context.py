@@ -308,7 +308,7 @@ import functools
 from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable
 from copy import copy
 from guards.default import Default, DefaultType, Singleton
-from udepend.errors import XynResourceError
+from udepend.errors import UDependError
 
 T = TypeVar('T')
 C = TypeVar('C')
@@ -544,7 +544,7 @@ class UContext:
             if parent:
                 return parent
 
-            raise XynResourceError(
+            raise UDependError(
                 f"Somehow we have a UContext has been activated "
                 f"(ie: has activated via decorator `@` or via `with` or via "
                 f"`UContext.make_active` at some point and has not exited yet) "
@@ -574,7 +574,7 @@ class UContext:
         if parent in (_TreatAsRootParent, None):
             return None
 
-        raise XynResourceError(
+        raise UDependError(
             f"Somehow we have a UContext that is not active "
             f"(ie: ever activated via decorator `@` or via `with` or via "
             f"`UContext.make_active`) but has a specific parent "
@@ -691,7 +691,7 @@ class UContext:
         # Store the decorated function for later use
         # (for when decorated method get's called).
         if __func and not callable(__func):
-            raise XynResourceError(
+            raise UDependError(
                 "First position argument was NOT a callable function; "
                 "The first positional argument `__func` is reserved for a decorated function "
                 "when you do use UContext directly as a decorator, "
@@ -727,7 +727,7 @@ class UContext:
             self._originally_passed_none_for_parent = False
             self._is_root_like_context = True
         else:
-            raise XynResourceError(
+            raise UDependError(
                 "You must only pass in `Default` or `None` or `_TreatAsRootParentType` for parent "
                 f"when creating a new UContext, got ({parent}) instead."
             )
@@ -786,7 +786,7 @@ class UContext:
         uses the new `Context`.
 
         .. warning:: If you attempt to add a second resource of the same type...
-            ...a `udepend.XynResourceError` will be
+            ...a `udepend.UDependError` will be
             raised. This is because other objects have already gotten this resource and are
             relying on it now.  You need to configure any special resources you want to add
             to this context early enough before anything else will need it.
@@ -823,7 +823,7 @@ class UContext:
                 return self
             # todo: complete/figure out comment!
             # if not rep
-            raise XynResourceError(f"Trying to add dependency ({resource}), but already have one!")
+            raise UDependError(f"Trying to add dependency ({resource}), but already have one!")
 
         self._resources[resource_type] = resource
         return self
@@ -957,7 +957,7 @@ class UContext:
 
         # Sanity check: If we are active we should have a None or an explicit, non-default parent.
         if self._is_active and parent is Default:
-            XynResourceError(
+            UDependError(
                 "We somehow have a UContext that has been 'activated' but yet has "
                 "their parent still set to `Default`. This is a bug. Active UContext's "
                 "should NEVER have their parent set at `Default`. It should either be None "
@@ -1024,7 +1024,7 @@ class UContext:
                 return parent_value.context_resource_for_child(child_context=self)
         except TypeError as e:
             # Python will add the `e` as the `from` exception to this new one.
-            raise XynResourceError(
+            raise UDependError(
                 f"I had trouble creating/getting dependency ({for_type}) due to TypeError({e})."
             )
 
@@ -1136,7 +1136,7 @@ class UContext:
         Returns:
             Deep copied object.
         """
-        raise XynResourceError(
+        raise UDependError(
             "Deepcopy is currently disabled for udepend.context.UContext. "
             "If there is a desire to use it again in the future, remove this exception "
             "as it should still work."
@@ -1294,7 +1294,7 @@ class UContext:
             fail_reason = "one non-callable argument"
 
         if fail_reason:
-            raise XynResourceError(
+            raise UDependError(
                 f"Used directly as decorator `@UContext` (without ending parens) which is"
                 f"normally fine. This normally makes "
                 f"Python pass decorated function into `__init__` method and I don;t "

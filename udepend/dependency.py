@@ -107,7 +107,7 @@ from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any
 from copy import copy, deepcopy
 from guards import Default
 from udepend import UContext, _private
-from udepend.errors import XynResourceError
+from udepend.errors import UDependError
 import sys
 
 T = TypeVar('T')
@@ -525,7 +525,7 @@ class Dependency:
     def __exit__(self, *args, **kwargs):
         stack = self._context_manager_stack
         if not stack:
-            raise XynResourceError(
+            raise UDependError(
                 f"While using ({self}) as a context manager via a `with` statement,"
                 f"somehow we did not have an internal context from the initial entering "
                 f"(see `udepend.context.Dependency.__enter__`). "
@@ -593,7 +593,7 @@ class Dependency:
             return self
 
         if not callable(func):
-            raise XynResourceError(
+            raise UDependError(
                 f"Attempt to calling a Dependency of type ({self}) as a callable function. "
                 f"By default (unless dependency subclass does/says otherwise) you need to use "
                 f"it as a decorator when calling it. "

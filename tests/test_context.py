@@ -2,7 +2,7 @@ from udepend import UContext, Dependency
 import dataclasses
 import pytest
 from copy import deepcopy, copy
-from udepend.errors import XynResourceError
+from udepend.errors import UDependError
 
 
 @UContext
@@ -148,7 +148,7 @@ def test_initial_context_resources_with_dict():
 
 def test_deepcopy_context():
     c1 = UContext()
-    with pytest.raises(XynResourceError):
+    with pytest.raises(UDependError):
         deepcopy(c1)
 
 
