@@ -1006,7 +1006,7 @@ class UContext:
                 will ask parent_value to decide if it wants to reuse it's self or create a
                 new dependency object.
 
-                See `udepend.dependency.Dependency.context_resource_for_child`
+                See `udepend.dependency.Dependency.dependency_for_child_context`
                 for more details if you want to customize this behavior.
         """
         from udepend import Dependency
@@ -1017,11 +1017,11 @@ class UContext:
 
             # If we have a context-dependency AND a parent_value;
             # then ask parent_value Dependency to do whatever it wants to do.
-            # By default, `udepend.dependency.Dependency.context_resource_for_child`
+            # By default, `udepend.dependency.Dependency.dependency_for_child_context`
             # returns `self`
             #   to reuse dependency value.
             if parent_value and isinstance(parent_value, Dependency):
-                return parent_value.context_resource_for_child(child_context=self)
+                return parent_value.dependency_for_child_context(child_context=self)
         except TypeError as e:
             # Python will add the `e` as the `from` exception to this new one.
             raise UDependError(

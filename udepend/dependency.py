@@ -182,7 +182,7 @@ class Dependency:
 
     By default, Resource's act like a singletons; in that child contexs will simply get the same
     instance of the resource that the parent context has.
-    You can override this behavior via `Resource.context_resource_for_child` method.
+    You can override this behavior via `Resource.dependency_for_child_context` method.
 
     If you inherit from this class, when you have `Resource.resource` called on you,
     we will do our best to ensure that the same object instance is returned every time
@@ -236,7 +236,7 @@ class Dependency:
             >>>         assert config.service == "override-service-name"
 
     If you need more control over how your allocated by default, you can override the
-    `Resource.context_resource_for_child` method to customize it.
+    `Resource.dependency_for_child_context` method to customize it.
 
     ## Background on Unit Testing
 
@@ -384,7 +384,7 @@ class Dependency:
         from .proxy import CurrentDependencyProxy
         return CurrentDependencyProxy.wrap(cls)
 
-    def context_resource_for_child(self, child_context: UContext):
+    def dependency_for_child_context(self, child_context: UContext):
         """
         Called by `Context` when it does not have a dependency of a particular type but it does
         have a value from a parent-context (via it's parent-chain).
@@ -392,11 +392,13 @@ class Dependency:
         Gives opportunity for the `Dependency` to do something special if it wants.
 
         Default implementation of this method is to simply return `self` when we get asked.
-        That way by default, we simply use the same object for every `Context` on the same thread.
+        That way by default, we simply use the same object for every `udepend.context.UContext`
+        on the same thread.
 
-        This way it will make a `Dependency` subclass by default a sort of 'singleton`; where we try
-        and reuse the same instance.
-        In this way, the child-context will get the same instance of me as the parent normally.
+        This way (by default) it will make a `Dependency` subclass a sort of 'singleton`;
+        where we try and do our best to "reuse" the same instance.
+
+        In this way, the child-context will get the same instance of me as the parent, normally.
 
         You can think of this as making a `Dependency` act like a singleton by default,
         as only one instance (at the root-context) would ever 'normally' be created.
@@ -409,10 +411,10 @@ class Dependency:
             (for more details, see [Activating New Dependency](#activating-new-dependency))
 
             THis is because the Dependency that was manually created was not given an opportunity
-            to reused the parent value.
+            to reuse the parent value.
 
             However, this is usually desirable as whatever manually created the object probably
-            wants to override the dependency with it's own configured object.
+            wants to override the dependency with its own configured object.
 
         - If a new `Context` was created at some point later via `Context(parent=None)`
             and then activated. When a dependency is next asked for, it must create a new one as
