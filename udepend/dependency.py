@@ -217,7 +217,7 @@ class Dependency:
     Here are the various ways to do that, via:
 
 
-    - `UContext.add_resource`
+    - `UContext.add`
         (you will get an error if that UContext currently has a resource
         of that type, so do that as you create the UContext object).
 

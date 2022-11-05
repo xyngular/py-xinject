@@ -305,7 +305,7 @@ furtherest parent it can... which in this case was the `udepend.context.UContext
 import contextvars
 import itertools
 import functools
-from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable
+from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable, Set
 from copy import copy
 from guards.default import Default, DefaultType, Singleton
 from udepend.errors import UDependError
@@ -400,7 +400,6 @@ class UContext:
     def _current_without_creating_thread_root(cls):
         return _current_context_contextvar.get()
 
-
     def _make_current_and_get_reset_token(
         self,
         is_thread_root_context=False,
@@ -461,6 +460,10 @@ class UContext:
         #
         # We return the reset token, but it's only used internally when calling this method.
         # outside people should ignore token.
+        my_parent = self._parent
+        if my_parent and not my_parent._is_root_context_for_app:
+            my_parent._children.add(self)
+
         return _current_context_contextvar.set(self)
 
     @property
@@ -475,8 +478,8 @@ class UContext:
 
             raise UDependError(
                 f"Somehow we have a UContext has been activated "
-                f"(ie: has activated via decorator `@` or via `with` or via "
-                f"`UContext.make_active` at some point and has not exited yet) "
+                f"(ie: has activated via decorator `@` or via `with` "
+                f"at some point and has not exited yet) "
                 f"but still has it's internal parent value set to `Default`. "
                 f"This indicates some sort of programming error or bug with UContext. "
                 f"An active UContext should NEVER have their parent set at `Default`. "
@@ -505,8 +508,7 @@ class UContext:
 
         raise UDependError(
             f"Somehow we have a UContext that is not active "
-            f"(ie: ever activated via decorator `@` or via `with` or via "
-            f"`UContext.make_active`) but has a specific parent "
+            f"(ie: ever activated via decorator `@` or via `with`) but has a specific parent "
             f"(ie: not None or _TreatAsRootParent or Default). "
             f"This indicates some sort of programming error or bug with UContext. "
             f"A UContext should only have an explicit parent if they have "
@@ -561,9 +563,9 @@ class UContext:
 
                 Mainly useful for unit-testing, but could be useful elsewhere too.
 
-                They will be added to use via `UContext.add_resource` for you.
+                They will be added to use via `UContext.add` for you.
 
-                If you use a dict/mapping, we will use the following for `UContext.add_resource`:
+                If you use a dict/mapping, we will use the following for `UContext.add`:
 
                 - Dict-key as the `for_type' method parameter.
                 - Dict-value as the `Dependency` method parameter.
@@ -647,6 +649,7 @@ class UContext:
         self._dependencies = {}
         self._parent = None
         self._cached_parent_dependencies = {}
+        self._children = set()
 
         if parent is Default:
             self._parent = Default
@@ -668,19 +671,19 @@ class UContext:
         if isinstance(dependencies, dict):
             # We have a mapping, use that....
             for for_type, resource in dependencies.items():
-                self.add_resource(resource, for_type=for_type)
+                self.add(resource, for_type=for_type)
         elif isinstance(dependencies, list):
             # We have one or more Dependency values, add each one.
             for resource in dependencies:
-                self.add_resource(resource)
+                self.add(resource)
         elif dependencies is not None:
             # Otherwise, we have a single Dependency value.
-            self.add_resource(dependencies)
+            self.add(dependencies)
 
     # todo: Make it so if there is a parent context, and the current config has no property
     # todo: it can ask the UContext for the parent config to see if it has what is needed.
-    def add_resource(
-            self, resource: Any, *, skip_if_present=False, for_type: Type = None
+    def add(
+            self, dependency: Any, *, for_type: Type = None
     ) -> "UContext":
         """
         Lets you add a resource to this context, you can only have one-resource per-type.
@@ -692,7 +695,7 @@ class UContext:
         >>> # Only works on python 3.9+, it relaxes grammar restrictions
         >>> #    (https://www.python.org/dev/peps/pep-0614/)
         >>>
-        >>> @UContext().add_resource(2)
+        >>> @UContext().add(2)
         >>> def some_method()
         ...     print(f"my int dependency: {UContext.dependency(int)}")
         Output: "my int resource: 2"
@@ -709,7 +712,7 @@ class UContext:
 
         >>> def some_method()
         ...     context = UContext()
-        ...     context.add_resource(3, for_type=str)
+        ...     context.add(3, for_type=str)
         ...     print(f"my str dependency: {UContext.dependency(str)}")
         Output: "my str resource: 3"
 
@@ -729,7 +732,7 @@ class UContext:
             if I found that desirable. Careful consideration would have to be made.
 
         Args:
-            resource (Any): Object to add as a resource, it's type will be mapped to it.
+            dependency (Any): Object to add as a resource, it's type will be mapped to it.
 
             skip_if_present (bool): If False [default], we raise an exception if resource
                 of that type is already in context/self.
@@ -745,19 +748,15 @@ class UContext:
                 We will then map the resource for `for_type` to the `resource` object when
                 a resource is requested for `for_type` in the future. Will still raise the
                 error if a resource for `for_type` already exists in Context.
+        Returns:
+            Return `self`, so that you can keep calling more methods easily if needed
+            (ie: .add(), etc)
         """
-        resource_type = type(resource)
-        if for_type is not None:
-            resource_type = for_type
+        if for_type is None:
+            for_type = type(dependency)
 
-        if resource_type in self._dependencies:
-            if skip_if_present:
-                return self
-            # todo: complete/figure out comment!
-            # if not rep
-            raise UDependError(f"Trying to add dependency ({resource}), but already have one!")
-
-        self._dependencies[resource_type] = resource
+        self._dependencies[for_type] = dependency
+        self._remove_cached_dependency_and_in_children(for_type)
         return self
 
     def resource(
@@ -810,7 +809,7 @@ class UContext:
         custom-resource-class and placing it in the Context for the normal-resource-type
         the normal code asks for.
 
-        >>> UContext().add_resource(20, for_type=str)
+        >>> UContext().add(20, for_type=str)
         >>> UContext().resource(str)
         Output: 20
 
@@ -860,25 +859,37 @@ class UContext:
                 Otherwise, we return `None`.
         """
 
-        # If we find it in self, use that; no need to check anything else.
+        # If we find it in self, use that; no need to check anything else...
         obj = self._dependencies.get(for_type, None)
         if obj is not None:
             return obj
 
+        # We next check our cached parent deps...
+        obj = self._cached_parent_dependencies.get(for_type, None)
+        if obj is not None:
+            return obj
+
+        # We must now query the parent-chain to find the dependency.
+
         # If we are the root context for the entire app (ie: app-root between all threads)
         # then we check to see if dependency is thread-sharable.
+        #
         # If it is then we continue as normal.
         # If NOT, then we always return None.
+        #
         # This will indicate to the thread-specific UContext that is calling us to allocate
-        # the object in it's self.
+        # the object in its self.
+        #
         # If something else is asking us, we still return None because this Dependency does not
-        # belong in us and so we should not accidently auto-create it in us.
-        # ie: Whoever is calling is should handle the None case.
+        # belong in us, and so we should not accidentally auto-create it in us.
+        # ie: Whoever is calling it should handle the None case.
         #
         # In Reality, the only thing that should be calling the app-root context
         # is a thread-root context.  Thread root-contexts should never return None when asked
         # for a dependency.
+        #
         # So, code using a Dependency in general should never have to worry about this None case.
+
         if self._is_root_context_for_app:
             from udepend import Dependency
             if issubclass(for_type, Dependency) and not for_type.resource_thread_safe:
@@ -889,7 +900,7 @@ class UContext:
 
         # Sanity check: If we are active we should have a None or an explicit, non-default parent.
         if self._is_active and parent is Default:
-            UDependError(
+            raise UDependError(
                 "We somehow have a UContext that has been 'activated' but yet has "
                 "their parent still set to `Default`. This is a bug. Active UContext's "
                 "should NEVER have their parent set at `Default`. It should either be None "
@@ -903,65 +914,38 @@ class UContext:
             # So this should be safe.
             # Doing an assert here to at least minimally double check this.
             parent = UContext.current()
+            if self is parent:
+                raise UDependError(
+                    f"Somehow have self ({self}) and parent as same instance (UContext), "
+                    f"when self is not currently active and is attempting to find the current "
+                    f"active UContext to use as it's temporary parent."
+                )
             assert self is not parent, "Somehow have self and parent as same instance."
+
+            # Since our `parent is Default`, we should not be the app-root, or thread-root
+            # context; we also don't want to cache anything our parent retrieves so simply
+            # return whatever our Default parent returns.
+            return parent.resource(for_type, create=create)
 
         if parent:
             parent_value = parent.resource(for_type, create=create)
 
         # If we can't create the dependency, we can ask the resoruce to potetially create more of
-        # it's self.
+        # its self.
         # We should also not put any value we find in self either.
         # Simply return the parent_value, whatever it is (None or otherwise)
         if not create:
             return parent_value
 
         # We next create dependency if we don't have an existing one.
-        obj = self._create_or_reuse_resource(for_type=for_type, parent_value=parent_value)
+        # Allocate a blank object if we have no parent-value to use.
+        if parent_value is None:
+            obj = for_type()
+            self._dependencies[for_type] = obj
+            return obj
 
         # Store in self for future reuse.
-        self._dependencies[for_type] = obj
-        return obj
-
-    def _create_or_reuse_resource(
-            self,
-            *,
-            for_type: Type[T],
-            parent_value: Union['Dependency', Any, None] = None
-    ) -> T:
-        """
-        This tries to reuse parent_value if possible;
-        otherwise will create new dependency of `for_type` and returns it.
-
-        Args:
-            for_type: A class/type to create if needed.
-            parent_value: If `parent_value` is not None and inherits from `Dependency`
-                will ask parent_value to decide if it wants to reuse it's self or create a
-                new dependency object.
-
-                See `udepend.dependency.Dependency.dependency_for_child_context`
-                for more details if you want to customize this behavior.
-        """
-        from udepend import Dependency
-        try:
-            # Allocate a blank object if we have no parent-value to use.
-            if parent_value is None:
-                return for_type()
-
-            # If we have a context-dependency AND a parent_value;
-            # then ask parent_value Dependency to do whatever it wants to do.
-            # By default, `udepend.dependency.Dependency.dependency_for_child_context`
-            # returns `self`
-            #   to reuse dependency value.
-            if parent_value and isinstance(parent_value, Dependency):
-                return parent_value.dependency_for_child_context(child_context=self)
-        except TypeError as e:
-            # Python will add the `e` as the `from` exception to this new one.
-            raise UDependError(
-                f"I had trouble creating/getting dependency ({for_type}) due to TypeError({e})."
-            )
-
-        # If we have a parent value that is not a `udepend.dependency.Dependency`;
-        # default to reusing it:
+        self._cached_parent_dependencies[for_type] = parent_value
         return parent_value
 
     def resource_chain(
@@ -1131,18 +1115,29 @@ class UContext:
     def __exit__(self, *args, **kwargs):
         # Makes it possible to use a UContext object in a `with UContext():` statement.
         token = self._reset_token_stack.pop()
+
         current_context = UContext.current()
 
-        # Doing this to be extra-cautious, UContext should dynamically lookup current
+        assert current_context is self, (
+            f"A UContext ({self}) was exited, and was not current context ({current_context})"
+        )
+
+        assert not self._reset_token_stack, (
+            f"A UContext ({self}) was exited, and there was still a reset-token on stack."
+        )
+
+        # Doing this to be extra-cautious, UContext should dynamically look up current
         # context if it's not active anymore
         # (ie: outside-of / not in python ContextVar: `_current_context_contextvar`).
         #
         # Reset context that is not active anymore back to Default if it had a parent.
         # if the parent is None, it should remain as None.
         # A `Default` parent means it looks up parent dynamically each time (to the current one).
-        if current_context._parent:
-            current_context._parent = Default
-            current_context._reset_caches()
+        if self._parent:
+            # Remove self from children, reset parent/caches.
+            self._parent._children.remove(self)
+            self._parent = Default
+            self._reset_caches()
 
         _current_context_contextvar.reset(token)
 
@@ -1157,7 +1152,7 @@ class UContext:
         OR
 
         >>> my_context = UContext()
-        >>> my_context.add_resource(Dependency())
+        >>> my_context.add(Dependency())
         >>>
         >>> @my_context
         >>> def some_method():
@@ -1324,6 +1319,11 @@ class UContext:
         self._cached_context_chain = None
         self._cached_parent_dependencies.clear()
 
+    def _remove_cached_dependency_and_in_children(self, dependency_type: Type):
+        self._cached_parent_dependencies.pop(dependency_type)
+        for child in self._children:
+            child._remove_cached_dependency_and_in_children(dependency_type)
+
     _cached_context_chain = None
     _cached_parent_dependencies: dict = None
 
@@ -1361,6 +1361,8 @@ class UContext:
     _parent: 'Union[UContext, _TreatAsRootParent, None]' = None
     _originally_passed_none_for_parent = True
     """ Used internally to know if None was passed as my parent value originally. """
+
+    _children: Set['UContext'] = None
 
     _func = None
     """ Used if UContext is used as a function decorator directly, ie:

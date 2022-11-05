@@ -115,7 +115,7 @@ module_level_context = UContext(
 @module_level_context
 def test_module_level_context(glazy_test_context):
     # `context` is the base-context
-    UContext.current().add_resource(1.2)
+    UContext.current().add(1.2)
     assert UContext.current(for_type=float) == 1.2
 
     # Ensure that when we used the module-level-context, ensure it still uses the current
