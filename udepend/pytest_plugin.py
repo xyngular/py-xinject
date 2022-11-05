@@ -9,7 +9,7 @@ Auto-loaded common fixtures for helping with unit-testing.
 
     You should be able to use any of these fixtures without importing them.
     This is accomplished via the setup.py file in udepend, it tells pytest about the
-    `udepend.fixtures` module so it can load them automatically.
+    `udepend.fixtures` module, so it can load them automatically.
 
 
     For `glazy_test_context` fixture it's self... it's an auto-use fixture,

@@ -112,7 +112,7 @@ from udepend import Dependency
 # it as a semi-singleton shared dependency/resource.
 class MyResource(Dependency):
 
-    # It's important to allow resources to be allocated with
+    # It's important to allow dependencies to be allocated with
     # no required init arguments.
     # That way a default-instance/version of the class can
     # easily be created lazily.

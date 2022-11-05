@@ -26,7 +26,7 @@ my_class_via_proxy_method = MyClass.proxy()
 
 def test_proxy_wrapper():
     for current_class in [my_class, my_class_via_proxy_method]:
-        with UContext(resources=[MyClass()]):
+        with UContext(dependencies=[MyClass()]):
             assert_myclass("b")
 
             current_class.my_prop = "c"
@@ -51,7 +51,7 @@ def assert_myclass(param):
 
 def test_shared_threaded_resource():
     # Test to ensure that the app-root and thread-root work correctly with
-    # thread safe/unsafe resources.
+    # thread safe/unsafe dependencies.
 
     class ThreadSharableDependency(Dependency):
         hello = "1"
@@ -96,6 +96,6 @@ def test_shared_threaded_resource():
     # Wait for thread to finish
     other_thread.join()
 
-    # Check to see if the thread safe/unsafe resources worked correctly.
+    # Check to see if the thread safe/unsafe dependencies worked correctly.
     assert thread_out_sharable == "3"
     assert thread_out_nonsharable == "a"

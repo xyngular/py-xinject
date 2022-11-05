@@ -11,9 +11,9 @@ If you have not already, to get a nice high-level overview of library see either
 - Or go to glazy module documentation at here:
     - [glazy, How To Use](./#how-to-use)
 
-## Resource Refrence Summary
+## Dependency Refrence Summary
 
-Allows you to create subclasses that act as sharable resources.
+Allows you to create subclasses that act as sharable dependencies.
 Things that should stick around and should be created lazily.
 
 Also allows code to temporarily create, customize and activate a resource if you don't want
@@ -30,8 +30,8 @@ and yet each one can take advantage of the shared resource.
 
 This means that Resource can also help with simple dependency injection use-case scenarios.
 
-## Resources
-[resources]: #resources
+## Dependencies
+[dependencies]: #dependencies
 
 ### Get Current
 There are various ways to get current resource.
@@ -137,7 +137,7 @@ class Dependency:
 
     ## Summary
 
-    Allows you to create subclasses that act as sharable resources.
+    Allows you to create subclasses that act as sharable dependencies.
     Things that should stick around and should be created lazily.
 
     Also allows code to temporarily create, customize and activate a resource if you don't want
@@ -160,12 +160,12 @@ class Dependency:
     ## Overview
 
     A `Resource` represents an object in a `glazy.context.UContext`.
-    Generally, resources that are added/created inside a `UContext` inherit from this abstract base
+    Generally, dependencies that are added/created inside a `UContext` inherit from this abstract base
     `Resource` class, but are not required too. `Resource` just adds some class-level
     conveince methods and configuratino options. Inheriting from Resource also helps
     self-document that it's a Resource.
 
-    See [Resources](#resources) at top of this module for a general overview of how resources
+    See [Resources](#dependencies) at top of this module for a general overview of how dependencies
     and `UContext`'s work. You should also read the glazy project's
     [README.md](https://github.com/xyngular/py-glazy#active-resource-proxy) for a high-level
     overview.  The text below is more like plain refrence matrial.
@@ -188,7 +188,7 @@ class Dependency:
     we will do our best to ensure that the same object instance is returned every time
     (there are two exceptions, keep reading).
 
-    These resources are stored in the current `UContext`'s parent.  What happens is:
+    These dependencies are stored in the current `UContext`'s parent.  What happens is:
 
     If the current `UContext` and none of their parents have this object and it's asked for
     (like what happens when `Resource.resource` is called on it)...
@@ -242,11 +242,11 @@ class Dependency:
 
     By default, unit tests always create a new blank `UContext` with `parent=None`.
     THis is done by an autouse fixture (`glazy.fixtures.context`)
-    THis forces every unit test run to create new resources when they are asked for (lazily).
+    THis forces every unit test run to create new dependencies when they are asked for (lazily).
 
     This fixture is used automatically for each unit test, it provides a blank root-context
     for each run of a unit test. That way it will recreated any shared resource each time
-    and a unit test can't leak resources it added or changed into the next run.
+    and a unit test can't leak dependencies it added or changed into the next run.
 
     One example of why this is good is for `moto` and `xyn_aws.dynamodb.DynamoDB`.
     This ensures that we get a new dynamodb shared resource from `boto` each time
@@ -255,13 +255,13 @@ class Dependency:
 
     What I mean by a new blank root-context is that there is nothing in it and it has not
     parent context.  So there are no pre-existing resource that are visible.
-    so the older resources that may have already existed won't be used while that
+    so the older dependencies that may have already existed won't be used while that
     blank new root-context is the currently active (or any children of it) the old
     resource will be hidden and not used.
 
     This is exactly what we want for each unit test run.
 
-    When the application runs for real though, we do generally want to use the resources in a
+    When the application runs for real though, we do generally want to use the dependencies in a
     shared fashion.  So normally we only allocate a new blank-root `@UContext(parent=None)`
     either at the start of a normal application run, or during a unit-test.
     """
@@ -271,7 +271,7 @@ class Dependency:
         we will skip copying them for you (via `Dependency.__copy__` and `Dependency.__deepcopy__`).
 
         We ourselves need to skip copying a specific internal property,
-        and there are other resources that need to do the same thing.
+        and there are other dependencies that need to do the same thing.
 
         This is an easy way to accomplish that goal.
 
@@ -436,7 +436,7 @@ class Dependency:
 
         It will go through and call this method on each dependency in the original 'template' context.
         By default, we simply return self
-        (generally, UContext resources are usually treated as singletons, and UContext tries to
+        (generally, UContext dependencies are usually treated as singletons, and UContext tries to
         maintain that).
 
         If a `Dependency` needs to do more, they can override us
@@ -453,7 +453,7 @@ class Dependency:
 
         `Dependency` overrides the default copy operation to shallow copy everything,
         except it will make a new instance for dict/lists
-        (so old a new resources don't share the same list/dict instance).
+        (so old a new dependencies don't share the same list/dict instance).
 
         If you want different behavior, then override.
 
@@ -519,9 +519,9 @@ class Dependency:
             self._context_manager_stack = []
 
         # We make a new UContext object, and delegate context-management duties to it.
-        context = UContext(resources=self)
+        context = UContext(dependencies=self)
         self._context_manager_stack.append(context)
-        context.__enter__(use_a_copy_of_self=False)
+        context.__enter__()
         return self
 
     def __exit__(self, *args, **kwargs):

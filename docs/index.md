@@ -44,7 +44,7 @@ from udepend import Dependency
 # is to treat it as a semi-singleton shared dependency.
 class MyUniversalDependency(Dependency):
 
-  # It's important to allow resources to be allocated with
+  # It's important to allow dependencies to be allocated with
   # no required init arguments.
   # That way a default-instance/version of the class can
   # easily be created lazily.

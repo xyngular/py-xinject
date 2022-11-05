@@ -28,7 +28,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.plugins]
-# Pytest plugin to support automatic clearing of all current dependency resources between each test.
+# Pytest plugin to support automatic clearing of all current dependency dependencies between each test.
 pytest11 = {glazy_pytest_plugin = "glazy.pytest_plugin"}
 
 [tool.black]

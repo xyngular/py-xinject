@@ -30,25 +30,25 @@ def test_ensure_pytest_plugin_context_autouse_fixture_working():
     assert UContext.current() is not module_level_context
 
     # Ensure we have no items in the UContext, that it is indeed blank.
-    assert len(UContext.current()._resources) == 0
+    assert len(UContext.current()._dependencies) == 0
 
     # Ensure app-root context also has no items in it, that it's blank.
-    assert len(UContext.current().parent._resources) == 0
+    assert len(UContext.current().parent._dependencies) == 0
 
 
 # noinspection PyTypeChecker
 # NOTE: This is not how you would normally do this, normally you would do:
 #       >>> @SomeDependency(my_name='first-name')
-#       Doing it this way to test out giving initial resources to a new UContext directly
+#       Doing it this way to test out giving initial dependencies to a new UContext directly
 #       instead of indirectly.
-@UContext(resources=[SomeDependency(my_name='first-name')])
+@UContext(dependencies=[SomeDependency(my_name='first-name')])
 def test_decorator_on_context_object():
     first_resource = SomeDependency.grab()
     assert first_resource.my_name == 'first-name'
     decorated_context = UContext.current()
 
     new_resource = SomeDependency(my_name='new-name')
-    with UContext(resources=[new_resource]) as with_context:
+    with UContext(dependencies=[new_resource]) as with_context:
         assert with_context is not decorated_context, "Should be new context"
         # I created new UContext and manually added new instance of SomeDependency;
         # check to see if it's the current dependency and looks intact.
@@ -70,7 +70,7 @@ def test_decorator_on_context_object():
 def test_context_and_with():
     root_context = UContext.current()
 
-    context_1 = UContext(resources=[2])
+    context_1 = UContext(dependencies=[2])
 
     def verify_current_context_is_copy():
         copied_context = UContext.current()
@@ -82,8 +82,8 @@ def test_context_and_with():
         # currently active UContext.
         assert context_1.parent is copied_context
 
-        # Ensure resources at copied.
-        assert copied_context._resources == {int: 2}
+        # Ensure dependencies at copied.
+        assert copied_context._dependencies == {int: 2}
 
     with context_1 as copied_context:
         # When we use UContext via `@` or `with` or `make_current`, they should copy the
@@ -100,7 +100,7 @@ def test_context_and_with():
 
 
 module_level_context = UContext(
-    resources=[
+    dependencies=[
         20,
         "hello-str",
         SomeDependency(my_name="start-name")
@@ -125,9 +125,9 @@ def test_module_level_context(glazy_test_context):
     assert module_level_context is not UContext.current()
 
     # Ensure that we have not float dependency in the outer-module version (since create=False).
-    assert float not in module_level_context._resources
+    assert float not in module_level_context._dependencies
 
-    # See if the copied-context has the same resources still
+    # See if the copied-context has the same dependencies still
     assert SomeDependency.grab().my_name == "start-name"
     assert UContext.current(for_type=int) == 20
     assert UContext.current(for_type=str) == "hello-str"
@@ -135,12 +135,12 @@ def test_module_level_context(glazy_test_context):
 
 def test_initial_context_resources_with_dict():
     my_context = UContext(
-        resources={int: 'string-as-int-dependency', float: False, SomeDependency: 'str-instead'}
+        dependencies={int: 'string-as-int-dependency', float: False, SomeDependency: 'str-instead'}
     )
 
     with my_context:
         # SomeDependency was replaced by a direct-string 'str-instead', testing replacing
-        # resources with a completely different type (if you want to mock/test something specific).
+        # dependencies with a completely different type (if you want to mock/test something specific).
         assert SomeDependency.grab() == 'str-instead'
         assert UContext.current(for_type=int) == 'string-as-int-dependency'
         assert UContext.current(for_type=float) is False
@@ -184,10 +184,10 @@ def test_each_unit_test_starts_with_a_single_parentless_root_like_context():
     assert unit_test_root_context.parent.parent is None
 
     # Ensure we have no items in the UContext, that it is indeed blank.
-    assert len(unit_test_root_context._resources) == 0
+    assert len(unit_test_root_context._dependencies) == 0
 
     # Ensure app-root context also has no items in it, that it's blank
-    assert len(unit_test_root_context.parent._resources) == 0
+    assert len(unit_test_root_context.parent._dependencies) == 0
 
     # Ensure that when we use the root-like blank unit test context inside a `with` statement,
     # we have a new context with it's parent set at our root-like blank unit test context.

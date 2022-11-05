@@ -16,10 +16,10 @@ If you have not already, to get a nice high-level overview of library see either
 
 ## Please Read First
 
-If your looking for a simple example/use of singltone-like resources,
+If your looking for a simple example/use of singltone-like dependencies,
 go to `glazy.resource.Resource`.
 
-The whole point of the `udepend.context.UContext` is to have a place to get shared resources.
+The whole point of the `udepend.context.UContext` is to have a place to get shared dependencies.
 
 Normally, code will use some other convenience methods, as an example:
 
@@ -54,12 +54,12 @@ utilize more advance use-cases. I get into some of these advanced use-cases belo
 
 # Context Overview
 
-Context is used to keep track of a set of resources. The resources are keyed off the class
+Context is used to keep track of a set of dependencies. The dependencies are keyed off the class
 type. IE: One resource per-context per-resource-type.
 
 Main Classes:
 
-- `udepend.context.UContext`: Container of resources, mapped by type.
+- `udepend.context.UContext`: Container of dependencies, mapped by type.
 - For Resource Subclasses:
     - `glazy.resource.Resource`: Nice interface to easily get the current resource.
         Used to implment a something that should shared and not generally duplicated,
@@ -67,20 +67,20 @@ Main Classes:
 
 # Fundamentals
 
-`udepend.context.UContext` is like a container, used to store various objects we are calling resources.
+`udepend.context.UContext` is like a container, used to store various objects we are calling dependencies.
 
-Used to store various resources of any type  in general [ie: configs, auths, clients, etc].
-All of these resources together represent a sort of "context" from which various pieces of code
+Used to store various dependencies of any type  in general [ie: configs, auths, clients, etc].
+All of these dependencies together represent a sort of "context" from which various pieces of code
 can easily get them; that way they can 'share' the resource when appropriate. This is a way
 to do dependcy injection in a easier and more reliable way since you don't have to worry
-about passing these resources around everywhere manually.
+about passing these dependencies around everywhere manually.
 
 The values are mapped by their type.  When a resource of a specific type is asked for,
 the Context will return it if it find it. If not found it will create it, add it to it's self
 and return it. Future calls will return this new resource.
 
 `udepend.context.UContext` can optionally have a parent. By default, a newly created/used Context will use
- the current context Normally, resources are still normally created even if a
+ the current context Normally, dependencies are still normally created even if a
 parent has a value, as long as the current context does not have one yet.
 
 This behavior can be customized by the resource, see one of these for details:
@@ -90,10 +90,10 @@ This behavior can be customized by the resource, see one of these for details:
         version of it.
 
 
-## Resources
-[resources]: #resources
+## Dependencies
+[dependencies]: #dependencies
 
-There are various ways to get resources from the current context. Let's say we have
+There are various ways to get dependencies from the current context. Let's say we have
 a resource called `SomeResourceType`:
 
 >>> next_identifier = 0
@@ -124,7 +124,7 @@ saw in the previous example.
 `Context.current()` will return the current Context if no params are passed in, or if a
 type is passed in, it will return the current Context's resource for the passed in type.
 
-This means another way to grab resources is to get the current `Context.current`,
+This means another way to grab dependencies is to get the current `Context.current`,
 and then ask it for the resource like below. This works for any type, including
 types that don't inherit from `glazy.resource.Resource`:
 
@@ -179,7 +179,7 @@ the copy is what is made current/activated (see `Context.__copy__` for more deta
 4. When running a unit-test where glazy is installed as a dependcy,
     because the `glazy.ptest_plugin.glazy_test_context` fixture is auto-used in this case.
     This fixture creates a new Context with a None parent;
-    that will isolate resources between each run of a unit test method.
+    that will isolate dependencies between each run of a unit test method.
 
 ### Examples
 
@@ -236,8 +236,8 @@ See below for more advanced usage patterns.
 
 A Context can have a parent (`Context.parent`) or event a chain of them (`Context.parent_chain`)
 
-Because it's the safest thing to do by default for naive resources, Context's normally don't
-consult parents for basic resources, they will just create them if they don't already have them.
+Because it's the safest thing to do by default for naive dependencies, Context's normally don't
+consult parents for basic dependencies, they will just create them if they don't already have them.
 
 You can customize this behavior. There are some default resource base classes that will implment
 a few common patterns for you. You can see how they work to get ideas, and customize the process
@@ -275,7 +275,7 @@ See [Activating New Resource](#activating-new-resource) for more details.
 
 #### Example
 
-I create a new class that uses our previous [SomeResourceType][resources] but adds in a
+I create a new class that uses our previous [SomeResourceType][dependencies] but adds in a
 `glazy.resource.Resource`.
 
 >>> class MySingleton(SomeResourceType, Dependency):
@@ -376,6 +376,7 @@ class UContext:
     See [Quick Start](#quick-start) in the `udepend.context` module if your new to the UContext
     class.
     """
+    copy_as_template = False
 
     @classmethod
     def current(cls, for_type: Union[Type[C], "UContext"] = None) -> Union[C, "UContext"]:
@@ -399,78 +400,6 @@ class UContext:
     def _current_without_creating_thread_root(cls):
         return _current_context_contextvar.get()
 
-    def make_current(self) -> 'UContext':
-        """
-        Read [Quick Start](#quick-start) first if you don't know anything about how `udepend.context.UContext`
-        works.
-
-        Makes a **copy** of this Context object (which I will return), and makes that copy the
-        current one the current thread until:
-
-        1. Another Context object is made current.
-        2. If while calling `make_current` the current context is temporary. Once the current
-           context is not temporary anymore, the current context reverts back to what it was
-           before that change happened. ie:
-
-        .. note:: See `Context.__copy__` for more details on copying aspect.
-
-        Example of this via a 'with'`' statement:
-        >>> before_context = UContext.current()
-        >>> with UContext() as my_context:
-        ...    assert UContext.current() is my_context
-        ...    another_context = UContext()
-        ...    active_context_copy = another_context.make_current()
-        ...    assert UContext.current() is active_context_copy
-        >>> assert UContext.current() is before_context
-
-        Example of this via a '@' method decorator statement:
-
-        >>>
-        >>> before_int_resource_value = UContext.current(for_type=int)
-        >>> method_context = UContext(resources=[20])
-        >>>
-        >>> # This dectorator will make a copy of `method_context` each time `my_method` is called.
-        >>> @method_context
-        >>> def my_method():
-        ...     assert UContext.current(for_type=int) == 20
-        ...     another_context = UContext(resources=[19])
-        ...     another_context.make_current()
-        ...     assert UContext.current(for_type=int) == 19
-        ...     # After method exits, due to `@method_context` the previous context
-        ...     # state will be restored.
-        >>> assert UContext.current(for_type=int) == before_int_resource_value
-
-        ## Other Notes
-
-        If you want to have a config object only temporarily current for the current thread,
-        use it in a with statement:
-
-        >>> with UContext() as my_context:
-        ...     assert UContext.current() is my_context
-        ... assert UContext.current() is not my_context
-
-        Or as a method decorator:
-
-        >>> some_context = UContext()
-        >>> @some_context:
-        >>> def my_method()
-        ...     # Current context will be copy of `some_context` (with it's resources intact).
-
-        If you use this method, it will make current permanently a copy of the 'current' context.
-
-        Normally you would avoid make a context 'permanet' unless your trying to setup
-        something special at the start of the application.
-
-        Normally using the pre-allocated/existing permanet root context, or a temporary one via
-        dectorator `@` / `with` statement is the way to go.
-
-        Using `make_current` is more useful for situations where you are setting
-        up a new "default" context for entire app, that you want everything in the project to
-        generally use that would sit on top of the pre-allocated root-context.
-        """
-        new_ctx = copy(self)
-        new_ctx._make_current_and_get_reset_token()
-        return new_ctx
 
     def _make_current_and_get_reset_token(
         self,
@@ -565,7 +494,7 @@ class UContext:
         # lookup current active context and make that our 'parent' temporarily (ie: dynamically),
         # next time we are asked it could change. That's fine as long as we are not 'active'.
         #
-        # Honestly, looking up resources with a non-active context should be pretty rare,
+        # Honestly, looking up dependencies with a non-active context should be pretty rare,
         # I am allowing it for more of completeness at this point then anything else.
         # However, it might be more useful at some point.
         if parent is Default:
@@ -597,12 +526,13 @@ class UContext:
 
     def __init__(
             self, __func=None, *,
-            resources: Union[Dict[Type, Any], List[Any], Any] = None,
+            dependencies: Union[Dict[Type, Any], List[Any], Any] = None,
             parent: Union[DefaultType, _TreatAsRootParentType, None] = Default,
-            name: str = None
+            name: str = None,
+            copy_as_template: bool = False
     ):
         """
-        You can give an initial list of resources
+        You can give an initial list of dependencies
         (if desired, most of the time you just start with a blank context).
 
         for `parent`, it can be set to `guards.default.Default` (default value); or to `None.
@@ -615,7 +545,7 @@ class UContext:
 
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
-        method resources from other unit tests. Right now, the unit-test Dependency isolation
+        method dependencies from other unit tests. Right now, the unit-test Dependency isolation
         happens automatically via an auto-use fixture (`udepend.ptest_plugin.glazy_test_context`).
 
         A non-activated context will return `guards.default.Default` as it's `UContext.parent`
@@ -623,11 +553,11 @@ class UContext:
         otherwise we return `None` (if it was created that way).
 
         Args:
-            resources (Union[Dict[Type, Any], List[Any], Any]): If you wish to have the
-                `UContext` your creating have an initial list of resources you can pass them
+            dependencies (Union[Dict[Type, Any], List[Any], Any]): If you wish to have the
+                `UContext` your creating have an initial list of dependencies you can pass them
                 in here.
 
-                It can be a single Dependency, or a list of resources, or a mapping of resources.
+                It can be a single Dependency, or a list of dependencies, or a mapping of dependencies.
 
                 Mainly useful for unit-testing, but could be useful elsewhere too.
 
@@ -641,7 +571,7 @@ class UContext:
                 This allows you to map some standard Dependency type into a completely different
                 type (useful for unit-testing).
 
-                By default, no resources are initially added to a new UContext.
+                By default, no dependencies are initially added to a new UContext.
 
             parent (Union[guards.default.Default, _TreatAsRootParent, None]): If we should use
                 `guards.default.Default`, treat this as a root-like UContext, or use None as
@@ -712,9 +642,11 @@ class UContext:
         if name:
             self._name = f'{self._name}-{name}'
 
+        self.copy_as_template = copy_as_template
         self._reset_token_stack = []
-        self._resources = {}
+        self._dependencies = {}
         self._parent = None
+        self._cached_parent_dependencies = {}
 
         if parent is Default:
             self._parent = Default
@@ -732,18 +664,18 @@ class UContext:
                 f"when creating a new UContext, got ({parent}) instead."
             )
 
-        # Add any requested initial resources.
-        if isinstance(resources, dict):
+        # Add any requested initial dependencies.
+        if isinstance(dependencies, dict):
             # We have a mapping, use that....
-            for for_type, resource in resources.items():
+            for for_type, resource in dependencies.items():
                 self.add_resource(resource, for_type=for_type)
-        elif isinstance(resources, list):
+        elif isinstance(dependencies, list):
             # We have one or more Dependency values, add each one.
-            for resource in resources:
+            for resource in dependencies:
                 self.add_resource(resource)
-        elif resources is not None:
+        elif dependencies is not None:
             # Otherwise, we have a single Dependency value.
-            self.add_resource(resources)
+            self.add_resource(dependencies)
 
     # todo: Make it so if there is a parent context, and the current config has no property
     # todo: it can ask the UContext for the parent config to see if it has what is needed.
@@ -767,7 +699,7 @@ class UContext:
 
         As as side-note, you can easily add resources to a new `udepend.context.UContext` via:
 
-        >>> @UContext(resources=[2])
+        >>> @UContext(dependencies=[2])
         >>> def some_method()
         ...     print(f"my int dependency: {UContext.dependency(int)}")
         Output: "my int resource: 2"
@@ -818,14 +750,14 @@ class UContext:
         if for_type is not None:
             resource_type = for_type
 
-        if resource_type in self._resources:
+        if resource_type in self._dependencies:
             if skip_if_present:
                 return self
             # todo: complete/figure out comment!
             # if not rep
             raise UDependError(f"Trying to add dependency ({resource}), but already have one!")
 
-        self._resources[resource_type] = resource
+        self._dependencies[resource_type] = resource
         return self
 
     def resource(
@@ -835,7 +767,7 @@ class UContext:
 
         ## Summary
 
-        The whole point of the `udepend.context.UContext` is to have a place to get shared resources. This method
+        The whole point of the `udepend.context.UContext` is to have a place to get shared dependencies. This method
         is the primary way to get a shared resource from a Contet directly
 
         Normally, code will use some other convenience methods, as an example:
@@ -866,11 +798,11 @@ class UContext:
 
         ## Advanced Usage for Unit Tests
 
-        You can allocate a new Context to inject or customize resources. When the context is
+        You can allocate a new Context to inject or customize dependencies. When the context is
         thrown away or otherwise is not the current context anymore, the idea is whatever
         resource you made temporarily active is forgotten.
 
-        You can inject/replace resources as needed for unit-testing purposes as well by simply
+        You can inject/replace dependencies as needed for unit-testing purposes as well by simply
         adding the resource to a new/blank `udepend.context.UContext` as a diffrent type, see example below.
 
         In this example, we add a value of int(20) for the `str` resource type.
@@ -929,7 +861,7 @@ class UContext:
         """
 
         # If we find it in self, use that; no need to check anything else.
-        obj = self._resources.get(for_type, None)
+        obj = self._dependencies.get(for_type, None)
         if obj is not None:
             return obj
 
@@ -987,7 +919,7 @@ class UContext:
         obj = self._create_or_reuse_resource(for_type=for_type, parent_value=parent_value)
 
         # Store in self for future reuse.
-        self._resources[for_type] = obj
+        self._dependencies[for_type] = obj
         return obj
 
     def _create_or_reuse_resource(
@@ -1036,7 +968,7 @@ class UContext:
             self, for_type: Type[ResourceTypeVar], create: bool = False
     ) -> Iterable[ResourceTypeVar]:
         """
-        Returns a python generator yielding resources in self and in each parent;
+        Returns a python generator yielding dependencies in self and in each parent;
         returns them in order.
 
         This won't create a dependency if none exist unless you pass True into `create`, so it's
@@ -1047,7 +979,7 @@ class UContext:
 
             Not normally used elsewhere. It can help the udepend.dependency.Dependency`
             subclass to find it's
-            list of parent resources to consult on it's own.
+            list of parent dependencies to consult on it's own.
 
             Real Example: `xyn_config.config.Config` uses this to construct it's parent-chain.
 
@@ -1065,7 +997,7 @@ class UContext:
                 yield resource
 
     def __copy__(self):
-        """ Makes a copy of self, gives an opportunity for resources to do something special
+        """ Makes a copy of self, gives an opportunity for dependencies to do something special
             while they are copied if needed via
             `udepend.dependency.Dependency.context_resource_for_copy`.
 
@@ -1101,19 +1033,19 @@ class UContext:
         # Blank context with the same parent configuration
         new_context = UContext(parent=parent)
 
-        # Copy current resources from self into new UContext;
+        # Copy current dependencies from self into new UContext;
         # This uses `self` as a template for the new UContext.
         # See doc comment on: `UContext.__call__` and
         # `udepend.dependency.Dependency.context_resource_for_copy`.
         new_resources = {}
-        for k, v in self._resources.items():
+        for k, v in self._dependencies.items():
             if isinstance(v, Dependency):
                 v = v.context_resource_for_copy(current_context=self, copied_context=new_context)
             else:
                 v = copy(v)
             new_resources[k] = v
 
-        new_context._resources = new_resources
+        new_context._dependencies = new_resources
         # Reset context chain cache, if anything was cached in it.
         new_context._reset_caches()
         return new_context
@@ -1121,10 +1053,10 @@ class UContext:
     def __deepcopy__(self, memo):
         """
         Used to make a deepcopy of self via `copy.deepcopy(some_context)`,
-        This will in-turn deep-copy all resources currently in self.
+        This will in-turn deep-copy all dependencies currently in self.
 
         At the moment, this is not really used. I considered using this for
-        unit tests but decided to use an autouse context to setup the needed resources
+        unit tests but decided to use an autouse context to setup the needed dependencies
         instead.
 
         for now I am just making this method private, as it still works just fine in
@@ -1147,12 +1079,21 @@ class UContext:
         """ Convenience method to easily shallow-copy a UContext, calls `return copy.copy(self)`.
             Used when you activate a UContext via a decorator or `with` statement.
 
-            When a UContext is activate, it is copied and then the copy is set to active.
+            When a UContext is activated, it is copied and then the copy is set to active.
         """
         return copy(self)
 
-    def __enter__(self, use_a_copy_of_self: bool = True):
-        """ Used to make a Context usable as a ContextManager via `with` statement.
+    def __enter__(self):
+        """
+        Used to make a Context usable as a ContextManager via `with` statement.
+
+        If self.copy_as_template is True, will make a copy of self, activate that and return
+        that context.
+
+        Otherwise, will activate self, and return self.
+        You MUST ensure that a context that is directly activated and with no
+        copy made is not currently active right now.
+
             We will copy self and then activate the copy, returning the copy as the
             output of the with statement.
 
@@ -1165,21 +1106,24 @@ class UContext:
             ...     assert UContext.current() is not some_context
 
             Args:
-                use_a_copy_of_self: If True (default): will make a copy of self,
-                    activate that and return that context
+                prevent_copying_self: If False (default): If self.copy_as_template is True, will
+                    make a copy of self, activate that and return that context.
 
-                    If False: Will activate self, and return self,
+                    If True: Even if `copy_as_template` is Will activate self, and return self,
                         You MUST ensure that a context that is directly activated and with no
                         copy made is not currently active right now.
 
                     Generally, `udepend.dependency.Dependency.__enter__` will set to this
-                    False because it always creates a blank context just for it's self.
-                    No need to create two context's.
+                    False because it always creates a blank context just for its self.
+                    No need to create two contexts (just an optimization).
         """
-        # We copy by default, but if requested we can use current context.
-        # It's safer to Copy, but if you know what your doing you can use current context
-        # instead of activating a copy of it.
-        new_ctx = self.copy() if use_a_copy_of_self else self
+        new_ctx = self
+        if self.copy_as_template:
+            new_ctx = self.copy()
+        # Check to make sure new_ctx is not currently active, if it is we either need to:
+        #   make a copy of self and activate that instead
+        #   raise an error.
+
         token = new_ctx._make_current_and_get_reset_token()
         self._reset_token_stack.append(token)
         return new_ctx
@@ -1191,7 +1135,7 @@ class UContext:
 
         # Doing this to be extra-cautious, UContext should dynamically lookup current
         # context if it's not active anymore
-        # (ie: outside of / not in python ContextVar: `_current_context_contextvar`).
+        # (ie: outside-of / not in python ContextVar: `_current_context_contextvar`).
         #
         # Reset context that is not active anymore back to Default if it had a parent.
         # if the parent is None, it should remain as None.
@@ -1229,7 +1173,7 @@ class UContext:
         we will use that as the template/starting-point each time `some_method` is called;
 
         What this means is that when `some_method` is called, and we create this new `udepend.context.UContext`
-        to use. The next `udepend.context.UContext` will get the same resources that are/were assigned to it;
+        to use. The next `udepend.context.UContext` will get the same dependencies that are/were assigned to it;
         whatever it is at the time `some_method` is called.
 
         This allows for more fine-control of what is in the `template` context, without
@@ -1283,7 +1227,7 @@ class UContext:
         # Our objective is to wrap a decorated function; such that when decorated method is called
         # we will activate a new context, keeping whatever objects are in `some_context`.
         # After function is done, we will throwaway the new context because it may have
-        # objects while `some_func` was running. We don't want to bring any resources
+        # objects while `some_func` was running. We don't want to bring any dependencies
         # created while function was running into future runs of the function.
         # We want to start fresh each time.
 
@@ -1359,7 +1303,7 @@ class UContext:
         return chain
 
     def __repr__(self, include_parent=True):
-        types_list = list(self._resources.keys())
+        types_list = list(self._dependencies.keys())
         if types_list and len(types_list) < 3:
             types_list = [t.__name__ for t in types_list]
             types = ';'.join(types_list)
@@ -1378,8 +1322,11 @@ class UContext:
             up next time they are asked for.
         """
         self._cached_context_chain = None
+        self._cached_parent_dependencies.clear()
 
     _cached_context_chain = None
+    _cached_parent_dependencies: dict = None
+
     _is_active = None
     """ This means at some point in the past we were 'activated' via one of these methods:
 
@@ -1395,7 +1342,7 @@ class UContext:
     """
 
     _reset_token_stack: List[contextvars.Token] = None
-    _resources: Dict[Type[Any], Any] = None
+    _dependencies: Dict[Type[Any], Any] = None
 
     _is_root_context_for_app = False
 
