@@ -14,7 +14,7 @@ Library's main focus is an easy way to create lazy universally injectable depend
 in less magical way. It also leans more on the side of making it easier to get
 the dependency you need anywhere in the codebase.
 
-u-depend allows you to easily inject universal resource dependencies into whatever code that needs them,
+u-depend allows you to easily inject universal dependency dependencies into whatever code that needs them,
 in an easy to understand and self-documenting way.
 
 ??? note "udepend is short for "Universal Dependency""
@@ -112,14 +112,14 @@ with MyUniversalDependency(name='injected-value'):
 
 # Overview
 
-The main class used most of the time is `udepend.resource.Dependency`,
+The main class used most of the time is `udepend.dependency.Dependency`,
 you can look at the doc-comment for that module and class for more details.
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
 we are calling resources here.
 These are also typically objects that should generally stick around and should be created lazily.
 
-Also allows code to temporarily create, customize and activate a resource if you don't want
+Also allows code to temporarily create, customize and activate a dependency if you don't want
 the customization to stick around permanently.
 You can do it without your or other code needing to be aware of each other.
 
@@ -129,7 +129,7 @@ as the 'current' version to use.
 The only coupling that takes place is to the Dependency sub-class it's self.
 
 Each separate piece of code can be completely unaware of each other,
-and yet each one can take advantage of the shared resource.
+and yet each one can take advantage of the shared dependency.
 
 This means that Dependency can also help with simple dependency injection use-case scenarios.
 
@@ -148,13 +148,13 @@ This means that Dependency can also help with simple dependency injection use-ca
 
 ## Example Use Cases
 
-- Network connection and/or a remote resource/client.
-  - You can wrap these objects in a `resource`, the resource provides the object.
+- Network connection and/or a remote dependency/client.
+  - You can wrap these objects in a `dependency`, the dependency provides the object.
   - Objects to wrap are 'client' like things, and allow you to communicate with some external system.
   - Very common for these objects to represent an already-open network connection,
     So there are performance considerations to try and keep connection open and to reuse it.
   - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
-    allows you to lazily get a shared aws client/resource.
+    allows you to lazily get a shared aws client/dependency.
     - It also uses a more advance feature, CurrentDependencyProxy, to represent boto resources/clients
       that are importable into other modules and directly usable.
 - Common configuration or setting values

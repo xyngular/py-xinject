@@ -50,13 +50,13 @@ then this library could come in use for your situation.
 
 #### Example Use Cases
 
-- Network connection and/or a remote resource/client.
-  - You can wrap these objects in a `resource`, the resource provides the object.
+- Network connection and/or a remote dependency/client.
+  - You can wrap these objects in a `dependency`, the dependency provides the object.
   - Objects to wrap are 'client' like things, and allow you to communicate with some external system.
   - Very common for these objects to represent an already-open network connection,
     So there are performance considerations to try and keep connection open and to reuse it.
   - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
-    allows you to lazily get a shared aws client/resource.
+    allows you to lazily get a shared aws client/dependency.
     - It also uses a more advance feature, CurrentDependencyProxy, to represent boto resources/clients
       that are importable into other modules and directly usable.
 - Common configuration or setting values
@@ -81,14 +81,14 @@ then this library could come in use for your situation.
 
 ### Overview
 
-The main class used most of the time is `glazy.resource.Dependency`,
+The main class used most of the time is `glazy.dependency.Dependency`,
 you can look at the doc-comment for that module and class for more details.
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
 we are calling resources here.
 These are also typically objects that should generally stick around and should be created lazily.
 
-Also allows code to temporarily create, customize and activate a resource if you don't want
+Also allows code to temporarily create, customize and activate a dependency if you don't want
 the customization to stick around permanently.
 You can do it without your or other code needing to be aware of each other.
 
@@ -98,7 +98,7 @@ as the 'current' version to use.
 The only coupling that takes place is to the Dependency sub-class it's self.
 
 Each separate piece of code can be completely unaware of each other,
-and yet each one can take advantage of the shared resource.
+and yet each one can take advantage of the shared dependency.
 
 This means that Dependency can also help with simple dependency injection use-case scenarios.
 
@@ -109,7 +109,7 @@ from udepend import Dependency
 
 
 # This is a example Dependency class, the intent with this class is to treat 
-# it as a semi-singleton shared dependency/resource.
+# it as a semi-singleton shared dependencydependency/resource.
 class MyResource(Dependency):
 
     # It's important to allow dependencies to be allocated with
@@ -189,9 +189,9 @@ By default, each Dependency subclass will be shared between different threads,
 ie: it's assumed to be thread-safe.
 
 You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `glazy.resource.ThreadUnsafeResource` instead,
+by inheriting from `glazy.dependency.ThreadUnsafeResource` instead,
 or by setting the **class attribute** (on your custom sub-class of Dependency)
-`glazy.resource.Dependency.resource_thread_sharable` to `False`.
+`glazy.dependency.Dependency.resource_thread_sharable` to `False`.
 
 Things that are probably not thread-safe in general
 are resources that contain network/remote type connections/sessions/clients.
@@ -202,24 +202,24 @@ Concrete Examples In Code Base:
   - xyn_model_rest uses a Dependency to wrap requests library session, so it can automatically
     reuse connections on same thread, but use new session if on different thread.
     Also helps with unit testing, when Mocking requests URL calls.
-- boto client/resource
+- boto client/dependency
   - Library says it's not thread-safe, you need to use a diffrent object per-thread.
   - Moto mocking library for AWS services needs you to allocate a client after it's setup,
-    (so lazily allocate client/resource from boto).
+    (so lazily allocate client/dependency from boto).
   - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
     accomplish being both lazy and will allocate a new one per-thread for you automatically.
 
 ### Active Dependency Proxy
 
-You can use the convenience method `glazy.resource.Dependency.proxy` to easily get a
+You can use the convenience method `glazy.dependency.Dependency.proxy` to easily get a
 proxy object.
 
 Or you can use `glazy.proxy.CurrentDependencyProxy.wrap` to create an object that will act
-like the current resource.
+like the current dependency.
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
 This means you can call all non-special methods and access normal attributes,
-as if the object was really the currently active resource instance.
+as if the object was really the currently active dependency instance.
 
 Any methods/attributes that start with a `_` will not be used on the proxied object,
 but will be used on only the proxy-object it's self.
@@ -250,7 +250,7 @@ value = config.get('some_config_var')
 ```
 
 When you ask `config` for it's `get` attribute, it will get it from the current
-active resource for `Config`. So it's the equivalent of doing this:
+active dependency for `Config`. So it's the equivalent of doing this:
 
 ```python
 from xyn_config import Config

@@ -1,5 +1,5 @@
 """
-Manage shared resource and dependency injection.
+Manage shared dependency and dependency injection.
 
 
 # To Do First:
@@ -17,15 +17,15 @@ If you have not already, to get a nice high-level overview of library see either
 ## Please Read First
 
 If your looking for a simple example/use of singltone-like dependencies,
-go to `glazy.resource.Resource`.
+go to `glazy.dependency.Resource`.
 
 The whole point of the `udepend.context.UContext` is to have a place to get shared dependencies.
 
 Normally, code will use some other convenience methods, as an example:
 
-Most of the time a resource will inherit from `glazy.resource.Resource` and that
-class provides a class method `glazy.resource.Resource.resource` to easily get a
-resource of the inherited type from the current context as a convenience.
+Most of the time a dependency will inherit from `glazy.dependency.Resource` and that
+class provides a class method `glazy.dependency.Resource.dependency` to easily get a
+dependency of the inherited type from the current context as a convenience.
 
 So normally, code would do this to get the current object instance for a Resource:
 
@@ -35,8 +35,8 @@ So normally, code would do this to get the current object instance for a Resourc
 >>> # Normally code would do this to interact with current Dependency subclass object:
 >>> SomeResource.grab().my_attribute = "change-value"
 
-Another convenient way to get the current resource is via the
-`glazy.resource.CurrentDependencyProxy`. This class lets you create an object
+Another convenient way to get the current dependency is via the
+`glazy.dependency.CurrentDependencyProxy`. This class lets you create an object
 that always acts like the current/active object for some Resource.
 So you can define it at the top-level of some module, and code can import it
 and use it directly.
@@ -45,23 +45,23 @@ I would start with [Fundamentals](#fundamentals) if you know nothing of how `ude
 and want to learn more about how it works.
 
 Most of the time, you interact with Context indrectly via
-`glazy.resource.Resource`.  So getting familiar with Context is more about
+`glazy.dependency.Resource`.  So getting familiar with Context is more about
 utilize more advance use-cases. I get into some of these advanced use-cases below.
 
 .. important:: The below is for advanced use-cases and understanding.
-    Look at `glazy.resource.Resource` or docs just above ^^^ for the normal use-case and
+    Look at `glazy.dependency.Resource` or docs just above ^^^ for the normal use-case and
     examples / quick starts.
 
 # Context Overview
 
 Context is used to keep track of a set of dependencies. The dependencies are keyed off the class
-type. IE: One resource per-context per-resource-type.
+type. IE: One dependency per-context per-dependency-type.
 
 Main Classes:
 
 - `udepend.context.UContext`: Container of dependencies, mapped by type.
 - For Resource Subclasses:
-    - `glazy.resource.Resource`: Nice interface to easily get the current resource.
+    - `glazy.dependency.Resource`: Nice interface to easily get the current dependency.
         Used to implment a something that should shared and not generally duplicated,
         like a soft-singleton.
 
@@ -71,21 +71,21 @@ Main Classes:
 
 Used to store various dependencies of any type  in general [ie: configs, auths, clients, etc].
 All of these dependencies together represent a sort of "context" from which various pieces of code
-can easily get them; that way they can 'share' the resource when appropriate. This is a way
+can easily get them; that way they can 'share' the dependency when appropriate. This is a way
 to do dependcy injection in a easier and more reliable way since you don't have to worry
 about passing these dependencies around everywhere manually.
 
-The values are mapped by their type.  When a resource of a specific type is asked for,
+The values are mapped by their type.  When a dependency of a specific type is asked for,
 the Context will return it if it find it. If not found it will create it, add it to it's self
-and return it. Future calls will return this new resource.
+and return it. Future calls will return this new dependency.
 
 `udepend.context.UContext` can optionally have a parent. By default, a newly created/used Context will use
  the current context Normally, dependencies are still normally created even if a
 parent has a value, as long as the current context does not have one yet.
 
-This behavior can be customized by the resource, see one of these for details:
+This behavior can be customized by the dependency, see one of these for details:
 
-- `glazy.resource.Resource`
+- `glazy.dependency.Resource`
     - Useful for a shared/soft overridable shared object; where you can easily get the current
         version of it.
 
@@ -94,7 +94,7 @@ This behavior can be customized by the resource, see one of these for details:
 [dependencies]: #dependencies
 
 There are various ways to get dependencies from the current context. Let's say we have
-a resource called `SomeResourceType`:
+a dependency called `SomeResourceType`:
 
 >>> next_identifier = 0
 >>> class SomeResourceType(Dependency):
@@ -108,25 +108,25 @@ a resource called `SomeResourceType`:
     So the first SomeResoureType's `ident` will equal `0`,
     the second one created will be `1` and so forth.
 
-If what you want inherits from `glazy.resource.Resource`, it has a nice class method that
-returns the current resource.
-The easiest way to get the current resource for the type in this case is
-to call `glazy.resource.Resource.resource` on it's type like so:
+If what you want inherits from `glazy.dependency.Resource`, it has a nice class method that
+returns the current dependency.
+The easiest way to get the current dependency for the type in this case is
+to call `glazy.dependency.Resource.dependency` on it's type like so:
 
 >>> SomeResourceType.grab().some_value
 'hello!'
 >>> SomeResourceType.grab().ident
 0
 
-When a Context does not have the resource, by default it will create it for you, as you
+When a Context does not have the dependency, by default it will create it for you, as you
 saw in the previous example.
 
 `Context.current()` will return the current Context if no params are passed in, or if a
-type is passed in, it will return the current Context's resource for the passed in type.
+type is passed in, it will return the current Context's dependency for the passed in type.
 
 This means another way to grab dependencies is to get the current `Context.current`,
-and then ask it for the resource like below. This works for any type, including
-types that don't inherit from `glazy.resource.Resource`:
+and then ask it for the dependency like below. This works for any type, including
+types that don't inherit from `glazy.dependency.Resource`:
 
 >>> UContext.current().grab(SomeResourceType).some_value
 'hello!'
@@ -142,13 +142,13 @@ As you can see, it still returns the same object [ie: `ident == 0`]
 
 ## Activating New Resource
 
-You can easily create a new resource, configure it however you like and then 'activate' it
-so it's the current version of that resource.
-This allows you to 'override' and activate your own copy of a resource.
+You can easily create a new dependency, configure it however you like and then 'activate' it
+so it's the current version of that dependency.
+This allows you to 'override' and activate your own copy of a dependency.
 
 You can do it via one of the below listed methods/examples below.
 
-For these examples, say I have this resource defined:
+For these examples, say I have this dependency defined:
 
 >>> from dataclasses import dataclass
 >>> from udepend import Dependency
@@ -159,7 +159,7 @@ For these examples, say I have this resource defined:
 >>>
 >>> assert MyResource.grab().some_value == 'default-value'
 
-- Use desired `glazy.resource.Resource` subclass as a method decorator:
+- Use desired `glazy.dependency.Resource` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
@@ -207,12 +207,12 @@ be the default once more.
 0
 
 As you can see, after the method exits the old context takes over, and it already had the
-older version of the resource and so returns that one.
+older version of the dependency and so returns that one.
 
-By default, a context will create a resource when it's asked for it and it does not have it
+By default, a context will create a dependency when it's asked for it and it does not have it
 already. As you saw above, every time a blank Context was created, it also created a new
 SomeResourceType when it was asked for it because the new blank `udepend.context.UContext` did not already
-have the resource.
+have the dependency.
 
 
 >>> UContext().make_current()
@@ -228,7 +228,7 @@ With the context test fixture, it creates a brand new parent-less context every 
 
 
 
-There are ways to share resource in a parent Context that a new blank context would beable
+There are ways to share dependency in a parent Context that a new blank context would beable
 to use. But that's more advanced usage. The above should be enough to get you started quickly.
 See below for more advanced usage patterns.
 
@@ -239,9 +239,9 @@ A Context can have a parent (`Context.parent`) or event a chain of them (`Contex
 Because it's the safest thing to do by default for naive dependencies, Context's normally don't
 consult parents for basic dependencies, they will just create them if they don't already have them.
 
-You can customize this behavior. There are some default resource base classes that will implment
+You can customize this behavior. There are some default dependency base classes that will implment
 a few common patterns for you. You can see how they work to get ideas, and customize the process
-for your own resource when needed. See [Resource Base Classes][resource-base-classes] below for
+for your own dependency when needed. See [Resource Base Classes][dependency-base-classes] below for
 more details on how to do that.
 
 You can make an isolated Context by doing:
@@ -256,27 +256,27 @@ This is also how the Context test fixture works (see `glazy.ptest_plugin.glazy_t
 a new parent-less context and activates it while the fixture is used.
 
 # Resource Base Classes
-[resource-base-classes]: #resource-base-classes.
+[dependency-base-classes]: #dependency-base-classes.
 
-### `glazy.resource.Resource`
+### `glazy.dependency.Resource`
 
 You can implment the singleton-pattern easily by inherting from the
-`glazy.resource.Resource` class.
-This will try it's best to ensure only one resource is used amoung a chain/tree of parents.
+`glazy.dependency.Resource` class.
+This will try it's best to ensure only one dependency is used amoung a chain/tree of parents.
 It does this by returning `self` when `udepend.context.UContext` asks it what it wants to do when a child-context
-asks for the resource of a specific type.
-Since `glazy.resource.Resource` can be shared amoung many diffrent child Context objects,
+asks for the dependency of a specific type.
+Since `glazy.dependency.Resource` can be shared amoung many diffrent child Context objects,
 and makes the same instance always 'look' like it's the current one;
 generally only one is every made or used.
 
 However, you can create a new Context, make it current and put a diffrent instance of the
-resource in it to 'override' this behavior.
-See [Activating New Resource](#activating-new-resource) for more details.
+dependency in it to 'override' this behavior.
+See [Activating New Resource](#activating-new-dependency) for more details.
 
 #### Example
 
 I create a new class that uses our previous [SomeResourceType][dependencies] but adds in a
-`glazy.resource.Resource`.
+`glazy.dependency.Resource`.
 
 >>> class MySingleton(SomeResourceType, Dependency):
 ...     pass
@@ -289,16 +289,16 @@ Now watch as I do this:
 ...     MySingleton.grab().ident
 5
 
-The same resource is kept when making a child-context. However, if you make a parent-less
+The same dependency is kept when making a child-context. However, if you make a parent-less
 context:
 
 >>> with UContext(parent=None):
 ...     MySingleton.grab().ident
 6
 
-The `glazy.resource.Resource` will not see pased the parent-less context,
-and so won't see the old resource.
-It will create a new one. The `glazy.resource.Resource` will still create it in the
+The `glazy.dependency.Resource` will not see pased the parent-less context,
+and so won't see the old dependency.
+It will create a new one. The `glazy.dependency.Resource` will still create it in the
 furtherest parent it can... which in this case was the `udepend.context.UContext` activated by the with statement.
 
 """
@@ -394,7 +394,7 @@ class UContext:
         if for_type in (None, UContext):
             return context
 
-        return context.resource(for_type=for_type)
+        return context.dependency(for_type=for_type)
 
     @classmethod
     def _current_without_creating_thread_root(cls):
@@ -686,10 +686,10 @@ class UContext:
             self, dependency: Any, *, for_type: Type = None
     ) -> "UContext":
         """
-        Lets you add a resource to this context, you can only have one-resource per-type.
+        Lets you add a dependency to this context, you can only have one-dependency per-type.
 
         Returns self so that you can keep calling more methods on it easily.... this allws you
-        to also add a resource and then use it directly as decorator (only works on python 3.9),
+        to also add a dependency and then use it directly as decorator (only works on python 3.9),
         ie:
 
         >>> # Only works on python 3.9+, it relaxes grammar restrictions
@@ -698,56 +698,56 @@ class UContext:
         >>> @UContext().add(2)
         >>> def some_method()
         ...     print(f"my int dependency: {UContext.dependency(int)}")
-        Output: "my int resource: 2"
+        Output: "my int dependency: 2"
 
         As as side-note, you can easily add resources to a new `udepend.context.UContext` via:
 
         >>> @UContext(dependencies=[2])
         >>> def some_method()
         ...     print(f"my int dependency: {UContext.dependency(int)}")
-        Output: "my int resource: 2"
+        Output: "my int dependency: 2"
 
-        With the `Context.add_resource` method, you can subsitute resource for other
-        resource types, ie:
+        With the `Context.add_resource` method, you can subsitute dependency for other
+        dependency types, ie:
 
         >>> def some_method()
         ...     context = UContext()
         ...     context.add(3, for_type=str)
         ...     print(f"my str dependency: {UContext.dependency(str)}")
-        Output: "my str resource: 3"
+        Output: "my str dependency: 3"
 
-        If you need to override a resource, you can create a new context and set me as it's
+        If you need to override a dependency, you can create a new context and set me as it's
         parent. At that point you can add whatever resources you want before anyone else
         uses the new `udepend.context.UContext`.
 
-        .. warning:: If you attempt to add a second resource of the same type...
+        .. warning:: If you attempt to add a second dependency of the same type...
             ...a `udepend.UDependError` will be
-            raised. This is because other objects have already gotten this resource and are
+            raised. This is because other objects have already gotten this dependency and are
             relying on it now.  You need to configure any special resources you want to add
             to this context early enough before anything else will need it.
 
         .. todo:: Consider relaxing this ^ and not producing an error [or at least an option
-            to 'replace' an existing resource in an existing Context. I was cautious on this
+            to 'replace' an existing dependency in an existing Context. I was cautious on this
             at first because it was the safest thing to do and I could always relax it later
             if I found that desirable. Careful consideration would have to be made.
 
         Args:
-            dependency (Any): Object to add as a resource, it's type will be mapped to it.
+            dependency (Any): Object to add as a dependency, it's type will be mapped to it.
 
-            skip_if_present (bool): If False [default], we raise an exception if resource
+            skip_if_present (bool): If False [default], we raise an exception if dependency
                 of that type is already in context/self.
 
-                If True, we don't do anything if resource of that type is already in
+                If True, we don't do anything if dependency of that type is already in
                 context/self.
 
             for_type: You can force a particular mapping by using this option.
-                By default, the `for_type` is set to the type of the passed in resource
-                [via `type(resource)`].
+                By default, the `for_type` is set to the type of the passed in dependency
+                [via `type(dependency)`].
 
                 You can override this behavior by passing a type in the `for_type` param.
-                We will then map the resource for `for_type` to the `resource` object when
-                a resource is requested for `for_type` in the future. Will still raise the
-                error if a resource for `for_type` already exists in Context.
+                We will then map the dependency for `for_type` to the `dependency` object when
+                a dependency is requested for `for_type` in the future. Will still raise the
+                error if a dependency for `for_type` already exists in Context.
         Returns:
             Return `self`, so that you can keep calling more methods easily if needed
             (ie: .add(), etc)
@@ -759,7 +759,7 @@ class UContext:
         self._remove_cached_dependency_and_in_children(for_type)
         return self
 
-    def resource(
+    def dependency(
             self, for_type: Type[ResourceTypeVar], *, create: bool = True
     ) -> ResourceTypeVar:
         """
@@ -810,7 +810,7 @@ class UContext:
         the normal code asks for.
 
         >>> UContext().add(20, for_type=str)
-        >>> UContext().resource(str)
+        >>> UContext().dependency(str)
         Output: 20
 
         ## Specific Details
@@ -925,10 +925,10 @@ class UContext:
             # Since our `parent is Default`, we should not be the app-root, or thread-root
             # context; we also don't want to cache anything our parent retrieves so simply
             # return whatever our Default parent returns.
-            return parent.resource(for_type, create=create)
+            return parent.dependency(for_type, create=create)
 
         if parent:
-            parent_value = parent.resource(for_type, create=create)
+            parent_value = parent.dependency(for_type, create=create)
 
         # If we can't create the dependency, we can ask the resoruce to potetially create more of
         # its self.
@@ -976,7 +976,7 @@ class UContext:
                 hierarchy.
         """
         for context in self.parent_chain():
-            resource = context.resource(for_type=for_type, create=create)
+            resource = context.dependency(for_type=for_type, create=create)
             if resource:
                 yield resource
 

@@ -16,7 +16,7 @@ If you have not already, to get a nice high-level overview of library see either
 Allows you to create subclasses that act as sharable dependencies.
 Things that should stick around and should be created lazily.
 
-Also allows code to temporarily create, customize and activate a resource if you don't want
+Also allows code to temporarily create, customize and activate a dependency if you don't want
 the customization to stick around permanently.
 You can do it without your or other code needing to be aware of each other.
 
@@ -26,7 +26,7 @@ as the 'current' version to use.
 The only coupling that takes place is to the Resource sub-class it's self.
 
 Each separate piece of code can be completely unaware of each other,
-and yet each one can take advantage of the shared resource.
+and yet each one can take advantage of the shared dependency.
 
 This means that Resource can also help with simple dependency injection use-case scenarios.
 
@@ -34,8 +34,8 @@ This means that Resource can also help with simple dependency injection use-case
 [dependencies]: #dependencies
 
 ### Get Current
-There are various ways to get current resource.
-Let's say we have a resource called `SomeResourceType`:
+There are various ways to get current dependency.
+Let's say we have a dependency called `SomeResourceType`:
 
 >>> next_identifier = 0
 >>> class SomeResourceType(Dependency):
@@ -50,9 +50,9 @@ Let's say we have a resource called `SomeResourceType`:
     the second one created will be `1` and so forth.
 
 If what you want inherits from `Resource`, it has a nice class method that
-returns the current resource.
-An easy way to get the current resource for the type in this case is
-to call the class method `Resource.resource` on its type like so:
+returns the current dependency.
+An easy way to get the current dependency for the type in this case is
+to call the class method `Resource.dependency` on its type like so:
 
 >>> SomeResourceType.grab().some_value
 'hello!'
@@ -61,13 +61,13 @@ to call the class method `Resource.resource` on its type like so:
 
 ### Activating New Resource
 
-You can easily create a new resource, configure it however you like and then 'activate' it.
-That will make it the current version of that resource.
-This allows you to tempoary 'override' and activate your own custimized version of a resource.
+You can easily create a new dependency, configure it however you like and then 'activate' it.
+That will make it the current version of that dependency.
+This allows you to tempoary 'override' and activate your own custimized version of a dependency.
 
 You can do it via one of the below listed methods/examples below.
 
-For these examples, say I have this resource defined:
+For these examples, say I have this dependency defined:
 
 >>> from dataclasses import dataclass
 >>> from udepend import Dependency
@@ -78,7 +78,7 @@ For these examples, say I have this resource defined:
 >>>
 >>> assert MyResource.grab().some_value == 'default-value'
 
-- Use desired `glazy.resource.Resource` subclass as a method decorator:
+- Use desired `glazy.dependency.Resource` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
@@ -88,15 +88,15 @@ For these examples, say I have this resource defined:
 ## Active Resource Proxy
 
 You can use `glazy.proxy.CurrentDependencyProxy` to create an object that will act
-like the current resource.
+like the current dependency.
 All non-dunder attributes will be grabbed/set on the current object instead of the proxy.
 
 This means you can call all non-special methods and access normal attributes,
-as if the object was really the currently active resource instance.
+as if the object was really the currently active dependency instance.
 
 For more info/details see:
 
-- [Active Resource Proxy - pydoc](./#active-resource-proxy)
+- [Active Resource Proxy - pydoc](./#active-dependency-proxy)
 - [Active Resource Proxy - github]
   (https://github.com/xyngular/py-glazy#active-resource-proxy)
 
@@ -140,7 +140,7 @@ class Dependency:
     Allows you to create subclasses that act as sharable dependencies.
     Things that should stick around and should be created lazily.
 
-    Also allows code to temporarily create, customize and activate a resource if you don't want
+    Also allows code to temporarily create, customize and activate a dependency if you don't want
     the customization to stick around permanently.
     You can do it without your or other code needing to be aware of each other.
 
@@ -153,7 +153,7 @@ class Dependency:
     by inheriting from `PerThreadResource`.
 
     Each separate piece of code that uses a particular Resource subclass can be completely
-    unaware of each other, and yet each one can take advantage of the shared resource.
+    unaware of each other, and yet each one can take advantage of the shared dependency.
 
     This means that Resource can help cover dependency-injection use-cases.
 
@@ -171,8 +171,8 @@ class Dependency:
     overview.  The text below is more like plain refrence matrial.
 
 
-    Get the current resource via `Resource.resource`, you can call it on sub-class/concreate
-    resource type, like so:
+    Get the current dependency via `Resource.dependency`, you can call it on sub-class/concreate
+    dependency type, like so:
 
     >>> from udepend import Dependency
     >>> class MyConfig(Dependency):
@@ -181,17 +181,17 @@ class Dependency:
     >>> MyConfig.grab().some_setting
 
     By default, Resource's act like a singletons; in that child contexs will simply get the same
-    instance of the resource that the parent context has.
+    instance of the dependency that the parent context has.
     You can override this behavior via `Resource.dependency_for_child_context` method.
 
-    If you inherit from this class, when you have `Resource.resource` called on you,
+    If you inherit from this class, when you have `Resource.dependency` called on you,
     we will do our best to ensure that the same object instance is returned every time
     (there are two exceptions, keep reading).
 
     These dependencies are stored in the current `UContext`'s parent.  What happens is:
 
     If the current `UContext` and none of their parents have this object and it's asked for
-    (like what happens when `Resource.resource` is called on it)...
+    (like what happens when `Resource.dependency` is called on it)...
     It will be created in the deepest/oldest parent UContext.
 
     This is the first parent `UContext` who's `UContext.parent` is None.
@@ -199,7 +199,7 @@ class Dependency:
     created in the root-context.
 
     If we don't already exist in any parent, then we must be created the first time we are asked
-    for. Normally it will simply be a direct call the resource-type being requested,
+    for. Normally it will simply be a direct call the dependency-type being requested,
     this is the normal way to create objects in python:
 
     >>> class MyResource(Dependency):
@@ -208,17 +208,17 @@ class Dependency:
     >>> MyResource.grab()
 
     When that last line is executed, and the current or any parent context has a `MyResource`
-    resource; `UContext` will simply create one via calling the resource type:
+    dependency; `UContext` will simply create one via calling the dependency type:
 
     >>> MyResource()
 
-    You can allocate the resource yourself with custom options and add it to the UContext your self.
+    You can allocate the dependency yourself with custom options and add it to the UContext your self.
 
     Here are the various ways to do that, via:
 
 
     - `UContext.add`
-        (you will get an error if that UContext currently has a resource
+        (you will get an error if that UContext currently has a dependency
         of that type, so do that as you create the UContext object).
 
     - Decorator, ie: `@MyResource()`
@@ -245,19 +245,19 @@ class Dependency:
     THis forces every unit test run to create new dependencies when they are asked for (lazily).
 
     This fixture is used automatically for each unit test, it provides a blank root-context
-    for each run of a unit test. That way it will recreated any shared resource each time
+    for each run of a unit test. That way it will recreated any shared dependency each time
     and a unit test can't leak dependencies it added or changed into the next run.
 
     One example of why this is good is for `moto` and `xyn_aws.dynamodb.DynamoDB`.
-    This ensures that we get a new dynamodb shared resource from `boto` each time
+    This ensures that we get a new dynamodb shared dependency from `boto` each time
     a unit test executes
-    (which helps with `moto`, it needs to be active when a resource is allocated/used).
+    (which helps with `moto`, it needs to be active when a dependency is allocated/used).
 
     What I mean by a new blank root-context is that there is nothing in it and it has not
-    parent context.  So there are no pre-existing resource that are visible.
+    parent context.  So there are no pre-existing dependency that are visible.
     so the older dependencies that may have already existed won't be used while that
     blank new root-context is the currently active (or any children of it) the old
-    resource will be hidden and not used.
+    dependency will be hidden and not used.
 
     This is exactly what we want for each unit test run.
 
@@ -359,10 +359,10 @@ class Dependency:
     @classmethod
     def grab(cls: Type[T]) -> T:
         """
-        Gets a potentially shared resource from the current `udpend.context.UContext`.
+        Gets a potentially shared dependency from the current `udpend.context.UContext`.
 
         Dependency subclass may add override to have additional args/kwargs when overriding this
-        method if needed [rare] to customize things or return alternate resource based on
+        method if needed [rare] to customize things or return alternate dependency based on
         some passed-in value(s).
 
         (example: like passing in a hash-key of some sort).
@@ -372,11 +372,11 @@ class Dependency:
 
         >>> class SomeDependencyManager(Dependency):
         ...     def get_resource_via(self, some_key_or_value: str) -> SomeResourceType:
-        ...         # Lookup and return some sort of related resource.
+        ...         # Lookup and return some sort of related dependency.
         ...         pass
         >>> SomeResourceManager.obj.get_resource_via("some-key-or-value")
         """
-        return UContext.current().resource(for_type=cls)
+        return UContext.current().dependency(for_type=cls)
 
     @classmethod
     def proxy(cls: Type[R]) -> R:

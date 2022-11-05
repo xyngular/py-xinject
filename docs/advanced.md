@@ -8,9 +8,9 @@ By default, each Dependency subclass will be shared between different threads,
 ie: it's assumed to be thread-safe.
 
 You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `udepend.resource.ThreadUnsafeResource` instead,
+by inheriting from `udepend.dependency.ThreadUnsafeResource` instead,
 or by setting the **class attribute** (on your custom sub-class of Dependency)
-`udepend.resource.Dependency.resource_thread_sharable` to `False`.
+`udepend.dependency.Dependency.resource_thread_sharable` to `False`.
 
 Things that are probably not thread-safe in general
 are resources that contain network/remote type connections/sessions/clients.
@@ -21,24 +21,24 @@ Concrete Examples In Code Base:
   - xyn_model_rest uses a Dependency to wrap requests library session, so it can automatically
     reuse connections on same thread, but use new session if on different thread.
     Also helps with unit testing, when Mocking requests URL calls.
-- boto client/resource
+- boto client/dependency
   - Library says it's not thread-safe, you need to use a different object per-thread.
   - Moto mocking library for AWS services needs you to allocate a client after it's setup,
-    (so lazily allocate client/resource from boto).
+    (so lazily allocate client/dependency from boto).
   - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
     accomplish being both lazy and will allocate a new one per-thread for you automatically.
 
 ## Active Dependency Proxy
 
-You can use the convenience method `udepend.resource.Dependency.proxy` to easily get a
+You can use the convenience method `udepend.dependency.Dependency.proxy` to easily get a
 proxy object.
 
 Or you can use `udepend.proxy.CurrentDependencyProxy.wrap` to create an object that will act
-like the current resource.
+like the current dependency.
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
 This means you can call all non-special methods and access normal attributes,
-as if the object was really the currently active resource instance.
+as if the object was really the currently active dependency instance.
 
 Any methods/attributes that start with a `_` will not be used on the proxied object,
 but will be used on only the proxy-object it's self.
@@ -69,7 +69,7 @@ value = config.get('some_config_var')
 ```
 
 When you ask `config` for it's `get` attribute, it will get it from the current
-active resource for `Config`. So it's the equivalent of doing this:
+active dependency for `Config`. So it's the equivalent of doing this:
 
 ```python
 from xyn_config import Config

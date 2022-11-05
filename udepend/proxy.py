@@ -22,10 +22,10 @@ D = TypeVar('D')
 
 class CurrentDependencyProxy(Generic[R]):
     """
-    Used to simplify accessing the current resource class via proxy object,
+    Used to simplify accessing the current dependency class via proxy object,
     so you can use the object like a normal global-object, but every time you access a
     normal (non-private) attribute/method it will grab you the one from the currenly active
-    resource.
+    dependency.
 
     >>> class MyClass(Dependency):
     ...   def my_method(self):
@@ -40,14 +40,14 @@ class CurrentDependencyProxy(Generic[R]):
     >>> my_class = CurrentDependencyProxy.wrap(MyClass)
     >>> my_class.my_method()
 
-    This will always call the active/current resource without having to use the boilerplate
-    `.resource()` method on the resource class/type.
+    This will always call the active/current dependency without having to use the boilerplate
+    `.dependency()` method on the dependency class/type.
 
     >>> # You can use the `proxy` convenience
     >>> # method to also accomplish this:
     >>> my_class = MyClass.proxy()
 
-    It's sometimes useful to put at the top-level of a module the proxy-version of the resource
+    It's sometimes useful to put at the top-level of a module the proxy-version of the dependency
     so it can be directly imported into other modules, and used directly like a normal object.
 
     >>> # We are in some other Module;

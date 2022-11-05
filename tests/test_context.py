@@ -120,11 +120,12 @@ def test_module_level_context(glazy_test_context):
 
     # Ensure that when we used the module-level-context, ensure it still uses the current
     # context as it's first parent. the `create=False` will ensure it won't add this looked
-    # up dependency to it's self.
-    assert module_level_context.resource(for_type=float, create=False) == 1.2
+    # up dependency to its self.
+    assert module_level_context.dependency(for_type=float, create=False) == 1.2
     assert module_level_context is not UContext.current()
 
-    # Ensure that we have not float dependency in the outer-module version (since create=False).
+    # Ensure that we don't have a float dependency in the outer-module version
+    # (since create=False).
     assert float not in module_level_context._dependencies
 
     # See if the copied-context has the same dependencies still
