@@ -9,7 +9,7 @@ ie: it's assumed to be thread-safe.
 
 You can indicate a Dependency subclass should not be shared between threads
 by inheriting from `udepend.dependency.ThreadUnsafeResource` instead,
-or by setting the **class attribute** (on your custom sub-class of Dependency)
+or by setting the **class attribute** (on your custom subclass of Dependency)
 `udepend.dependency.Dependency.resource_thread_sharable` to `False`.
 
 Things that are probably not thread-safe in general

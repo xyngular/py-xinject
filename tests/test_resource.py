@@ -1,7 +1,7 @@
 import pytest as pytest
 
 from udepend import CurrentDependencyProxy, UContext, Dependency
-from udepend.dependency import DependencyPerThread
+from udepend.dependency import PerThreadDependency
 
 
 class MyClass(Dependency):
@@ -56,7 +56,7 @@ def test_shared_threaded_resource():
     class ThreadSharableDependency(Dependency):
         hello = "1"
 
-    class NonThreadSharableDependency(DependencyPerThread):
+    class NonThreadSharableDependency(PerThreadDependency):
         hello2 = "a"
 
     ThreadSharableDependency.grab().hello = "3"

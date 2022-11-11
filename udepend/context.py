@@ -7,9 +7,9 @@ Manage shared dependency and dependency injection.
 If you have not already, to get a nice high-level overview of library see either:
 
 - project README.md here:
-    - https://github.com/xyngular/py-glazy#how-to-use
-- Or go to glazy module documentation at here:
-    - [glazy, How To Use](./#how-to-use)
+    - https://github.com/xyngular/py-u-depend#how-to-use
+- Or go to udepend module documentation at here:
+    - [udepend, How To Use](./#how-to-use)
 
 
 # Quick Start
@@ -17,14 +17,14 @@ If you have not already, to get a nice high-level overview of library see either
 ## Please Read First
 
 If your looking for a simple example/use of singltone-like dependencies,
-go to `glazy.dependency.Resource`.
+go to `udepend.dependency.Dependency`.
 
 The whole point of the `udepend.context.UContext` is to have a place to get shared dependencies.
 
 Normally, code will use some other convenience methods, as an example:
 
-Most of the time a dependency will inherit from `glazy.dependency.Resource` and that
-class provides a class method `glazy.dependency.Resource.dependency` to easily get a
+Most of the time a dependency will inherit from `udepend.dependency.Dependency` and that
+class provides a class method `udepend.dependency.Resource.dependency` to easily get a
 dependency of the inherited type from the current context as a convenience.
 
 So normally, code would do this to get the current object instance for a Resource:
@@ -36,7 +36,7 @@ So normally, code would do this to get the current object instance for a Resourc
 >>> SomeResource.grab().my_attribute = "change-value"
 
 Another convenient way to get the current dependency is via the
-`glazy.dependency.CurrentDependencyProxy`. This class lets you create an object
+`udepend.dependency.CurrentDependencyProxy`. This class lets you create an object
 that always acts like the current/active object for some Resource.
 So you can define it at the top-level of some module, and code can import it
 and use it directly.
@@ -45,11 +45,11 @@ I would start with [Fundamentals](#fundamentals) if you know nothing of how `ude
 and want to learn more about how it works.
 
 Most of the time, you interact with Context indrectly via
-`glazy.dependency.Resource`.  So getting familiar with Context is more about
+`udepend.dependency.Dependency`.  So getting familiar with Context is more about
 utilize more advance use-cases. I get into some of these advanced use-cases below.
 
 .. important:: The below is for advanced use-cases and understanding.
-    Look at `glazy.dependency.Resource` or docs just above ^^^ for the normal use-case and
+    Look at `udepend.dependency.Dependency` or docs just above ^^^ for the normal use-case and
     examples / quick starts.
 
 # Context Overview
@@ -61,13 +61,14 @@ Main Classes:
 
 - `udepend.context.UContext`: Container of dependencies, mapped by type.
 - For Resource Subclasses:
-    - `glazy.dependency.Resource`: Nice interface to easily get the current dependency.
-        Used to implment a something that should shared and not generally duplicated,
+    - `udepend.dependency.Dependency`: Nice interface to easily get the current dependency.
+        Used to implment a something that should be shared and not generally duplicated,
         like a soft-singleton.
 
 # Fundamentals
 
-`udepend.context.UContext` is like a container, used to store various objects we are calling dependencies.
+`udepend.context.UContext` is like a container, used to store various objects we are calling
+dependencies.
 
 Used to store various dependencies of any type  in general [ie: configs, auths, clients, etc].
 All of these dependencies together represent a sort of "context" from which various pieces of code
@@ -76,16 +77,16 @@ to do dependcy injection in a easier and more reliable way since you don't have 
 about passing these dependencies around everywhere manually.
 
 The values are mapped by their type.  When a dependency of a specific type is asked for,
-the Context will return it if it find it. If not found it will create it, add it to it's self
+the Context will return it if it finds it. If not found it will create it, add it to its self
 and return it. Future calls will return this new dependency.
 
-`udepend.context.UContext` can optionally have a parent. By default, a newly created/used Context will use
- the current context Normally, dependencies are still normally created even if a
+`udepend.context.UContext` can optionally have a parent. By default, a newly created/used Context
+will use the current context Normally, dependencies are still normally created even if a
 parent has a value, as long as the current context does not have one yet.
 
 This behavior can be customized by the dependency, see one of these for details:
 
-- `glazy.dependency.Resource`
+- `udepend.dependency.Dependency`
     - Useful for a shared/soft overridable shared object; where you can easily get the current
         version of it.
 
@@ -104,14 +105,14 @@ a dependency called `SomeResourceType`:
 ...         self.ident = next_identifier
 ...         next_identifier += 1
 
-.. note:: SomeResourceType's `ident` field get's incremented and set on each newly created object.
+.. note:: SomeResourceType's `ident` field gets incremented and set on each newly created object.
     So the first SomeResoureType's `ident` will equal `0`,
     the second one created will be `1` and so forth.
 
-If what you want inherits from `glazy.dependency.Resource`, it has a nice class method that
+If what you want inherits from `udepend.dependency.Dependency`, it has a nice class method that
 returns the current dependency.
 The easiest way to get the current dependency for the type in this case is
-to call `glazy.dependency.Resource.dependency` on it's type like so:
+to call `udepend.dependency.Resource.dependency` on it's type like so:
 
 >>> SomeResourceType.grab().some_value
 'hello!'
@@ -126,7 +127,7 @@ type is passed in, it will return the current Context's dependency for the passe
 
 This means another way to grab dependencies is to get the current `Context.current`,
 and then ask it for the dependency like below. This works for any type, including
-types that don't inherit from `glazy.dependency.Resource`:
+types that don't inherit from `udepend.dependency.Dependency`:
 
 >>> UContext.current().grab(SomeResourceType).some_value
 'hello!'
@@ -142,9 +143,9 @@ As you can see, it still returns the same object [ie: `ident == 0`]
 
 ## Activating New Resource
 
-You can easily create a new dependency, configure it however you like and then 'activate' it
-so it's the current version of that dependency.
-This allows you to 'override' and activate your own copy of a dependency.
+You can easily create a new dependency, configure it however you like and then 'activate' it,
+so it's the current version of that dependency. This allows you to 'override' and activate your
+own copy of a dependency.
 
 You can do it via one of the below listed methods/examples below.
 
@@ -159,7 +160,7 @@ For these examples, say I have this dependency defined:
 >>>
 >>> assert MyResource.grab().some_value == 'default-value'
 
-- Use desired `glazy.dependency.Resource` subclass as a method decorator:
+- Use desired `udepend.dependency.Dependency` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
@@ -176,8 +177,8 @@ the copy is what is made current/activated (see `Context.__copy__` for more deta
 2. As a method dectorator, ie: `@`.
 3. Permently activiating it via `Context.make_current`, making it the new Default/Base
    context in general.
-4. When running a unit-test where glazy is installed as a dependcy,
-    because the `glazy.ptest_plugin.glazy_test_context` fixture is auto-used in this case.
+4. When running a unit-test where udepend is installed as a dependcy,
+    because the `udepend.ptest_plugin.udepend_test_context` fixture is auto-used in this case.
     This fixture creates a new Context with a None parent;
     that will isolate dependencies between each run of a unit test method.
 
@@ -192,7 +193,8 @@ Here are examples of the four ways to create/activate a new context:
 This is stack-able as well; as in this can keep track of a stack of contexts, in a
 thread-safe way.
 
-When the context manager or decorated method is exited, it will pop-off the context and it won't
+When the context manager or decorated method is exited, it will pop-off the context,
+and it won't
 be the default one anymore. Whatever the default one was before you entered the `with` will
 be the default once more.
 
@@ -252,20 +254,20 @@ When creating a new context. This will tell the context NOT to use a parent. By 
 Context will use the current Context as the time the Context was created as it's parent.
 See `Context.parent` for more details.
 
-This is also how the Context test fixture works (see `glazy.ptest_plugin.glazy_test_context`). It creates
+This is also how the Context test fixture works (see `udepend.ptest_plugin.udepend_test_context`). It creates
 a new parent-less context and activates it while the fixture is used.
 
 # Resource Base Classes
 [dependency-base-classes]: #dependency-base-classes.
 
-### `glazy.dependency.Resource`
+### `udepend.dependency.Dependency`
 
 You can implment the singleton-pattern easily by inherting from the
-`glazy.dependency.Resource` class.
+`udepend.dependency.Dependency` class.
 This will try it's best to ensure only one dependency is used amoung a chain/tree of parents.
 It does this by returning `self` when `udepend.context.UContext` asks it what it wants to do when a child-context
 asks for the dependency of a specific type.
-Since `glazy.dependency.Resource` can be shared amoung many diffrent child Context objects,
+Since `udepend.dependency.Dependency` can be shared amoung many diffrent child Context objects,
 and makes the same instance always 'look' like it's the current one;
 generally only one is every made or used.
 
@@ -276,7 +278,7 @@ See [Activating New Resource](#activating-new-dependency) for more details.
 #### Example
 
 I create a new class that uses our previous [SomeResourceType][dependencies] but adds in a
-`glazy.dependency.Resource`.
+`udepend.dependency.Dependency`.
 
 >>> class MySingleton(SomeResourceType, Dependency):
 ...     pass
@@ -296,9 +298,9 @@ context:
 ...     MySingleton.grab().ident
 6
 
-The `glazy.dependency.Resource` will not see pased the parent-less context,
+The `udepend.dependency.Dependency` will not see pased the parent-less context,
 and so won't see the old dependency.
-It will create a new one. The `glazy.dependency.Resource` will still create it in the
+It will create a new one. The `udepend.dependency.Dependency` will still create it in the
 furtherest parent it can... which in this case was the `udepend.context.UContext` activated by the with statement.
 
 """
@@ -548,7 +550,7 @@ class UContext:
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
         method dependencies from other unit tests. Right now, the unit-test Dependency isolation
-        happens automatically via an auto-use fixture (`udepend.ptest_plugin.glazy_test_context`).
+        happens automatically via an auto-use fixture (`udepend.ptest_plugin.udepend_test_context`).
 
         A non-activated context will return `guards.default.Default` as it's `UContext.parent`
         if it was created with the default value;
@@ -771,7 +773,7 @@ class UContext:
 
         Normally, code will use some other convenience methods, as an example:
 
-        Normally a resource will inherit from `udepend.resource.Resource` and that
+        Normally a resource will inherit from `udepend.resource.Dependency` and that
         class provides a class method `udepend.resource.Resource.resource` to easily get a
         resource of the inherited type from the current context as a convenience.
 
@@ -792,7 +794,7 @@ class UContext:
         and want to learn more about how it works.
 
         Most of the time, you interact with Context indrectly via
-        `udepend.context.Resource`.  So getting familure with Context is more about
+        `udepend.context.Dependency`.  So getting familure with Context is more about
         utilize more advance use-cases. I get into some of these advanced use-cases below.
 
         ## Advanced Usage for Unit Tests
@@ -815,14 +817,14 @@ class UContext:
 
         ## Specific Details
 
-        Given a type of `udepend.resource.Resource`, or any other type;
+        Given a type of `udepend.resource.Dependency`, or any other type;
         we will return an instance of it.
 
         If we currently don't have one, we will create a new one of type passe in and return that.
         We will continue to return the one created in the future for the type passed in.
 
         You can customize this process a bit by having your custom resource inherit from
-        `udepend.resource.Resource`.
+        `udepend.resource.Dependency`.
 
         Otherwise, no other parameters will be sent to init method.
 
@@ -839,24 +841,6 @@ class UContext:
             create (bool): Whether to create resource if needed or not.
                 If `True` [default]: creates the resource if it does not exist in self.
                 If `False`: only returns an object if we have it already, otherwise None.
-
-            use_parent (bool): Controls how the parent is used.
-
-                If `False` [default]: we won't check the parent for the resource to return. We may
-                still consult the parent in order to create a new resource from it; the use of
-                the resource from parent is dependent on the resource. It has the option to decide
-                what to do in this case. That's why this is False by default, it gives the option
-                of what to do with the parent resource [if any] to the resource it's self. It has
-                more knowledge about what it's situation is and can make a more informed decision.
-
-                If `True`: and the resource is not directly in `self`, we will ask the parent
-                `udepend.context.UContext`; if we have a parent for the resource and return that if it's found.
-                If a resource is found this way, we won't add it to `self` directly,
-                only return it for you to use.
-
-                If the resource is not in self and is not found in parent, then we will create it
-                if `create=True` [default] and add that to `self` and return it.
-                Otherwise, we return `None`.
         """
 
         # If we find it in self, use that; no need to check anything else...
@@ -981,9 +965,7 @@ class UContext:
                 yield resource
 
     def __copy__(self):
-        """ Makes a copy of self, gives an opportunity for dependencies to do something special
-            while they are copied if needed via
-            `udepend.dependency.Dependency.context_resource_for_copy`.
+        """ Makes a copy of self.
 
             We copy `UContext` implicitly and make that copy the 'active' context when it's made
             current/activated via a:
@@ -1019,14 +1001,9 @@ class UContext:
 
         # Copy current dependencies from self into new UContext;
         # This uses `self` as a template for the new UContext.
-        # See doc comment on: `UContext.__call__` and
-        # `udepend.dependency.Dependency.context_resource_for_copy`.
         new_resources = {}
         for k, v in self._dependencies.items():
-            if isinstance(v, Dependency):
-                v = v.context_resource_for_copy(current_context=self, copied_context=new_context)
-            else:
-                v = copy(v)
+            v = copy(v)
             new_resources[k] = v
 
         new_context._dependencies = new_resources
@@ -1378,7 +1355,7 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     Used to create initial global state of app/thread-root contexts containers,
     which keep track of the visible `Contexts` on each thread, and for the app-root `UContext`.
 
-    Is also used by `udepend.pytest_plugin.glazy_test_context` auto-use fixture to blank/clear out
+    Is also used by `udepend.pytest_plugin.udepend_test_context` auto-use fixture to blank/clear out
     all root/globally visible contexts by allocating the global-structures again and letting
     the old global structures deallocate.
 

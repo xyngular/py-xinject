@@ -35,9 +35,9 @@ poetry add udepend
 
 ## How To Use
 
-The main class used most of the time is `glazy.resource.Dependency`.
+The main class used most of the time is `udepend.resource.Dependency`.
 Read the below/this-document first, but after your done here and need more details see
-`glazy.resource.Dependency`, you can look at the doc-comment for that module and class for
+`udepend.resource.Dependency`, you can look at the doc-comment for that module and class for
 more detailed  reference-type documentation.
 
 Below is a high-level-overview of how to use this library
@@ -81,7 +81,7 @@ then this library could come in use for your situation.
 
 ### Overview
 
-The main class used most of the time is `glazy.dependency.Dependency`,
+The main class used most of the time is `udepend.dependency.Dependency`,
 you can look at the doc-comment for that module and class for more details.
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
@@ -189,9 +189,9 @@ By default, each Dependency subclass will be shared between different threads,
 ie: it's assumed to be thread-safe.
 
 You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `glazy.dependency.ThreadUnsafeResource` instead,
+by inheriting from `udepend.dependency.ThreadUnsafeResource` instead,
 or by setting the **class attribute** (on your custom sub-class of Dependency)
-`glazy.dependency.Dependency.resource_thread_sharable` to `False`.
+`udepend.dependency.Dependency.resource_thread_sharable` to `False`.
 
 Things that are probably not thread-safe in general
 are resources that contain network/remote type connections/sessions/clients.
@@ -211,10 +211,10 @@ Concrete Examples In Code Base:
 
 ### Active Dependency Proxy
 
-You can use the convenience method `glazy.dependency.Dependency.proxy` to easily get a
+You can use the convenience method `udepend.dependency.Dependency.proxy` to easily get a
 proxy object.
 
-Or you can use `glazy.proxy.CurrentDependencyProxy.wrap` to create an object that will act
+Or you can use `udepend.proxy.CurrentDependencyProxy.wrap` to create an object that will act
 like the current dependency.
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
@@ -262,16 +262,16 @@ value = get_method('some_config_var')
 The code then executes the method that was attached to the `get` attribute.
 This makes the call-stack clean, if an error happens it won't be going through
 the CurrentDependencyProxy.
-The `glazy.proxy.CurrentDependencyProxy` already return the `get` method  and is finished.
+The `udepend.proxy.CurrentDependencyProxy` already return the `get` method  and is finished.
 The outer-code is the one that executed/called the method.
 
 Another read-world example is in the `xyn_aws`.
 
-See `glazy.proxy.CurrentDependencyProxy` for more ref-doc type details.
+See `udepend.proxy.CurrentDependencyProxy` for more ref-doc type details.
 
 ## Unit Testing
 
-The `glazys.pytest_plugin.xyn_context` fixture in particular will be automatically used 
+The `udepends.pytest_plugin.xyn_context` fixture in particular will be automatically used 
 for every unit test. This is important, it ensures a blank root-context is used each time
 a unit test executes.
 
@@ -279,7 +279,7 @@ This is accomplished via an `autouse=True` fixture.
 The fixture is in a pytest plugin module.
 This plugin module is automatically found and loaded by pytest.
 pytest checks all installed dependencies in the environment it runs in,
-so as long as glazy is installed in the environment as a dependency it will find this
+so as long as udepend is installed in the environment as a dependency it will find this
 and autoload this fixture for each unit test.
 
 This means for each unit test executed via pytest, it will always start with no resources

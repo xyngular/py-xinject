@@ -11,7 +11,7 @@ See one of these for more details:
 
 - [Active Dependency Proxy - pydoc](./#active-dependency-proxy)
 - [Active Dependency Proxy - github]
-  (https://github.com/xyngular/py-glazy#active-resource-proxy)
+  (https://github.com/xyngular/py-u-depend#active-resource-proxy)
 
 """
 from typing import TypeVar, Type, Generic, Callable, Any
@@ -20,7 +20,7 @@ from .dependency import Dependency
 D = TypeVar('D')
 
 
-class CurrentDependencyProxy(Generic[R]):
+class CurrentDependencyProxy(Generic[D]):
     """
     Used to simplify accessing the current dependency class via proxy object,
     so you can use the object like a normal global-object, but every time you access a
@@ -31,9 +31,9 @@ class CurrentDependencyProxy(Generic[R]):
     ...   def my_method(self):
     ...      pass
 
-    Typically, to access attributes of a particular Rsource subclass you would have to do this:
+    Typically, to access attributes of a particular dependency subclass you would have to do this:
 
-    >>> MyClass.dependency().my_method()
+    >>> MyClass.grab().my_method()
 
     With ProxyActive you can do this instead:
 

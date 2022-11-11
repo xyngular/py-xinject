@@ -6,14 +6,14 @@ from udepend.errors import UDependError
 
 
 @UContext
-def test_decorator_on_direct_context_class(glazy_test_context):
+def test_decorator_on_direct_context_class(udepend_test_context):
     """ Test using UContext class directly as a decorator (not a UContext instance). """
     # This should be the UContext that was created via `@UContext`.
-    assert UContext.current() is not glazy_test_context
+    assert UContext.current() is not udepend_test_context
 
     # Since the `@UContext` would have been created AFTER the standard unit-test `context`
     # fixture, the parent of my `@UContext` would be the standard unit-test context fixture.
-    assert UContext.current().parent is glazy_test_context
+    assert UContext.current().parent is udepend_test_context
 
 
 @dataclasses.dataclass
@@ -113,7 +113,7 @@ module_level_context = UContext(
 # If our decorator is not setup correctly, pytest won't call our test-method correctly.
 # So having pycharm call our test method correctly is a really good edge-case test in of it's self!
 @module_level_context
-def test_module_level_context(glazy_test_context):
+def test_module_level_context(udepend_test_context):
     # `context` is the base-context
     UContext.current().add(1.2)
     assert UContext.current(for_type=float) == 1.2

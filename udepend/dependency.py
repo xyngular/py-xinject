@@ -1,15 +1,39 @@
 """
 Easily create singleton-like classes in a sharable/injectable/decoupled way.
 
+Uses `udepend.context.UContext` to find the current dependency for any particular subclass
+of Dependency.
+
+You can think of this as making a `Dependency` act like a singleton by default,
+as only one instance (at the root-context) would ever 'normally' be created.
+
+It's still possible to get a second instance of the dependency, however:
+
+- If someone created a new dependency themselves manually and adds it to a new Context
+    and then activates the context,
+    that dependency they created and added themselves could be a second instance.
+    (for more details, see [Activating New Dependency](#activating-new-dependency))
+
+    THis is because the Dependency that was manually created was not given an opportunity
+    to reuse the parent value.
+
+    However, this is usually desirable as whatever manually created the object probably
+    wants to override the dependency with its own configured object.
+
+- If a new `udepend.context.UContext` was created at some point later via `Context(parent=None)`
+    and then activated. When a dependency is next asked for, it must create a new one as
+    any previous `udepend.context.UContext` would be unreachable until the context was deactivated.
+    (for more details, see [Activating New Context](#activating-new-context))
+
 
 ## To Do First
 
 If you have not already, to get a nice high-level overview of library see either:
 
 - project README.md here:
-    - https://github.com/xyngular/py-glazy#how-to-use
-- Or go to glazy module documentation at here:
-    - [glazy, How To Use](./#how-to-use)
+    - https://github.com/xyngular/py-u-depend#how-to-use
+- Or go to udepend module documentation at here:
+    - [udepend, How To Use](./#how-to-use)
 
 ## Dependency Refrence Summary
 
@@ -78,7 +102,7 @@ For these examples, say I have this dependency defined:
 >>>
 >>> assert MyResource.grab().some_value == 'default-value'
 
-- Use desired `glazy.dependency.Resource` subclass as a method decorator:
+- Use desired `udepend.dependency.Dependency` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
@@ -87,7 +111,7 @@ For these examples, say I have this dependency defined:
 
 ## Active Resource Proxy
 
-You can use `glazy.proxy.CurrentDependencyProxy` to create an object that will act
+You can use `udepend.proxy.CurrentDependencyProxy` to create an object that will act
 like the current dependency.
 All non-dunder attributes will be grabbed/set on the current object instead of the proxy.
 
@@ -98,12 +122,12 @@ For more info/details see:
 
 - [Active Resource Proxy - pydoc](./#active-dependency-proxy)
 - [Active Resource Proxy - github]
-  (https://github.com/xyngular/py-glazy#active-resource-proxy)
+  (https://github.com/xyngular/py-u-depend#active-resource-proxy)
 
 
 """
 import functools
-from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any
+from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any, Optional, Dict, Set
 from copy import copy, deepcopy
 from guards import Default
 from udepend import UContext, _private
@@ -111,9 +135,7 @@ from udepend.errors import UDependError
 import sys
 
 T = TypeVar('T')
-C = TypeVar('C')
 R = TypeVar('R')
-ResourceTypeVar = TypeVar('ResourceTypeVar')
 
 if sys.version_info >= (3, 11):
     # If we are using Python 3.11, can use this new `Self` type that means current class/subclass
@@ -129,10 +151,20 @@ else:
     Self = 'Dependency'
 
 
-class Dependency:
+def is_dependency_thread_sharable(dependency: 'Dependency') -> bool:
+    # noinspection PyProtectedMember
+    return dependency._dependency__meta.get('thread_sharable', True)
+
+
+def attributes_to_skip_while_copying(dependency: 'Dependency') -> Set[str]:
+    # noinspection PyProtectedMember
+    return dependency._dependency__meta.get('attributes_to_skip_while_copying', set())
+
+
+class Dependency(thread_sharable=True):
     """
-    If you have not already done so, you should also read the glazy project's
-    [README.md](https://github.com/xyngular/py-glazy#active-resource-proxy) for an overview
+    If you have not already done so, you should also read the udepend project's
+    [README.md](https://github.com/xyngular/py-u-depend#active-resource-proxy) for an overview
     of the library before diving into the below text, that's more of like reference material.
 
     ## Summary
@@ -159,15 +191,15 @@ class Dependency:
 
     ## Overview
 
-    A `Resource` represents an object in a `glazy.context.UContext`.
+    A `Resource` represents an object in a `udepend.context.UContext`.
     Generally, dependencies that are added/created inside a `UContext` inherit from this abstract base
     `Resource` class, but are not required too. `Resource` just adds some class-level
     conveince methods and configuratino options. Inheriting from Resource also helps
     self-document that it's a Resource.
 
     See [Resources](#dependencies) at top of this module for a general overview of how dependencies
-    and `UContext`'s work. You should also read the glazy project's
-    [README.md](https://github.com/xyngular/py-glazy#active-resource-proxy) for a high-level
+    and `UContext`'s work. You should also read the udepend project's
+    [README.md](https://github.com/xyngular/py-u-depend#active-resource-proxy) for a high-level
     overview.  The text below is more like plain refrence matrial.
 
 
@@ -182,7 +214,6 @@ class Dependency:
 
     By default, Resource's act like a singletons; in that child contexs will simply get the same
     instance of the dependency that the parent context has.
-    You can override this behavior via `Resource.dependency_for_child_context` method.
 
     If you inherit from this class, when you have `Resource.dependency` called on you,
     we will do our best to ensure that the same object instance is returned every time
@@ -191,12 +222,15 @@ class Dependency:
     These dependencies are stored in the current `UContext`'s parent.  What happens is:
 
     If the current `UContext` and none of their parents have this object and it's asked for
-    (like what happens when `Resource.dependency` is called on it)...
-    It will be created in the deepest/oldest parent UContext.
+    (like what happens when `Resource.dependency` is called on it),
+    it will be created in the deepest/oldest parent UContext.
 
-    This is the first parent `UContext` who's `UContext.parent` is None.
+    This is the first parent `udepend.context.UContext` who's `UContext.parent` is None.
     That way it should be visible to everyone on the current thread since it will normally be
-    created in the root-context.
+    created in the app-root `udepend.context.UContext`.
+
+    If the Dependency can't be shared between multiple threads, creation would normally happen
+    at the thread-root UContext instead of the app-root one.
 
     If we don't already exist in any parent, then we must be created the first time we are asked
     for. Normally it will simply be a direct call the dependency-type being requested,
@@ -218,116 +252,150 @@ class Dependency:
 
 
     - `UContext.add`
-        (you will get an error if that UContext currently has a dependency
-        of that type, so do that as you create the UContext object).
+        Adds dependency to a specific UContext that already exists
+        (or replaces if one has already been directly added in the past to that specific Context).
+        When/While UContext is active, these added dependencies will be the `current` ones.
 
     - Decorator, ie: `@MyResource()`
 
             >>> from xny_config import Config, config
             >>>
-            >>> @Config(service="override-service-name")
+            >>> @DependencySubclass(service="override-service-name")
             >>> def my_method():
             >>>    assert config.service == "override-service-name"
 
     - via a with statement.
 
             >>> def my_method():
-            >>>    with @Config(service="override-service-name")
+            >>>    with @DependencySubclass(service="override-service-name")
             >>>         assert config.service == "override-service-name"
 
-    If you need more control over how your allocated by default, you can override the
-    `Resource.dependency_for_child_context` method to customize it.
+    - multiple in single statement by making your own UContext directly:
+
+            >>> def my_method():
+            >>>     with @UContext([
+            >>>         DependencySubclass(service="override-service-name"),
+            >>>         SomeOtherDep(name='new-name')
+            >>>     ]):
+            >>>         assert config.service == "override-service-name"
 
     ## Background on Unit Testing
 
     By default, unit tests always create a new blank `UContext` with `parent=None`.
-    THis is done by an autouse fixture (`glazy.fixtures.context`)
+    THis is done by an autouse fixture (`udepend.fixtures.context`)
     THis forces every unit test run to create new dependencies when they are asked for (lazily).
 
-    This fixture is used automatically for each unit test, it provides a blank root-context
-    for each run of a unit test. That way it will recreated any shared dependency each time
-    and a unit test can't leak dependencies it added or changed into the next run.
+    This fixture is used automatically for each unit test, it clears the app-root UContext,
+    removes all current thread-root UContext's and their children from being `active`.
+    just beofre each run of a unit test.
+
+    That way it will recreate any shared dependency each time and a unit test can't leak
+    dependencies it added or changed into the next run.
 
     One example of why this is good is for `moto` and `xyn_aws.dynamodb.DynamoDB`.
     This ensures that we get a new dynamodb shared dependency from `boto` each time
     a unit test executes
     (which helps with `moto`, it needs to be active when a dependency is allocated/used).
 
-    What I mean by a new blank root-context is that there is nothing in it and it has not
-    parent context.  So there are no pre-existing dependency that are visible.
-    so the older dependencies that may have already existed won't be used while that
-    blank new root-context is the currently active (or any children of it) the old
-    dependency will be hidden and not used.
+    This is exactly what we want for each unit test run, to have a blank-slate for all the
+    vairous dependencies.
 
-    This is exactly what we want for each unit test run.
+    If a particulre set of unit-tests need to have specific dependcies, you can use fixtures to
+    modify/add various dependcies as needed for each indivirual unit-test function run.
 
     When the application runs for real though, we do generally want to use the dependencies in a
     shared fashion.  So normally we only allocate a new blank-root `@UContext(parent=None)`
     either at the start of a normal application run, or during a unit-test.
     """
 
-    attributes_to_skip_while_copying: Iterable[str] = None
-    """ If subclass sets this to a list/set of attribute names,
-        we will skip copying them for you (via `Dependency.__copy__` and `Dependency.__deepcopy__`).
+    def __init_subclass__(
+            cls,
+            thread_sharable=True,
+            attributes_to_skip_while_copying: Optional[Iterable[str]] = None,
+            **kwargs
+    ):
+        """
 
-        We ourselves need to skip copying a specific internal property,
-        and there are other dependencies that need to do the same thing.
+        Args:
+            thread_sharable: If `False`: While a resource is lazily auto-created, we will
+                ensure we do it per-thread, and not make it visible to other threads.
+                This is accomplished by only auto-creating the resource in the thread-root
+                `udepend.context.UContext`.
 
-        This is an easy way to accomplish that goal.
+                If `True` (default): Lazily auto-creating the `Dependency` subclass will happen
+                in app-root `udepend.context.UContext`, and will therefore be visible and shared
+                among all threads.
 
-        As a side note, we will always skip copying `_context_manager_stack` in addition to
-        what's set on `Dependency.attributes_to_skip_while_copying`.
+                If True, we can be put in the app-root context, and can be potentially used in
+                multiple threads.  If False, we will only be lazily allocated in the
+                pre-thread, thread-root UContext and always be used in a single-thread.
 
-        This can be dynamic if needed, by default it's consulted on the object each time it's
-        copied
-        (to see where it's used, look at `udepend.dependency.Dependency.__copy__` and
-        `udepend.dependency.Dependency.__deepcopy__`)
-    """
+                If another thread needs us and this is False, a new Dependency instance will be
+                lazily created for that thread.
 
-    resource_thread_safe = True
-    """ If True, we can be put in the app-root context, and can be potentially used in
-        multiple threads.  If False, we will only be lazily allocated in the pre-thread UContext
-        and always be used in a single-thread. If another thread needs us and this is False,
-        a new Dependency instance will be created for that thread.
+                ## Details on Mechanism
 
-        ## Details on Mechanism
+                It accomplishes this by the lazy-creation mechanism.
+                When something asks for a Dependency that does not currently exist,
+                the parent-UContext is asked for the dependency, and then the parent's parent
+                will be asked and so on.
 
-        It accomplishes this by the lazy-creation mechanism.
-        When something asks for a Dependency that does not currently exist,
-        the parent-UContext is asked for the dependency, and then the parent's parent will be
-        asked and so on.
+                Eventually the app-root context will be asked for the Dependency.
 
-        Eventually the app-root context will be asked for the Dependency.
+                If the app-root already has the Dependency, it will return it.
 
-        If the app-root already has the Dependency, it will return it.
+                When app-root does not have the dependency, it potentially needs to lazily create
+                the dependency depending on if Dependency is thread-safe.
 
-        When app-root does not have the dependency, it potentially needs to lazily create the
-        dependency depending on if Dependency is thread-safe.
+                So at this point, if `resource_thread_safe` value is (as a class attribute):
 
-        So at this point, if `resource_thread_safe` value is (as a class attribute):
+                - `False`: The app-root context will return `None` instead of lazily creating the
+                    Dependency. It's expected a thread-root UContext is the thing that asked the
+                    app-root context and the thread-root context when getting back a None should
+                    just go and lazily create it.
+                    This results in a new Dependency being lazily allocated for each thread that
+                    needs it.
+                - `True`: If it does not have one it will lazily create a new Dependency store it
+                    in self and return it. Other thread-roots that ask for this Dependency in the
+                    future will get the one from the app-root, and therefore the Dependency will
+                    be shared between threads and needs to be thread-safe.
 
-        - `False`: The app-root context will return `None` instead of lazily creating the Dependency.
-            It's expected a thread-root UContext is the thing that asked the app-root context
-            and the thread-root context when getting back a None should just go and lazily create
-            it.
-            This results in a new Dependency being lazily allocated for each thread that needs it.
-        - `True`: If it does not have one it will lazily create a new Dependency store it in self
-            and return it. Other thread-roots that ask for this Dependency in the future will
-            get the one from the app-root, and therefore the Dependency will be shared between
-            threads and needs to be thread-safe.
+                Each context then stores this value in its self as it goes up the chain.
+                Finally, the code that originally asked for the Dependency will have it returned
+                to it, and they can then use it.
 
-        Each context then stores this value in it's self as it goes up the chain.
-        Finally the code that orginally asked for the Dependency will have it returned to it
-        and they can then use it.
+                We store it in each UContext that Dependency passes though so in the future it can
+                just directly answer the question and return the Dependency quickly.
 
-        We store it in each UContext that Dependency pases though so in the future it can just
-        directly answer the question and return the Dependency quickly.
+            attributes_to_skip_while_copying: If subclass sets this to a list/set of attribute
+                names, we will skip copying them for you
+                (via `Dependency.__copy__` and `Dependency.__deepcopy__`).
 
+                We ourselves need to skip copying a specific internal property,
+                and there are other dependencies that need to do the same thing.
 
-        ## How thread-safe
+                This is an easy way to accomplish that goal.
 
-        This is consulted
-    """
+                As a side note, we will always skip copying `_context_manager_stack` in addition to
+                what's set on `Dependency.attributes_to_skip_while_copying`.
+
+                This can be dynamic if needed, by default it's consulted on the object each time
+                it's copied.
+
+                To see where it's used, look at:
+                - `Dependency.__copy__`
+                - `Dependency.__deepcopy__`
+            **kwargs:
+
+        Returns:
+
+        """
+        cls._dependency__meta = {
+            'thread_sharable': thread_sharable,
+            'attributes_to_skip_while_copying': set(attributes_to_skip_while_copying)
+        }
+
+        return super().__init_subclass__(cls, **kwargs)
 
     obj: Self
     """ 
@@ -383,68 +451,6 @@ class Dependency:
         """ Convenience method to easily get a wrapped CurrentDependencyProxy for cls/self. """
         from .proxy import CurrentDependencyProxy
         return CurrentDependencyProxy.wrap(cls)
-
-    def dependency_for_child_context(self, child_context: UContext):
-        """
-        Called by `udepend.context.UContext` when it does not have a dependency of a particular type but it does
-        have a value from a parent-context (via it's parent-chain).
-
-        Gives opportunity for the `Dependency` to do something special if it wants.
-
-        Default implementation of this method is to simply return `self` when we get asked.
-        That way by default, we simply use the same object for every `udepend.context.UContext`
-        on the same thread.
-
-        This way (by default) it will make a `Dependency` subclass a sort of 'singleton`;
-        where we try and do our best to "reuse" the same instance.
-
-        In this way, the child-context will get the same instance of me as the parent, normally.
-
-        You can think of this as making a `Dependency` act like a singleton by default,
-        as only one instance (at the root-context) would ever 'normally' be created.
-
-        It's still possible to get a second instance of the dependency, however:
-
-        - If someone created a new dependency themselves manually and adds it to a new Context
-            and then activates the context,
-            that dependency they created and added themselves could be a second instance.
-            (for more details, see [Activating New Dependency](#activating-new-dependency))
-
-            THis is because the Dependency that was manually created was not given an opportunity
-            to reuse the parent value.
-
-            However, this is usually desirable as whatever manually created the object probably
-            wants to override the dependency with its own configured object.
-
-        - If a new `udepend.context.UContext` was created at some point later via `Context(parent=None)`
-            and then activated. When a dependency is next asked for, it must create a new one as
-            any previous `udepend.context.UContext` would be unreachable until the context was deactivated.
-            (for more details, see [Activating New Context](#activating-new-context))
-
-        Args:
-            child_context (UContext): A child context that is needing the dependency.
-        """
-        return self
-
-    def context_resource_for_copy(
-            self, *, current_context: UContext, copied_context: UContext
-    ) -> "Dependency":
-        """
-        When an existing `UContext` instance is used via a `with` statement or as a function
-        decorator it will copy it's self for use during the `with` statement
-        (ie: it will act as sort of `template`).
-
-        It will go through and call this method on each dependency in the original 'template' context.
-        By default, we simply return self
-        (generally, UContext dependencies are usually treated as singletons, and UContext tries to
-        maintain that).
-
-        If a `Dependency` needs to do more, they can override us
-
-        - `Dependency.context_resource_for_copy`: Overridable by a dependency if non-singleton
-            (or other behavior) is desired.
-        """
-        return self
 
     def __copy__(self):
         """
@@ -537,7 +543,7 @@ class Dependency:
         context = stack.pop()
         context.__exit__(*args, **kwargs)
 
-    def __call__(self, func = None):
+    def __call__(self, func):
         """
         This makes Resource subclasses have an ability to be used as function decorators
         by default unless this method is overriden to provide some other funcionality.
@@ -587,13 +593,6 @@ class Dependency:
 
         Returns: We execute decorated method and return whatever it returns.
         """
-        # If we are called without any arguments, return self to support using this either as:
-        #   `DependencySubclass.depend()`
-        #   OR
-        #   `DependencySubclass.depend`
-        if not func:
-            return self
-
         if not callable(func):
             raise UDependError(
                 f"Attempt to calling a Dependency of type ({self}) as a callable function. "
@@ -621,9 +620,9 @@ class Dependency:
 setattr(Dependency, 'obj', _private.classproperty(fget=lambda cls: cls.grab()))
 
 
-class DependencyPerThread(Dependency):
+class PerThreadDependency(Dependency, thread_sharable=False):
     """
-    Same as `Dependency`, except we set the `Dependency.resource_thread_safe` flag to False,
+    Same as `Dependency`, except we set the `thread_sharable` flag to False (via class argument),
     this means when an instance of us is created by the system lazily,
     it will not be shared between threads.
 
@@ -641,7 +640,7 @@ class DependencyPerThread(Dependency):
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
-    When a dependency makes a subclass from `DependencyPerThread` or otherwise set's
+    When a dependency makes a subclass from `PerThreadDependency` or otherwise set's
     the `Dependency.resource_thread_safe` to False at the Dependency class-level.
     When a thread asks for that dependency for first time it will be lazily created like expected,
     but the resulting object is placed in the root-context instead (and NOT the app-root-context).
@@ -653,4 +652,4 @@ class DependencyPerThread(Dependency):
     the first time they ask for it, and place it in their thread-root
     `udepend.context.UContext`.
     """
-    resource_thread_safe = False
+    pass

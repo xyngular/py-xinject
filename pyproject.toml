@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "glazy"
+name = "udepend"
 version = "0.3.0"
-description = "Inject global resources lazily; global-lazy -> glazy"
+description = "Inject universal resources/dependencies lazily."
 authors = ["Josh Orr <josh@orr.blue>"]
-packages = [{include = "glazy"}]
+packages = [{include = "udepend"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -29,7 +29,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.plugins]
 # Pytest plugin to support automatic clearing of all current dependency dependencies between each test.
-pytest11 = {glazy_pytest_plugin = "glazy.pytest_plugin"}
+pytest11 = {udepend_pytest_plugin = "udepend.pytest_plugin"}
 
 [tool.black]
 line-length = 99
