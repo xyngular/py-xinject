@@ -372,7 +372,6 @@ _TreatAsRootParent = _TreatAsRootParentType()
 """
 
 
-# todo: Remove ContextType
 class UContext:
     """
     See [Quick Start](#quick-start) in the `udepend.context` module if your new to the UContext
@@ -875,8 +874,8 @@ class UContext:
         # So, code using a Dependency in general should never have to worry about this None case.
 
         if self._is_root_context_for_app:
-            from udepend import Dependency
-            if issubclass(for_type, Dependency) and not for_type.resource_thread_safe:
+            from udepend.dependency import is_dependency_thread_sharable
+            if not is_dependency_thread_sharable(for_type):
                 return None
 
         parent_value = None

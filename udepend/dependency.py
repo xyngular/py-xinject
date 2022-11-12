@@ -161,7 +161,7 @@ def attributes_to_skip_while_copying(dependency: 'Dependency') -> Set[str]:
     return dependency._dependency__meta.get('attributes_to_skip_while_copying', set())
 
 
-class Dependency(thread_sharable=True):
+class Dependency:
     """
     If you have not already done so, you should also read the udepend project's
     [README.md](https://github.com/xyngular/py-u-depend#active-resource-proxy) for an overview
@@ -347,7 +347,8 @@ class Dependency(thread_sharable=True):
                 When app-root does not have the dependency, it potentially needs to lazily create
                 the dependency depending on if Dependency is thread-safe.
 
-                So at this point, if `resource_thread_safe` value is (as a class attribute):
+                So at this point, if you call `is_dependency_thread_sharable` on type/cls,
+                and if returned value is:
 
                 - `False`: The app-root context will return `None` instead of lazily creating the
                     Dependency. It's expected a thread-root UContext is the thing that asked the
@@ -641,7 +642,9 @@ class PerThreadDependency(Dependency, thread_sharable=False):
     This makes the object available to be seen/used by other threads.
 
     When a dependency makes a subclass from `PerThreadDependency` or otherwise set's
-    the `Dependency.resource_thread_safe` to False at the Dependency class-level.
+    the `Dependency.__init_subclass__`'s `thread_sharable` to `False` via the Dependency
+    class arguments (so that `is_dependency_thread_sharable` will return `False` when its passed
+    the new Dependency subclass/type).
     When a thread asks for that dependency for first time it will be lazily created like expected,
     but the resulting object is placed in the root-context instead (and NOT the app-root-context).
 
