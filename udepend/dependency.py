@@ -310,8 +310,8 @@ class Dependency:
 
     def __init_subclass__(
             cls,
-            thread_sharable=True,
-            attributes_to_skip_while_copying: Optional[Iterable[str]] = None,
+            thread_sharable=Default,
+            attributes_to_skip_while_copying: Optional[Iterable[str]] = Default,
             **kwargs
     ):
         """
@@ -391,12 +391,24 @@ class Dependency:
         Returns:
 
         """
-        cls._dependency__meta = {
-            'thread_sharable': thread_sharable,
-            'attributes_to_skip_while_copying': set(attributes_to_skip_while_copying)
-        }
+        super().__init_subclass__(**kwargs)
+        parent_meta_dict = cls._dependency__meta
 
-        return super().__init_subclass__(cls, **kwargs)
+        if parent_meta_dict is None:
+            meta_dict = {attributes_to_skip_while_copying:set()}
+        else:
+            meta_dict = deepcopy(parent_meta_dict)
+
+        cls._dependency__meta = meta_dict
+
+        if thread_sharable is not Default:
+            meta_dict['thread_sharable'] = thread_sharable
+
+        if attributes_to_skip_while_copying is not Default:
+            attr_set: set = meta_dict['attributes_to_skip_while_copying']
+            attr_set.update(attributes_to_skip_while_copying)
+
+    _dependency__meta = None
 
     obj: Self
     """ 
@@ -473,7 +485,7 @@ class Dependency:
         dict_copy = self.__dict__.copy()
 
         # Pop out of the dict-copy any attributes we should skip.
-        attrs_to_skip = self.attributes_to_skip_while_copying or []
+        attrs_to_skip = attributes_to_skip_while_copying(self) or []
         for attr_to_skip in ['_context_manager_stack', *attrs_to_skip]:
             dict_copy.pop(attr_to_skip, None)
 
@@ -488,7 +500,7 @@ class Dependency:
         # We always need to have `_context_manager_stack`, subclasses can set
         # `attributes_to_skip_while_copying` if they have additional ones they want to skip.
         skip_attributes = {
-            x for x in ['_context_manager_stack', *(self.attributes_to_skip_while_copying or [])]
+            x for x in ['_context_manager_stack', *(attributes_to_skip_while_copying(self) or [])]
         }
 
         # If we get called without a memo, allocate a blank dict.

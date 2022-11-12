@@ -108,11 +108,11 @@ module_level_context = UContext(
 )
 
 
-# I want to test it out here, because pycharm looks at the argument list of the function
+# I want to test it out here, because pytest looks at the argument list of the function
 # in order to know what (if any) fixtures to inject.
 # If our decorator is not setup correctly, pytest won't call our test-method correctly.
-# So having pycharm call our test method correctly is a really good edge-case test in of it's self!
-@module_level_context
+# So having pycharm call our test method correctly is a excellent edge-case test in of its self!
+@module_level_context.copy()
 def test_module_level_context(udepend_test_context):
     # `context` is the base-context
     UContext.current().add(1.2)
@@ -122,6 +122,8 @@ def test_module_level_context(udepend_test_context):
     # context as it's first parent. the `create=False` will ensure it won't add this looked
     # up dependency to its self.
     assert module_level_context.dependency(for_type=float, create=False) == 1.2
+
+    # Should be the same object since we have not been called recursively.
     assert module_level_context is not UContext.current()
 
     # Ensure that we don't have a float dependency in the outer-module version
@@ -141,7 +143,8 @@ def test_initial_context_resources_with_dict():
 
     with my_context:
         # SomeDependency was replaced by a direct-string 'str-instead', testing replacing
-        # dependencies with a completely different type (if you want to mock/test something specific).
+        # dependencies with a completely different type
+        # (if you want to mock/test something specific).
         assert SomeDependency.grab() == 'str-instead'
         assert UContext.current(for_type=int) == 'string-as-int-dependency'
         assert UContext.current(for_type=float) is False
@@ -197,8 +200,7 @@ def test_each_unit_test_starts_with_a_single_parentless_root_like_context():
         assert new_context.parent is unit_test_root_context
 
 
-class TestSkipAttrOnCopyDependency(Dependency):
-    attributes_to_skip_while_copying = ['my_attribute']
+class TestSkipAttrOnCopyDependency(Dependency, attributes_to_skip_while_copying=['my_attribute']):
     my_attribute = "hello-1"  # Defined at class-level, not object-level
     my_other_attr = "hello-2"  # Defined at class-level, not object-level
 

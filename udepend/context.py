@@ -477,11 +477,13 @@ class UContext:
             if parent:
                 return parent
 
+            # `parent` is most likely still set as `Default`.
+
             raise UDependError(
                 f"Somehow we have a UContext has been activated "
                 f"(ie: has activated via decorator `@` or via `with` "
                 f"at some point and has not exited yet) "
-                f"but still has it's internal parent value set to `Default`. "
+                f"but still has it's internal parent value set to ({parent}). "
                 f"This indicates some sort of programming error or bug with UContext. "
                 f"An active UContext should NEVER have their parent set at `Default`. "
                 f"It should either be None or an explict parent UContext instance "
@@ -757,6 +759,8 @@ class UContext:
             for_type = type(dependency)
 
         self._dependencies[for_type] = dependency
+        if self._sibling:
+            self._sibling.add(dependency, for_type=for_type)
         self._remove_cached_dependency_and_in_children(for_type)
         return self
 
@@ -1064,22 +1068,15 @@ class UContext:
             >>> with some_context as copied_and_activated_context:
             ...     assert UContext.current() is copied_and_activated_context
             ...     assert UContext.current() is not some_context
-
-            Args:
-                prevent_copying_self: If False (default): If self.copy_as_template is True, will
-                    make a copy of self, activate that and return that context.
-
-                    If True: Even if `copy_as_template` is Will activate self, and return self,
-                        You MUST ensure that a context that is directly activated and with no
-                        copy made is not currently active right now.
-
-                    Generally, `udepend.dependency.Dependency.__enter__` will set to this
-                    False because it always creates a blank context just for its self.
-                    No need to create two contexts (just an optimization).
         """
         new_ctx = self
         if self.copy_as_template:
             new_ctx = self.copy()
+        elif self._is_active:
+            # We are already 'activated', make shallow copy + sibling...
+            new_ctx = self.copy()
+            new_ctx._sibling = self
+
         # Check to make sure new_ctx is not currently active, if it is we either need to:
         #   make a copy of self and activate that instead
         #   raise an error.
@@ -1094,11 +1091,18 @@ class UContext:
 
         current_context = UContext.current()
 
-        assert current_context is self, (
-            f"A UContext ({self}) was exited, and was not current context ({current_context})"
-        )
+        if current_context._sibling:
+            assert current_context._sibling is self, (
+                f"Exiting a sibling ({current_context._sibling}), but sibling was not ({self})"
+            )
+            context_to_deactivate = current_context
+        else:
+            assert current_context is self, (
+                f"A UContext ({self}) was exited, and was not current context ({current_context})"
+            )
+            context_to_deactivate = self
 
-        assert not self._reset_token_stack, (
+        assert not context_to_deactivate._reset_token_stack, (
             f"A UContext ({self}) was exited, and there was still a reset-token on stack."
         )
 
@@ -1109,13 +1113,17 @@ class UContext:
         # Reset context that is not active anymore back to Default if it had a parent.
         # if the parent is None, it should remain as None.
         # A `Default` parent means it looks up parent dynamically each time (to the current one).
-        if self._parent:
-            # Remove self from children, reset parent/caches.
-            self._parent._children.remove(self)
-            self._parent = Default
-            self._reset_caches()
-
         _current_context_contextvar.reset(token)
+
+        context_to_deactivate._is_active = False
+        context_to_deactivate._reset_caches()
+
+        if context_to_deactivate._parent:
+            # Remove self from children, reset parent/caches.
+            context_to_deactivate._parent._children.remove(context_to_deactivate)
+            context_to_deactivate._parent = Default
+
+        assert not context_to_deactivate._children, f"UContext ({context_to_deactivate}) still has children after exiting as active ({context_to_deactivate._children})."
 
     def __call__(self, *args, **kwargs):
         """
@@ -1159,8 +1167,13 @@ class UContext:
             # >>> @UContext
             # >>> def some_method():
             # ...     pass
-            # We always start with a new-blank context in this state
-            with copy(self):
+            #
+            # FYI: This will make a shallow copy IF `self` has already activated and then make the
+            #      two contexts siblings, when a younger sibling has resources added to it, it
+            #      will also add them to the older sibling.
+            #      (ie: we are activating same `UContext` object twice).
+            #      Example: Could happen if function we are decorating is called recursively.
+            with self:
                 # Use the out-scope `_func` var; which should have the original/decorated method
                 # that is being called.
                 return _func(*args, **kwargs)
@@ -1296,14 +1309,14 @@ class UContext:
         self._cached_parent_dependencies.clear()
 
     def _remove_cached_dependency_and_in_children(self, dependency_type: Type):
-        self._cached_parent_dependencies.pop(dependency_type)
+        self._cached_parent_dependencies.pop(dependency_type, None)
         for child in self._children:
             child._remove_cached_dependency_and_in_children(dependency_type)
 
     _cached_context_chain = None
     _cached_parent_dependencies: dict = None
 
-    _is_active = None
+    _is_active = False
     """ This means at some point in the past we were 'activated' via one of these methods:
 
         `with` or `@` or `UContext.make_current`.
@@ -1339,6 +1352,31 @@ class UContext:
     """ Used internally to know if None was passed as my parent value originally. """
 
     _children: Set['UContext'] = None
+
+    _sibling: Optional['UContext'] = None
+    """
+    If a `UContext` is activated a second time (perhaps when a function is called recursively, etc)
+    then it makes a shallow copy of self, and sets its self as the the UContext copy's sibling
+    by setting this var on the copied UContext.
+    
+    If a UContext has a sibling, when a `udepend.dependency.Dependency` is directly added to
+    UContext via `UContext.add` it will also add that same dependency to the sibling UContext.
+    
+    In this way, when you do something like this:
+    
+    >>> @UContext()
+    >>> def some_method()
+    >>>   UContext.current().add(SomeDependency())  
+    
+    The `SomeDependency` instance will be added to all of the functions decorated UContext
+    objects like you would expect
+    (ie: it's treated as if one instance of UContext was created, even if `some_method` is
+         called recursively).
+    
+    The shallow-copy must be made if method is called recursively so that the parent-chain
+    can be kept track of correctly along with any cached resources from the parent-chain.
+    
+    """
 
     _func = None
     """ Used if UContext is used as a function decorator directly, ie:
