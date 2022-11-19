@@ -73,28 +73,34 @@ def test_context_and_with():
     context_1 = UContext(dependencies=[2])
 
     def verify_current_context_is_copy():
-        copied_context = UContext.current()
+        copied_context: UContext = UContext.current()
         # ensure they are not the same object (ie: it got copied), and the parent is correct.
         assert context_1 is not copied_context
-        assert copied_context.parent is root_context
+        assert copied_context.parent is context_1
+        assert copied_context._sibling is context_1
 
-        # See if the non-active `context_1` can dynamically lookup it's parent as the
+        # See if the non-active Context can dynamically look up it's parent as the
         # currently active UContext.
-        assert context_1.parent is copied_context
+        assert UContext().parent is copied_context
 
         # Ensure dependencies at copied.
         assert copied_context._dependencies == {int: 2}
 
-    with context_1 as copied_context:
+    with context_1 as current_context:
         # When we use UContext via `@` or `with` or `make_current`, they should copy the
         # context and activate/make-current that copied context.
-        assert UContext.current() is copied_context
-        verify_current_context_is_copy()
+        assert UContext.current() is current_context
+
+        with context_1 as current_context_2:
+            assert UContext.current() is current_context_2
+            assert UContext.current() is not current_context
+            verify_current_context_is_copy()
 
     # check to make sure same behavior happens when using context as a decorator.
     @context_1
     def my_method():
-        verify_current_context_is_copy()
+        assert UContext.current() is context_1
+        # verify_current_context_is_copy()
 
     my_method()
 

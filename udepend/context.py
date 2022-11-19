@@ -380,6 +380,10 @@ class UContext:
     copy_as_template = False
 
     @classmethod
+    def grab(cls) -> 'UContext':
+        return cls.current()
+
+    @classmethod
     def current(cls, for_type: Union[Type[C], "UContext"] = None) -> Union[C, "UContext"]:
         """ Gets the current context that should be used by default, via the Python 3.7 ContextVar
             feature. Please see UContext class doc [just above] for more details on how this works.

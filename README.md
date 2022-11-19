@@ -1,297 +1,83 @@
-# Xyngular Python Dependency Library
+![PythonSupport](https://img.shields.io/static/v1?label=python&message=%203.8|%203.9|%203.10&color=blue?style=flat-square&logo=python)
+![PyPI version](https://badge.fury.io/py/py-u-depend.svg?)
 
-Provides way to lazy-load sharable singleton-like resources classes,
-while promoting code-decoupling.
+- [Overview](#overview)
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [Licensing](#licensing)
 
-- [Xyngular Python Dependency Library](#xyngular-python-resource-library)
-    * [Install in Python project](#install-in-python-project)
-        + [Poetry](#poetry)
-                * [Gemfury](#gemfury)
-    * [Development](#development)
-    * [How To Use](#how-to-use)
-        + Go Here For Another TOC with more topics related to how to use this library in codebase.
-        + [What It's Used For](#what-its-used-for)
-            - [Example Use Cases](#example-use-cases)
-        + [Overview](#overview)
-        + [Quick Start Example Code](#quick-start-example-code)
-    * [Advanced Use Cases](#advanced-use-cases)
-        + [Dependency + Dataclasses](#resource--dataclasses)
-        + [Thread Safety](#thread-safety)
-        + [Active Dependency Proxy](#active-resource-proxy)
-    * [Unit Testing](#unit-testing)
-    * [Backwards Breaking Change - v2.x to v3.x](#backwards-breaking-change---v2x-to-v3x)
-        + Important info on what the backwards breaking change was.
+# Overview
 
+Various objects that allow for sentinel-like singleton guards for various purposes, including:
+
+- Ones pre-defined in this library:
+  - Default
+  - Null
+- Also, Easily create your own custom singletons/sentinels types.
+
+**[📄 Detailed Documentation](https://xyngular.github.io/py-u-depend/latest/)** | **[🐍 PyPi](https://pypi.org/project/py-u-depend/)**
 
 # Install
 
 ```bash
 # via pip
-pip install udepend
+pip install guards
 
 # via poetry
-poetry add udepend
+poetry add guards
 ```
 
-## How To Use
-
-The main class used most of the time is `udepend.resource.Dependency`.
-Read the below/this-document first, but after your done here and need more details see
-`udepend.resource.Dependency`, you can look at the doc-comment for that module and class for
-more detailed  reference-type documentation.
-
-Below is a high-level-overview of how to use this library
-
-### What It's Used For
-
-If you need a lazily created singleton-type object
-(but can still temporary override in a decoupled fashion if needed)
-then this library could come in use for your situation.
-
-#### Example Use Cases
-
-- Network connection and/or a remote dependency/client.
-  - You can wrap these objects in a `dependency`, the dependency provides the object.
-  - Objects to wrap are 'client' like things, and allow you to communicate with some external system.
-  - Very common for these objects to represent an already-open network connection,
-    So there are performance considerations to try and keep connection open and to reuse it.
-  - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
-    allows you to lazily get a shared aws client/dependency.
-    - It also uses a more advance feature, CurrentDependencyProxy, to represent boto resources/clients
-      that are importable into other modules and directly usable.
-- Common configuration or setting values
-  - See also:
-    - xyn_settings
-      - A Dependency subclass that has extra features geared towards this use case.
-    - xyn_config
-      - Way to get settings from SSM, Secrets Manager and other remote locations.
-- Anything that needs to be lazily allocated,
-  especially if they need to be re-created for each unit-test run.
-  - Example: things with moto, requests-mock
-    - This use useful when session/clients needs to be created after a mock installed.
-      So if code-base uses Dependency  to grab a requests session (for example),
-      when a new unit-test runs it will allocate a new requests session, and mock will therefore work.
-      While at the same time the code in prod/deployed code it will just use a shared session
-      that sticks around  between lambda runs, etc. (which is what you want to happen in deployed code).
-- Basic dependency injection scenarios, where two separate pieces of code need to use a shared
-  object of some sort that you want to 'inject' into them.
-  - Does it in a way that prevents you having to pass around the object manually everywhere.
-  - Promotes code-decoupling, since there is less-temptation to couple them if it's easy to share
-    what they need between each-other, without having each piece of code having to know about each-other.
-
-### Overview
-
-The main class used most of the time is `udepend.dependency.Dependency`,
-you can look at the doc-comment for that module and class for more details.
-
-Allows you to create sub-classes that act as sharable singleton-type objects that
-we are calling resources here.
-These are also typically objects that should generally stick around and should be created lazily.
-
-Also allows code to temporarily create, customize and activate a dependency if you don't want
-the customization to stick around permanently.
-You can do it without your or other code needing to be aware of each other.
-
-This helps promote code decoupling, since it's so easy to make a Dependency activate it
-as the 'current' version to use.
-
-The only coupling that takes place is to the Dependency sub-class it's self.
-
-Each separate piece of code can be completely unaware of each other,
-and yet each one can take advantage of the shared dependency.
-
-This means that Dependency can also help with simple dependency injection use-case scenarios.
-
-### Quick Start Example Code
+# Quick Start
 
 ```python
-from udepend import Dependency
+# This is the "my_resources.py" file/module.
 
+import boto3
+from udepend import PerThreadDependency
 
-# This is a example Dependency class, the intent with this class is to treat 
-# it as a semi-singleton shared dependencydependency/resource.
-class MyResource(Dependency):
-
-    # It's important to allow dependencies to be allocated with
-    # no required init arguments.
-    # That way a default-instance/version of the class can
-    # easily be created lazily.
-    def __init__(self, name=None):
-        if name is not None:
-            self.name = name
-
-    name: str = 'my-default-value'
-
-
-# Gets currently active instance of `MyResource`, or lazily creates if needed.
-# If system creates a new instance of MyResource, it will save it and reuse it
-# in the future when it's asked for.
-#
-# Next, we get value of `some_attribute` off of it.
-# Prints 'my-default-value'
-print(MyResource.grab().name)
-
-# Change the value of the name attribute on current dependency
-MyResource.grab().name = 'changing-the-value'
-
-# Now prints 'changing-the-value'
-print(MyResource.grab().name)
-
-# You can temporarily inject your own version of a dependency via a python context manager:
-with MyResource(name='my-temporary-name'):
-    # When someone asks for the current dependency of `MyResource`,
-    # they will get back the one I created in `with` statement above.
-    #
-    # Now prints 'my-temporary-name'
-    print(MyResource.grab().name)
-
-# Object we created and temporary activated by above `with` statement
-# has been deactivated (ie: thrown out).
-# Old one that was the active one previously is the one that is now used when
-# the current dependency for `MyResource` is asked for.
-#
-# prints 'changing-the-value'
-print(MyResource.grab().name)
+class S3(PerThreadDependency):
+    def __init__(self, **kwargs):
+        # Keeping this simple; a more complex version
+        # may store the `kwargs` and lazily create the s3 resource
+        # only when it's asked for (via a `@property or some such).
+        
+        self.resource = boto3.resource('s3', **kwargs)
 ```
 
-
-## Advanced Use Cases
-
-### Dependency + Dataclasses
-
-You can use the built-in dataclasses with Dependency without a problem.
-Just ensure all fields are optional (ie: they all have default values).
-
-Example:
+To use this resource in codebase, you can do this:
 
 ```python
-from udepend import Dependency
-from dataclasses import dataclass
+# This is the "my_functions.py" file/module
 
+from .my_resources import S3
 
-@dataclass
-class DataResource(Dependency):
-    # Making all fields optional, so DataResource can be created lazily:
-    my_optional_field: str = None
-    another_optional_field: str = "hello!"
-
-
-# Get current DataResource dependency, print it's another_optional_field;
-# will print out `hello!`:
-print(DataResource.grab().another_optional_field)
+def download_file(file_name, dest_path):
+    # Get dependency
+    s3_resource = S3.grab().resource
+    s3_resource.Bucket('my-bucket').download_file(file_name, dest_path)
 ```
 
-### Thread Safety
-
-There is a concept of an app-root, and thread-root contexts.
-
-By default, each Dependency subclass will be shared between different threads,
-ie: it's assumed to be thread-safe.
-
-You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `udepend.dependency.ThreadUnsafeResource` instead,
-or by setting the **class attribute** (on your custom sub-class of Dependency)
-`udepend.dependency.Dependency.resource_thread_sharable` to `False`.
-
-Things that are probably not thread-safe in general
-are resources that contain network/remote type connections/sessions/clients.
-
-Concrete Examples In Code Base:
-
-- Requests library session
-  - xyn_model_rest uses a Dependency to wrap requests library session, so it can automatically
-    reuse connections on same thread, but use new session if on different thread.
-    Also helps with unit testing, when Mocking requests URL calls.
-- boto client/dependency
-  - Library says it's not thread-safe, you need to use a diffrent object per-thread.
-  - Moto mocking library for AWS services needs you to allocate a client after it's setup,
-    (so lazily allocate client/dependency from boto).
-  - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
-    accomplish being both lazy and will allocate a new one per-thread for you automatically.
-
-### Active Dependency Proxy
-
-You can use the convenience method `udepend.dependency.Dependency.proxy` to easily get a
-proxy object.
-
-Or you can use `udepend.proxy.CurrentDependencyProxy.wrap` to create an object that will act
-like the current dependency.
-All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
-
-This means you can call all non-special methods and access normal attributes,
-as if the object was really the currently active dependency instance.
-
-Any methods/attributes that start with a `_` will not be used on the proxied object,
-but will be used on only the proxy-object it's self.
-This means, you should not ask/set any attributes that start with `_` (underscore)
-when using the proxy object.
-
-A real-world example is `xyn_config.config.config`, it uses this code for that object:
+Inject a different version of the resource:
 
 ```python
-from udepend import CurrentDependencyProxy
-from xyn_config import Config
+from .my_resources import S3
+from .my_functions import download_file
 
-# The `xny_resource.proxy.CurrentDependencyProxy.wrap` method to get a correctly type-hinted (for IDE)
-# proxy back:
-config = CurrentDependencyProxy.wrap(Config)
+us_west_s3_resource = S3(region_name='us-west-2')
 
-# This is a simpler way to get the same proxy
-# (no imports are needed, just call the class method on any Dependency subclass):
-config = Config.proxy()
+def get_s3_file_from_us_west(file, dest_path):
+    # Can use Dependencies as a context-manager,
+    # inject `use_west_s3_resource` inside `with`:
+    with us_west_s3_resource:
+        download_file(file, dest_path)
+
+# Can also use Dependencies as a function decorator,
+# inject `use_west_s3_resource` whenever this method is called.
+@us_west_s3_resource
+def get_s3_file_from_us_west(file, dest_path):
+    download_file(file, dest_path)
 ```
 
-Now someone can import and use it as-if it's the current config object:
+# Licensing
 
-```python
-from xyn_config import config
-
-value = config.get('some_config_var')
-```
-
-When you ask `config` for it's `get` attribute, it will get it from the current
-active dependency for `Config`. So it's the equivalent of doing this:
-
-```python
-from xyn_config import Config
-
-get_method = Config.grab().get
-value = get_method('some_config_var')
-```
-
-The code then executes the method that was attached to the `get` attribute.
-This makes the call-stack clean, if an error happens it won't be going through
-the CurrentDependencyProxy.
-The `udepend.proxy.CurrentDependencyProxy` already return the `get` method  and is finished.
-The outer-code is the one that executed/called the method.
-
-Another read-world example is in the `xyn_aws`.
-
-See `udepend.proxy.CurrentDependencyProxy` for more ref-doc type details.
-
-## Unit Testing
-
-The `udepends.pytest_plugin.xyn_context` fixture in particular will be automatically used 
-for every unit test. This is important, it ensures a blank root-context is used each time
-a unit test executes.
-
-This is accomplished via an `autouse=True` fixture.
-The fixture is in a pytest plugin module.
-This plugin module is automatically found and loaded by pytest.
-pytest checks all installed dependencies in the environment it runs in,
-so as long as udepend is installed in the environment as a dependency it will find this
-and autoload this fixture for each unit test.
-
-This means for each unit test executed via pytest, it will always start with no resources
-from a previous unit-test execution.
-
-Each unit-test will therefore always start out in the same state,
-and a unit-test won't leak/let-slip any of the changes it makes to its
-Resources into another unit-test.
-
-This use useful when session/clients needs to be created after a mock installed.
-So if code-base uses Dependency  to grab a requests session (for example),
-when a new unit-test runs it will allocate a new requests session, and mock will therefore work.
-While at the same time the code in prod/deployed code it will just use a shared session
-that sticks around  between lambda runs, etc. (which is what you want to happen in deployed code).
-
+This library is licensed under the MIT-0 License. See the LICENSE file.

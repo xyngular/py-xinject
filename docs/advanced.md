@@ -1,4 +1,7 @@
-
+---
+title: REST API
+description: Core utility
+---
 
 ## Thread Safety
 
@@ -15,26 +18,22 @@ or by setting the **class attribute** (on your custom subclass of Dependency)
 Things that are probably not thread-safe in general
 are resources that contain network/remote type connections/sessions/clients.
 
-Concrete Examples In Code Base:
+Example for which you would want a separate dependency instance/object per-thread:
 
-- Requests library session
-  - xyn_model_rest uses a Dependency to wrap requests library session, so it can automatically
-    reuse connections on same thread, but use new session if on different thread.
-    Also helps with unit testing, when Mocking requests URL calls.
+- `requests` library session
+  - Requests libraries session object is not thread-safe, there is issue that's been around for 7 years
+    to make it thread safe that's still open. For now, you need a seperate requests Session per-thread.
+  - `requests-mock` also needs the session created after it's setup, so after unit test runs.
 - boto client/dependency
   - Library says it's not thread-safe, you need to use a different object per-thread.
   - Moto mocking library for AWS services needs you to allocate a client after it's setup,
     (so lazily allocate client/dependency from boto).
-  - Use `xyn_aws` for easy to use Dependency's that wrap boto client/resources that
-    accomplish being both lazy and will allocate a new one per-thread for you automatically.
 
 ## Active Dependency Proxy
 
 You can use the convenience method `udepend.dependency.Dependency.proxy` to easily get a
 proxy object.
 
-Or you can use `udepend.proxy.CurrentDependencyProxy.wrap` to create an object that will act
-like the current dependency.
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
 This means you can call all non-special methods and access normal attributes,
@@ -45,45 +44,55 @@ but will be used on only the proxy-object it's self.
 This means, you should not ask/set any attributes that start with `_` (underscore)
 when using the proxy object.
 
-A real-world example is `xyn_config.config.config`, it uses this code for that object:
+Here is an example boto3 s3 resource dependency:
 
 ```python
-from udepend import CurrentDependencyProxy
-from xyn_config import Config
+# This is the "my_resources.py" file/module.
 
-# The `xny_resource.proxy.CurrentDependencyProxy.wrap` method to get a correctly type-hinted (for IDE)
-# proxy back:
-config = CurrentDependencyProxy.wrap(Config)
+from udepend import Dependency
 
-# This is a simpler way to get the same proxy
-# (no imports are needed, just call the class method on any Dependency class):
-config = Config.proxy()
+import boto3
+from udepend import PerThreadDependency
+
+class S3(PerThreadDependency):
+    def __init__(self, **kwargs):
+        self.resource = boto3.resource('s3', **kwargs)
+
+
+# The `xny_resource.proxy.CurrentDependencyProxy.wrap` method to get
+# a correctly type-hinted (for IDE) proxy back:
+s3 = S3.proxy()
 ```
 
-Now someone can import and use it as-if it's the current config object:
+You can import the proxy and use it as if it's the current S3 object:
 
 ```python
-from xyn_config import config
+# This is the download_file.py file.
 
-value = config.get('some_config_var')
+# Import proxy object from my module (lower-case version)
+from .my_resources import s3
+import sys
+
+if __name__ == '__main__':
+    file_name = sys.argv[0]
+    dest_path = sys.argv[1]
+    
+    # Call normal attributes/properties/methods on it like normal,
+    # the `s3` proxy will forward them to the current/injected object.
+    s3.resource.Bucket("my-bucket").download_file(file_name, dest_path)
 ```
 
-When you ask `config` for it's `get` attribute, it will get it from the current
-active dependency for `Config`. So it's the equivalent of doing this:
+You can use the proxy objecy like a normal object.
 
-```python
-from xyn_config import Config
+The only things not forwarded are any method/attribute that starts
+with a `_`, which conveays the attribute as private/internal.
 
-get_method = Config.grab().get
-value = get_method('some_config_var')
-```
+This includes any dunder-methods, they are not forarded either.
 
-The code then executes the method that was attached to the `get` attribute.
-This makes the call-stack clean, if an error happens it won't be going through
-the CurrentDependencyProxy.
-The `udepend.proxy.CurrentDependencyProxy` already return the `get` method  and is finished.
-The outer-code is the one that executed/called the method.
+Only use the proxy object for normal attribute/properties/methods.
 
-Another read-world example is in the `xyn_aws`.
+If you need do use an attribute/method that starts with an underscore `_`,
+grab the current object directly via `S3.grab()`.
 
-See `udepend.proxy.CurrentDependencyProxy` for more ref-doc type details.
+The [`grab`](api/udepend/dependency.html#udepend.dependency.Dependency.grab)
+method returns the current real object each time it's called (and not a proxy).

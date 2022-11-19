@@ -292,8 +292,8 @@ class Dependency:
     That way it will recreate any shared dependency each time and a unit test can't leak
     dependencies it added or changed into the next run.
 
-    One example of why this is good is for `moto` and `xyn_aws.dynamodb.DynamoDB`.
-    This ensures that we get a new dynamodb shared dependency from `boto` each time
+    One example of why this is good is for `moto` when mocking dynamodb in boto3 client.
+    Can use dependency to ensure that we get a new dynamodb shared dependency for `boto` each time
     a unit test executes
     (which helps with `moto`, it needs to be active when a dependency is allocated/used).
 
@@ -395,7 +395,7 @@ class Dependency:
         parent_meta_dict = cls._dependency__meta
 
         if parent_meta_dict is None:
-            meta_dict = {attributes_to_skip_while_copying:set()}
+            meta_dict = {'attributes_to_skip_while_copying': set()}
         else:
             meta_dict = deepcopy(parent_meta_dict)
 

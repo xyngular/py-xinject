@@ -1,3 +1,7 @@
+---
+title: Getting Started
+---
+
 ## Install
 
 ```bash
@@ -8,9 +12,9 @@ pip install udepend
 poetry add udepend
 ```
 
-# Introduction
+## Introduction
 
-Library's main focus is an easy way to create lazy universally injectable dependencies;
+Main focus is an easy way to create lazy universally injectable dependencies;
 in less magical way. It also leans more on the side of making it easier to get
 the dependency you need anywhere in the codebase.
 
@@ -30,12 +34,177 @@ in an easy to understand and self-documenting way.
     or directly to [`Dependency API Refrence`](api/udepend/dependency.html#udepend.dependency.Dependency)
     for more detailed reference-type documentation.
 
-# How To Use
-
-## Quick Start Example Code
+## Quick Start
 
 Although it's not required, most of the time you'll want to subclass [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
-Tge subclass will inherit some nice features that make it easier to use.
+The subclass will inherit some nice features that make it easier to use.
+
+The following is a specific usecase followed by a more generalized example
+
+### Lazy S3 Resource Dependency Example
+
+Here is a very basic injectable/sharable lazily created S3 resource.
+
+We have a choice to inherit from ether Dependency, or PerThreadDependency.
+
+The normal `Dependency` class lets the dependency be shared between threads, so more of a true singleton type
+of object where under normal/default circomstances there would ever only be one instance of a partculare `Dependency`.
+
+Using [`PerThreadDependency`](api/udepend/dependency.html#udepend.dependency.PerThreadDependency) will automatically get a
+separate dependency object per-thread (ie: separate instance per-thread).
+It simply inherits from Dependency and configures it to not be thread sharable.
+
+In the example below, we do that with the Boto resource, as the boto documentation for resources states they
+are not thread-safe. That means our program will need a separate s3 resource per-thread.
+
+```python
+# This is the "my_resources.py" file/module.
+
+import boto3
+from udepend import PerThreadDependency
+
+class S3(PerThreadDependency):
+    def __init__(self, **kwargs):
+        # Keeping this simple; a more complex version
+        # may store the `kwargs` and lazily create the s3 resource
+        # only when it's asked for (via a `@property or some such).
+        
+        self.resource = boto3.resource('s3', **kwargs)
+```
+
+To use this resource in any codebase, you can do this:
+
+```python
+# This is the "my_functions.py" file/module
+
+from .my_resources import S3
+
+def download_file(file_name, dest_path):
+    s3_resource = S3.grab().resource
+    s3_resource.Bucket('my-bucket').download_file(
+        file_name, dest_path
+    )
+```
+
+When `grab_file` is called it will grab the current `S3` dependency
+and get the resource off of it.
+If `S3` dependency has not been created yet, it will do so on the fly
+and store and return the lazily created dependency in the future when
+asked for it.
+
+This means, the resource is only created when it needs to be.
+
+### Inject Temporarily
+
+Now, let's say you wanted to change/inject a different version of the
+S3 dependency, you could do this:
+
+```python
+from .my_resources import S3
+from .my_functions import download_file
+
+us_west_s3_resource = S3(region_name='us-west-2')
+
+def get_s3_file_from_us_west(file, dest_path):
+    # Can use Dependencies as a context-manager,
+    # inject `use_west_s3_resource` inside `with`:
+    with us_west_s3_resource:
+        download_file(file, dest_path)
+
+# Can also use Dependencies as a function decorator,
+# inject `use_west_s3_resource` whenever this method is called.
+@us_west_s3_resource
+def get_s3_file_from_us_west(file, dest_path):
+    download_file(file, dest_path)
+```
+
+All classes that inherit from `Dependency` are context managers,
+and so the `with` statement will 'activate' that dependency as the
+current version to use.
+
+That will inject an S3 resource configured with `region_name='us-west-2`
+into the function you are calling.
+
+It does not matter how many other methods needs to be called to get
+to the method that needs the `S3` resource, it would still be injected
+and used.
+
+After the `with` statement is exited, the previous `S3` instance
+(if any) that was active before the `with` statement is now what is used
+from that point forward.
+
+This allows you to decouple the code. Code that needs a resource can
+grab it from the S3 class, and code that needs to configure
+the resource can do so without having to know exactly what other methods
+needs that dependency. It can configure the dependencies as/if needed,
+start the app/process and be done.
+
+The resource also sticks around inside the dependency, and can be reused/shared.
+This allows the boto3 s3 resource (in the example above) to reuse already opened
+TCP connections to s3 as the s3 resource is used from various parts of the
+code base.
+
+### Inject Permanently
+
+If instead (see previous example) you don't want to temporarily inject
+a dependency, but instead permanently do it you can do so in a few ways:
+
+- Change the current dependency by setting attributes or calling methods on it.
+- Replace the current dependency with a different object.
+
+The first way is easy, you just access the current version of the resource.
+I'll be using the `S3` dependency from the previous example:
+
+```python
+from .my_resources import S3
+S3.grab().resource = boto.resource('s3', region_name='us-west-2')
+```
+
+In this case, I am replacing the `resource` attribute on the S3 current
+dependency instance/object with my own version of the resource.
+From this point forward, it will be what is used
+(unless some other code after this point temporarily injects their own
+resource via a `with`; see previous example).
+
+Fro the second way, you can access the repository of dependencies 
+and swap/inject a different resource there.
+
+This will add the dependency to the current context, and when that 
+dependency is next asked for it will return the one that was added
+here:
+
+```python
+from udepend import UContext
+from .my_resources import S3
+
+us_west_s3_resource = S3(region_name='us-west-2')
+UContext.grab().add(us_west_s3_resource)
+```
+
+And finally, you can replace dependencies with a completely different
+class of object. This is sometimes useful when doing unit-testing.
+
+What we do here is add out special MyS3MockingClass object
+and tell context to use this in place for the `S3` type dependency.
+
+In the future, this mocking object will be returned when the code
+asks for the `S3` dependency-type.
+
+```python
+from udepend import UContext
+from .my_resources import S3
+from .my_mocks import MyS3MockingClass
+
+s3_mocking_obj = MyS3MockingClass()
+UContext.grab().add(s3_mocking_obj, for_type=S3)
+```
+
+
+
+### Generalized/Generic Example
+
+Although it's not required, most of the time you'll want to subclass [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
+The subclass will inherit some nice features that make it easier to use.
 
 ```python
 from udepend import Dependency
@@ -55,9 +224,10 @@ class MyUniversalDependency(Dependency):
   name: str = 'original-value'
 
 
-# Gets currently active instance of `MyResource`, or lazily creates if
-# needed. If system creates a new instance of MyResource, it will save
-# it and reuse it in the future when it's asked for.
+# Gets currently active instance of `MyUniversalDependency`,
+# or lazily creates if needed. If system creates a new
+# instance of MyUniversalDependency, it will save it and
+# reuse it in the future when it's asked for.
 #
 # Next, we get value of it's `name` attribute:
 
@@ -110,10 +280,9 @@ with MyUniversalDependency(name='injected-value'):
     assert my_universal_dependency.name == 'injected-value'
 ```
 
-# Overview
+## Overview
 
-The main class used most of the time is `udepend.dependency.Dependency`,
-you can look at the doc-comment for that module and class for more details.
+The main class used most of the time is [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
 we are calling resources here.
@@ -133,7 +302,7 @@ and yet each one can take advantage of the shared dependency.
 
 This means that Dependency can also help with simple dependency injection use-case scenarios.
 
-## What It's Used For
+### What It's Used For
 
 - Lazily created singleton-type objects that you can still override/inject as needed in a decoupled fashion.
 - Supports foster decoupled code by making it easy to use dependency injection code patterns.
@@ -146,65 +315,33 @@ This means that Dependency can also help with simple dependency injection use-ca
     - Example: session from requests library, so code can re-use already open TCP connections to an API.
 
 
-## Example Use Cases
+### Example Use Cases
 
 - Network connection and/or a remote dependency/client.
-  - You can wrap these objects in a `dependency`, the dependency provides the object.
-  - Objects to wrap are 'client' like things, and allow you to communicate with some external system.
-  - Very common for these objects to represent an already-open network connection,
-    So there are performance considerations to try and keep connection open and to reuse it.
-  - See `xyn_aws` for a special Dependency subclass that wraps boto clients/resources,
-    allows you to lazily get a shared aws client/dependency.
-    - It also uses a more advance feature, CurrentDependencyProxy, to represent boto resources/clients
-      that are importable into other modules and directly usable.
-- Common configuration or setting values
-  - See also:
-    - xyn_settings
-      - A Dependency subclass that has extra features geared towards this use case.
-    - xyn_config
-      - Way to get settings from SSM, Secrets Manager and other remote locations.
+    - You can wrap these objects in a `dependency`, the dependency provides the object.
+    - Objects to wrap are 'client' like things, and allow you to communicate with some external system.
+    - Very common for these objects to represent an already-open network connection,
+      So there are performance considerations to try and keep connection open and to reuse it.
+- Common configuration or setting objects.
 - Anything that needs to be lazily allocated,
   especially if they need to be re-created for each unit-test run.
-  - Example: things with moto, requests-mock
-    - This use useful when session/clients needs to be created after a mock installed.
-      So if code-base uses Dependency  to grab a requests session (for example),
-      when a new unit-test runs it will allocate a new requests session, and mock will therefore work.
-      While at the same time the code in prod/deployed code it will just use a shared session
-      that sticks around  between lambda runs, etc. (which is what you want to happen in deployed code).
+    - Since all dependencies are thrown-away before running each unit-test function,
+      all dependencies will be lazily re-created each time by default.
+    - Examples:
+        - moto
+            - You need to create boto clients after moto is setup in order for moto to intercept/mock
+              the service the boto client uses.
+            - But you also don't want the main code base to create a brand new boto client each time it needs it,
+              so that it can reuse/share already established TCP connections.
+            - Using a Dependency to lazily manage your boto clients solves both of these issues.
+        - requests-mock
+            - Requests-mock needs to be in place before the code base creates a requests-session
+                - You want to use a session in main code base to reuse/share already established TCP connections
+                  to your http apis.
+            - Using a Dependency to manage a shared requests session lets you both lazily create the session to help
+              with unit testing, but also allows you to easily reuse the session in your codebase in a decoupled manner.
 - Basic dependency injection scenarios, where two separate pieces of code need to use a shared
   object of some sort that you want to 'inject' into them.
-  - Does it in a way that prevents you having to pass around the object manually everywhere.
-  - Promotes code-decoupling, since there is less-temptation to couple them if it's easy to share
-    what they need between each-other, without having each piece of code having to know about each-other.
-
-
-
-
-
-
-## Unit Testing
-
-The `udepends.pytest_plugin.xyn_context` fixture in particular will be automatically used 
-for every unit test. This is important, it ensures a blank root-context is used each time
-a unit test executes.
-
-This is accomplished via an `autouse=True` fixture.
-The fixture is in a pytest plugin module.
-This plugin module is automatically found and loaded by pytest.
-pytest checks all installed dependencies in the environment it runs in,
-so as long as udepend is installed in the environment as a dependency it will find this
-and autoload this fixture for each unit test.
-
-This means for each unit test executed via pytest, it will always start with no resources
-from a previous unit-test execution.
-
-Each unit-test will therefore always start out in the same state,
-and a unit-test won't leak/let-slip any of the changes it makes to its
-Resources into another unit-test.
-
-This use useful when session/clients needs to be created after a mock installed.
-So if code-base uses Dependency  to grab a requests session (for example),
-when a new unit-test runs it will allocate a new requests session, and mock will therefore work.
-While at the same time the code in prod/deployed code it will just use a shared session
-that sticks around  between lambda runs, etc. (which is what you want to happen in deployed code).
-
+    - Does it in a way that prevents you having to pass around the object manually everywhere.
+    - Promotes code-decoupling, since there is less-temptation to couple them if it's easy to share
+      what they need between each-other, without having each piece of code having to know about each-other.

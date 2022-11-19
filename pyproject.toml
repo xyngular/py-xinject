@@ -9,7 +9,9 @@ packages = [{include = "udepend"}]
 python = "^3.8"
 guards = "^1.0.0"
 
+
 [tool.poetry.group.dev.dependencies]
+mkdocs-git-revision-date-plugin = "^0.3.2"
 mkdocs = "^1.4.0"
 mike = "^1.1.2"
 pytest-pycodestyle = "^2.3.0"
