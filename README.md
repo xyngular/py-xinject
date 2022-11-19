@@ -1,7 +1,8 @@
 ![PythonSupport](https://img.shields.io/static/v1?label=python&message=%203.8|%203.9|%203.10&color=blue?style=flat-square&logo=python)
 ![PyPI version](https://badge.fury.io/py/py-u-depend.svg?)
 
-- [Overview](#overview)
+- [Introduction](#introduction)
+- [Documentation](#documentation)
 - [Install](#install)
 - [Quick Start](#quick-start)
 - [Licensing](#licensing)
@@ -14,6 +15,8 @@ the dependency you need anywhere in the codebase.
 
 u-depend allows you to easily inject lazily created universal dependencies into whatever code that needs them,
 in an easy to understand and self-documenting way.
+
+# Documentation
 
 **[📄 Detailed Documentation](https://xyngular.github.io/py-u-depend/latest/)** | **[🐍 PyPi](https://pypi.org/project/py-u-depend/)**
 
