@@ -1,6 +1,6 @@
 import pytest as pytest
 
-from xinject import CurrentDependencyProxy, UContext, Dependency
+from xinject import CurrentDependencyProxy, XContext, Dependency
 from xinject.dependency import DependencyPerThread
 
 
@@ -26,7 +26,7 @@ my_class_via_proxy_method = MyClass.proxy()
 
 def test_proxy_wrapper():
     for current_class in [my_class, my_class_via_proxy_method]:
-        with UContext(dependencies=[MyClass()]):
+        with XContext(dependencies=[MyClass()]):
             assert_myclass("b")
 
             current_class.my_prop = "c"

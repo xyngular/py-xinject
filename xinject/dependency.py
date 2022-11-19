@@ -1,7 +1,7 @@
 """
 Easily create singleton-like classes in a sharable/injectable/decoupled way.
 
-Uses `xinject.context.UContext` to find the current dependency for any particular subclass
+Uses `xinject.context.XContext` to find the current dependency for any particular subclass
 of Dependency.
 
 You can think of this as making a `Dependency` act like a singleton by default,
@@ -20,9 +20,9 @@ It's still possible to get a second instance of the dependency, however:
     However, this is usually desirable as whatever manually created the object probably
     wants to override the dependency with its own configured object.
 
-- If a new `xinject.context.UContext` was created at some point later via `Context(parent=None)`
+- If a new `xinject.context.XContext` was created at some point later via `Context(parent=None)`
     and then activated. When a dependency is next asked for, it must create a new one as
-    any previous `xinject.context.UContext` would be unreachable until the context was deactivated.
+    any previous `xinject.context.XContext` would be unreachable until the context was deactivated.
     (for more details, see [Activating New Context](#activating-new-context))
 
 
@@ -130,7 +130,7 @@ import functools
 from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any, Optional, Dict, Set
 from copy import copy, deepcopy
 from guards import Default
-from xinject import UContext, _private
+from xinject import XContext, _private
 from xinject.errors import UDependError
 import sys
 
@@ -191,14 +191,14 @@ class Dependency:
 
     ## Overview
 
-    A `Resource` represents an object in a `xinject.context.UContext`.
-    Generally, dependencies that are added/created inside a `UContext` inherit from this abstract base
+    A `Resource` represents an object in a `xinject.context.XContext`.
+    Generally, dependencies that are added/created inside a `XContext` inherit from this abstract base
     `Resource` class, but are not required too. `Resource` just adds some class-level
     conveince methods and configuratino options. Inheriting from Resource also helps
     self-document that it's a Resource.
 
     See [Resources](#dependencies) at top of this module for a general overview of how dependencies
-    and `UContext`'s work. You should also read the xinject project's
+    and `XContext`'s work. You should also read the xinject project's
     [README.md](https://github.com/xyngular/py-xinject#documentation) for a high-level
     overview.  The text below is more like plain refrence matrial.
 
@@ -219,18 +219,18 @@ class Dependency:
     we will do our best to ensure that the same object instance is returned every time
     (there are two exceptions, keep reading).
 
-    These dependencies are stored in the current `UContext`'s parent.  What happens is:
+    These dependencies are stored in the current `XContext`'s parent.  What happens is:
 
-    If the current `UContext` and none of their parents have this object and it's asked for
+    If the current `XContext` and none of their parents have this object and it's asked for
     (like what happens when `Resource.dependency` is called on it),
-    it will be created in the deepest/oldest parent UContext.
+    it will be created in the deepest/oldest parent XContext.
 
-    This is the first parent `xinject.context.UContext` who's `UContext.parent` is None.
+    This is the first parent `xinject.context.XContext` who's `XContext.parent` is None.
     That way it should be visible to everyone on the current thread since it will normally be
-    created in the app-root `xinject.context.UContext`.
+    created in the app-root `xinject.context.XContext`.
 
     If the Dependency can't be shared between multiple threads, creation would normally happen
-    at the thread-root UContext instead of the app-root one.
+    at the thread-root XContext instead of the app-root one.
 
     If we don't already exist in any parent, then we must be created the first time we are asked
     for. Normally it will simply be a direct call the dependency-type being requested,
@@ -242,19 +242,19 @@ class Dependency:
     >>> MyResource.grab()
 
     When that last line is executed, and the current or any parent context has a `MyResource`
-    dependency; `UContext` will simply create one via calling the dependency type:
+    dependency; `XContext` will simply create one via calling the dependency type:
 
     >>> MyResource()
 
-    You can allocate the dependency yourself with custom options and add it to the UContext your self.
+    You can allocate the dependency yourself with custom options and add it to the XContext your self.
 
     Here are the various ways to do that, via:
 
 
-    - `UContext.add`
-        Adds dependency to a specific UContext that already exists
+    - `XContext.add`
+        Adds dependency to a specific XContext that already exists
         (or replaces if one has already been directly added in the past to that specific Context).
-        When/While UContext is active, these added dependencies will be the `current` ones.
+        When/While XContext is active, these added dependencies will be the `current` ones.
 
     - Decorator, ie: `@MyResource()`
 
@@ -270,10 +270,10 @@ class Dependency:
             >>>    with @DependencySubclass(service="override-service-name")
             >>>         assert config.service == "override-service-name"
 
-    - multiple in single statement by making your own UContext directly:
+    - multiple in single statement by making your own XContext directly:
 
             >>> def my_method():
-            >>>     with @UContext([
+            >>>     with @XContext([
             >>>         DependencySubclass(service="override-service-name"),
             >>>         SomeOtherDep(name='new-name')
             >>>     ]):
@@ -281,12 +281,12 @@ class Dependency:
 
     ## Background on Unit Testing
 
-    By default, unit tests always create a new blank `UContext` with `parent=None`.
+    By default, unit tests always create a new blank `XContext` with `parent=None`.
     THis is done by an autouse fixture (`xinject.fixtures.context`)
     THis forces every unit test run to create new dependencies when they are asked for (lazily).
 
-    This fixture is used automatically for each unit test, it clears the app-root UContext,
-    removes all current thread-root UContext's and their children from being `active`.
+    This fixture is used automatically for each unit test, it clears the app-root XContext,
+    removes all current thread-root XContext's and their children from being `active`.
     just beofre each run of a unit test.
 
     That way it will recreate any shared dependency each time and a unit test can't leak
@@ -304,7 +304,7 @@ class Dependency:
     modify/add various dependcies as needed for each indivirual unit-test function run.
 
     When the application runs for real though, we do generally want to use the dependencies in a
-    shared fashion.  So normally we only allocate a new blank-root `@UContext(parent=None)`
+    shared fashion.  So normally we only allocate a new blank-root `@XContext(parent=None)`
     either at the start of a normal application run, or during a unit-test.
     """
 
@@ -320,15 +320,15 @@ class Dependency:
             thread_sharable: If `False`: While a resource is lazily auto-created, we will
                 ensure we do it per-thread, and not make it visible to other threads.
                 This is accomplished by only auto-creating the resource in the thread-root
-                `xinject.context.UContext`.
+                `xinject.context.XContext`.
 
                 If `True` (default): Lazily auto-creating the `Dependency` subclass will happen
-                in app-root `xinject.context.UContext`, and will therefore be visible and shared
+                in app-root `xinject.context.XContext`, and will therefore be visible and shared
                 among all threads.
 
                 If True, we can be put in the app-root context, and can be potentially used in
                 multiple threads.  If False, we will only be lazily allocated in the
-                pre-thread, thread-root UContext and always be used in a single-thread.
+                pre-thread, thread-root XContext and always be used in a single-thread.
 
                 If another thread needs us and this is False, a new Dependency instance will be
                 lazily created for that thread.
@@ -337,7 +337,7 @@ class Dependency:
 
                 It accomplishes this by the lazy-creation mechanism.
                 When something asks for a Dependency that does not currently exist,
-                the parent-UContext is asked for the dependency, and then the parent's parent
+                the parent-XContext is asked for the dependency, and then the parent's parent
                 will be asked and so on.
 
                 Eventually the app-root context will be asked for the Dependency.
@@ -351,7 +351,7 @@ class Dependency:
                 and if returned value is:
 
                 - `False`: The app-root context will return `None` instead of lazily creating the
-                    Dependency. It's expected a thread-root UContext is the thing that asked the
+                    Dependency. It's expected a thread-root XContext is the thing that asked the
                     app-root context and the thread-root context when getting back a None should
                     just go and lazily create it.
                     This results in a new Dependency being lazily allocated for each thread that
@@ -365,7 +365,7 @@ class Dependency:
                 Finally, the code that originally asked for the Dependency will have it returned
                 to it, and they can then use it.
 
-                We store it in each UContext that Dependency passes though so in the future it can
+                We store it in each XContext that Dependency passes though so in the future it can
                 just directly answer the question and return the Dependency quickly.
 
             attributes_to_skip_while_copying: If subclass sets this to a list/set of attribute
@@ -440,7 +440,7 @@ class Dependency:
     @classmethod
     def grab(cls: Type[T]) -> T:
         """
-        Gets a potentially shared dependency from the current `udpend.context.UContext`.
+        Gets a potentially shared dependency from the current `udpend.context.XContext`.
 
         Dependency subclass may add override to have additional args/kwargs when overriding this
         method if needed [rare] to customize things or return alternate dependency based on
@@ -457,7 +457,7 @@ class Dependency:
         ...         pass
         >>> SomeResourceManager.obj.get_resource_via("some-key-or-value")
         """
-        return UContext.current().dependency(for_type=cls)
+        return XContext.current().dependency(for_type=cls)
 
     @classmethod
     def proxy(cls: Type[R]) -> R:
@@ -528,7 +528,7 @@ class Dependency:
 
         return copy
 
-    _context_manager_stack: List[UContext] = None
+    _context_manager_stack: List[XContext] = None
     """ Keeps track of context's we created when self (ie: `Dependency`) is used in a `with`
         statement.  This MUST be reset when doing a copy of the dependency.
     """
@@ -537,8 +537,8 @@ class Dependency:
         if self._context_manager_stack is None:
             self._context_manager_stack = []
 
-        # We make a new UContext object, and delegate context-management duties to it.
-        context = UContext(dependencies=self)
+        # We make a new XContext object, and delegate context-management duties to it.
+        context = XContext(dependencies=self)
         self._context_manager_stack.append(context)
         context.__enter__()
         return self
@@ -649,7 +649,7 @@ class DependencyPerThread(Dependency, thread_sharable=False):
     ## Details
 
     Normally, when a new `Dependency` subclass needs to be created on-demand for the first time
-    the new Dependency will be placed in the app's root `xinject.context.UContext`,
+    the new Dependency will be placed in the app's root `xinject.context.XContext`,
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
@@ -665,6 +665,6 @@ class DependencyPerThread(Dependency, thread_sharable=False):
 
     Therefore, when other threads also ask for the dependency, they will each create their own
     the first time they ask for it, and place it in their thread-root
-    `xinject.context.UContext`.
+    `xinject.context.XContext`.
     """
     pass

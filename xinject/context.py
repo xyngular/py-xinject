@@ -129,14 +129,14 @@ This means another way to grab dependencies is to get the current `Context.curre
 and then ask it for the dependency like below. This works for any type, including
 types that don't inherit from `xinject.dependency.Dependency`:
 
->>> UContext.current().grab(SomeResourceType).some_value
+>>> XContext.current().grab(SomeResourceType).some_value
 'hello!'
 
 If you pass a type into `Context.current`, it will do the above ^ for you:
 
->>> UContext.current(SomeResourceType).some_value
+>>> XContext.current(SomeResourceType).some_value
 'hello!'
->>> UContext.current(SomeResourceType).ident
+>>> XContext.current(SomeResourceType).ident
 0
 
 As you can see, it still returns the same object [ie: `ident == 0`]
@@ -186,7 +186,7 @@ the copy is what is made current/activated (see `Context.__copy__` for more deta
 
 Here are examples of the four ways to create/activate a new context:
 
->>> with UContext():
+>>> with XContext():
 ...     SomeResourceType.grab().ident
 1
 
@@ -198,7 +198,7 @@ and it won't
 be the default one anymore. Whatever the default one was before you entered the `with` will
 be the default once more.
 
->>> @UContext():
+>>> @XContext():
 >>> def a_decorated_method():
 ...     return SomeResourceType.grab().ident
 >>> a_decorated_method()
@@ -217,7 +217,7 @@ SomeResourceType when it was asked for it because the new blank `xinject.context
 have the dependency.
 
 
->>> UContext().make_current()
+>>> XContext().make_current()
 >>> SomeResourceType.grab().ident
 4
 
@@ -248,7 +248,7 @@ more details on how to do that.
 
 You can make an isolated Context by doing:
 
->>> UContext(parent=None)
+>>> XContext(parent=None)
 
 When creating a new context. This will tell the context NOT to use a parent. By default, a
 Context will use the current Context as the time the Context was created as it's parent.
@@ -287,14 +287,14 @@ I create a new class that uses our previous [SomeResourceType][dependencies] but
 
 Now watch as I do this:
 
->>> with UContext():
+>>> with XContext():
 ...     MySingleton.grab().ident
 5
 
 The same dependency is kept when making a child-context. However, if you make a parent-less
 context:
 
->>> with UContext(parent=None):
+>>> with XContext(parent=None):
 ...     MySingleton.grab().ident
 6
 
@@ -323,8 +323,8 @@ Some sort of Dependency, I am usually emphasizing with this that you need to pas
 
 # Tell pdoc3 to document the normally private method __call__.
 __pdoc__ = {
-    "UContext.__call__": True,
-    "UContext.__copy__": True,
+    "XContext.__call__": True,
+    "XContext.__copy__": True,
     "Dependency.__call__": True,
     "Dependency.__copy__": True
 }
@@ -343,23 +343,23 @@ class _TreatAsRootParentType(Singleton):
 
 
 _TreatAsRootParent = _TreatAsRootParentType()
-""" Can be used for the parent of a new `UContext`, it will make the context a root-like
+""" Can be used for the parent of a new `XContext`, it will make the context a root-like
     context. What this means is the parent is treated as if you set it to `None` while at the
     same time altering the copying/activating behavior.
 
-    When you make a copy of a root-like `UContext`, or use it in a `with` or `@` decorator
-    which will also copy of the UContext and activate the copy. When this happens the new context
+    When you make a copy of a root-like `XContext`, or use it in a `with` or `@` decorator
+    which will also copy of the XContext and activate the copy. When this happens the new context
     will use the currently activated context as it's parent.
 
     Normally when you pass in `None` as the parent of a new context, ie:
 
-    >>> UContext(parent=None)
+    >>> XContext(parent=None)
 
     New copies of that context object will have their parent set as None.
 
     For a root-like context created like this:
 
-    >>> UContext(parent=_TreatAsRootParent)
+    >>> XContext(parent=_TreatAsRootParent)
 
     When activating this context, it will make a copy and have it's parent set as None.
     But if you then make another copy of this root-like context, the new context will
@@ -372,31 +372,31 @@ _TreatAsRootParent = _TreatAsRootParentType()
 """
 
 
-class UContext:
+class XContext:
     """
-    See [Quick Start](#quick-start) in the `xinject.context` module if your new to the UContext
+    See [Quick Start](#quick-start) in the `xinject.context` module if your new to the XContext
     class.
     """
     copy_as_template = False
 
     @classmethod
-    def grab(cls) -> 'UContext':
+    def grab(cls) -> 'XContext':
         return cls.current()
 
     @classmethod
-    def current(cls, for_type: Union[Type[C], "UContext"] = None) -> Union[C, "UContext"]:
+    def current(cls, for_type: Union[Type[C], "XContext"] = None) -> Union[C, "XContext"]:
         """ Gets the current context that should be used by default, via the Python 3.7 ContextVar
-            feature. Please see UContext class doc [just above] for more details on how this works.
+            feature. Please see XContext class doc [just above] for more details on how this works.
         """
         context = _current_context_contextvar.get()
 
         # If we are None, we need to create the 'root-context' for current thread.
         if context is None:
             import threading
-            context = UContext(name=f'ThreadRoot-{threading.current_thread().name}')
+            context = XContext(name=f'ThreadRoot-{threading.current_thread().name}')
             context._make_current_and_get_reset_token(is_thread_root_context=True)
 
-        if for_type in (None, UContext):
+        if for_type in (None, XContext):
             return context
 
         return context.dependency(for_type=for_type)
@@ -410,9 +410,9 @@ class UContext:
         is_thread_root_context=False,
         is_app_root_context=False
     ) -> Optional[Any]:
-        """ See `UContext.make_current` docs for more details.
+        """ See `XContext.make_current` docs for more details.
 
-            This method is called by `UContext.make_current`, but will also pass back the reset
+            This method is called by `XContext.make_current`, but will also pass back the reset
             token (to be used internally in this module).
 
             Args:
@@ -420,7 +420,7 @@ class UContext:
                     `_TreatAsRootParent` as the parent when creating the context
                     and wanting it to be a 'root-context'.
 
-                is_app_root_context: This tells us to NOT add this UContext to the
+                is_app_root_context: This tells us to NOT add this XContext to the
                     per-thread `_current_context_contextvar`.  Instead, we activate
                     this context as the app-root context that is shared between all threads.
                     We only ever have one of these, and it's always allocated at
@@ -441,8 +441,8 @@ class UContext:
             assert self._parent is _TreatAsRootParent, "See my methods doc-comment for details."
 
         if self._parent is Default:
-            # Side Note: This will be `None` if we are the first UContext on current thread.
-            self._parent = UContext._current_without_creating_thread_root()
+            # Side Note: This will be `None` if we are the first XContext on current thread.
+            self._parent = XContext._current_without_creating_thread_root()
 
             if self._parent is None:
                 # We set parent to use app-root-context if we are the thread-root-context.
@@ -472,7 +472,7 @@ class UContext:
         return _current_context_contextvar.set(self)
 
     @property
-    def parent(self) -> Optional["UContext"]:
+    def parent(self) -> Optional["XContext"]:
         parent = self._parent
         if self._is_active:
             if parent is None:
@@ -484,18 +484,18 @@ class UContext:
             # `parent` is most likely still set as `Default`.
 
             raise UDependError(
-                f"Somehow we have a UContext has been activated "
+                f"Somehow we have a XContext has been activated "
                 f"(ie: has activated via decorator `@` or via `with` "
                 f"at some point and has not exited yet) "
                 f"but still has it's internal parent value set to ({parent}). "
-                f"This indicates some sort of programming error or bug with UContext. "
-                f"An active UContext should NEVER have their parent set at `Default`. "
-                f"It should either be None or an explict parent UContext instance "
+                f"This indicates some sort of programming error or bug with XContext. "
+                f"An active XContext should NEVER have their parent set at `Default`. "
+                f"It should either be None or an explict parent XContext instance "
                 # Can't resolve parent, would create infinite recursion.
                 f"({self.__repr__(include_parent=False)}). "
-                f"A UContext should either have an explicit parent or a parent of `None` after "
-                f"UContext has been activated via `@` or `with` or `UContext.make_current()`; "
-                f"(side note: you can look at UContext._is_active doc-comment for more internal "
+                f"A XContext should either have an explicit parent or a parent of `None` after "
+                f"XContext has been activated via `@` or `with` or `XContext.make_current()`; "
+                f"(side note: you can look at XContext._is_active doc-comment for more internal "
                 f"details)."
             )
 
@@ -508,26 +508,26 @@ class UContext:
         # I am allowing it for more of completeness at this point then anything else.
         # However, it might be more useful at some point.
         if parent is Default:
-            return UContext.current()
+            return XContext.current()
 
         if parent in (_TreatAsRootParent, None):
             return None
 
         raise UDependError(
-            f"Somehow we have a UContext that is not active "
+            f"Somehow we have a XContext that is not active "
             f"(ie: ever activated via decorator `@` or via `with`) but has a specific parent "
             f"(ie: not None or _TreatAsRootParent or Default). "
-            f"This indicates some sort of programming error or bug with UContext. "
-            f"A UContext should only have an explicit parent if they have "
-            f"been activated via `@` or `with` or `UContext.make_current()`; "
-            f"(side note: you can look at UContext._is_active for more internal details)."
+            f"This indicates some sort of programming error or bug with XContext. "
+            f"A XContext should only have an explicit parent if they have "
+            f"been activated via `@` or `with` or `XContext.make_current()`; "
+            f"(side note: you can look at XContext._is_active for more internal details)."
         )
 
     @property
     def name(self) -> str:
         """ Name of context (for debugging purposes only).
             Right now this defaults to a unique number, that gets incremented each time a
-            `UContext` is created (in it's init method).
+            `XContext` is created (in it's init method).
 
             May allow customization in the future.
         """
@@ -548,31 +548,31 @@ class UContext:
 
         If you don't pass anything to parent, then the default value of `Default` will cause us
         to lookup the current context and use that for the parent automatically when the
-        UContext is activated.
+        XContext is activated.
         For more information on activating a context see
-        [Activating A UContext](#activating-a-context).
+        [Activating A XContext](#activating-a-context).
 
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
         method dependencies from other unit tests. Right now, the unit-test Dependency isolation
         happens automatically via an auto-use fixture (`xinject.ptest_plugin.xinject_test_context`).
 
-        A non-activated context will return `guards.default.Default` as it's `UContext.parent`
+        A non-activated context will return `guards.default.Default` as it's `XContext.parent`
         if it was created with the default value;
         otherwise we return `None` (if it was created that way).
 
         Args:
             dependencies (Union[Dict[Type, Any], List[Any], Any]): If you wish to have the
-                `UContext` your creating have an initial list of dependencies you can pass them
+                `XContext` your creating have an initial list of dependencies you can pass them
                 in here.
 
                 It can be a single Dependency, or a list of dependencies, or a mapping of dependencies.
 
                 Mainly useful for unit-testing, but could be useful elsewhere too.
 
-                They will be added to use via `UContext.add` for you.
+                They will be added to use via `XContext.add` for you.
 
-                If you use a dict/mapping, we will use the following for `UContext.add`:
+                If you use a dict/mapping, we will use the following for `XContext.add`:
 
                 - Dict-key as the `for_type' method parameter.
                 - Dict-value as the `Dependency` method parameter.
@@ -580,10 +580,10 @@ class UContext:
                 This allows you to map some standard Dependency type into a completely different
                 type (useful for unit-testing).
 
-                By default, no dependencies are initially added to a new UContext.
+                By default, no dependencies are initially added to a new XContext.
 
             parent (Union[guards.default.Default, _TreatAsRootParent, None]): If we should use
-                `guards.default.Default`, treat this as a root-like UContext, or use None as
+                `guards.default.Default`, treat this as a root-like XContext, or use None as
                 parent.
 
                 Right now the only valid option is to do one of these three options:
@@ -597,12 +597,12 @@ class UContext:
                     This means app-root, and any current thread-root will be ignored.
                 - Pass `_TreatAsRootParent`, indicating to not use any parent, but allow copies
                     or when used as decorator/with-statement to use the currently activate
-                    UContext as the new copies parent.
+                    XContext as the new copies parent.
 
                     This option should **ONLY** be used internally in this module.
 
                     If you use `_TreatAsRootParent` as the value, keep in mind that a root-like
-                    UContext is special, as it never has a parent and is also considered to have
+                    XContext is special, as it never has a parent and is also considered to have
                     a default parent if it's copied. A context is shallow copied, and the copy
                     activated when used as a decorator or in a `with` statement.
 
@@ -617,13 +617,13 @@ class UContext:
 
                 If name is passed in, it will be appended to the unique sequential number.
 
-                When UContext is printed in a string, it will include
+                When XContext is printed in a string, it will include
                 this as it's name to make debugging easier.
 
         """
 
         # This means we were used directly as a function decorator, ie:
-        # >>> @UContext
+        # >>> @XContext
         # >>> def some_method():
         # ...     pass
         #
@@ -633,15 +633,15 @@ class UContext:
             raise UDependError(
                 "First position argument was NOT a callable function; "
                 "The first positional argument `__func` is reserved for a decorated function "
-                "when you do use UContext directly as a decorator, "
-                "ie: `@UContext` (notice no parens at end)."
+                "when you do use XContext directly as a decorator, "
+                "ie: `@XContext` (notice no parens at end)."
             )
         self._func = __func
         if __func:
             # Make our class appear to be '__func', ie: we are wrapping __func
-            # due to using UContext like this:
+            # due to using XContext like this:
             #
-            # >>> @UContext  # <-- notice not parens at end "()"
+            # >>> @XContext  # <-- notice not parens at end "()"
             # >>> def some_method():
             # ...     pass
             functools.update_wrapper(self, __func)
@@ -671,7 +671,7 @@ class UContext:
         else:
             raise UDependError(
                 "You must only pass in `Default` or `None` or `_TreatAsRootParentType` for parent "
-                f"when creating a new UContext, got ({parent}) instead."
+                f"when creating a new XContext, got ({parent}) instead."
             )
 
         # Add any requested initial dependencies.
@@ -688,10 +688,10 @@ class UContext:
             self.add(dependencies)
 
     # todo: Make it so if there is a parent context, and the current config has no property
-    # todo: it can ask the UContext for the parent config to see if it has what is needed.
+    # todo: it can ask the XContext for the parent config to see if it has what is needed.
     def add(
             self, dependency: Any, *, for_type: Type = None
-    ) -> "UContext":
+    ) -> "XContext":
         """
         Lets you add a dependency to this context, you can only have one-dependency per-type.
 
@@ -702,25 +702,25 @@ class UContext:
         >>> # Only works on python 3.9+, it relaxes grammar restrictions
         >>> #    (https://www.python.org/dev/peps/pep-0614/)
         >>>
-        >>> @UContext().add(2)
+        >>> @XContext().add(2)
         >>> def some_method()
-        ...     print(f"my int dependency: {UContext.dependency(int)}")
+        ...     print(f"my int dependency: {XContext.dependency(int)}")
         Output: "my int dependency: 2"
 
         As as side-note, you can easily add resources to a new `xinject.context.UContext` via:
 
-        >>> @UContext(dependencies=[2])
+        >>> @XContext(dependencies=[2])
         >>> def some_method()
-        ...     print(f"my int dependency: {UContext.dependency(int)}")
+        ...     print(f"my int dependency: {XContext.dependency(int)}")
         Output: "my int dependency: 2"
 
         With the `Context.add_resource` method, you can subsitute dependency for other
         dependency types, ie:
 
         >>> def some_method()
-        ...     context = UContext()
+        ...     context = XContext()
         ...     context.add(3, for_type=str)
-        ...     print(f"my str dependency: {UContext.dependency(str)}")
+        ...     print(f"my str dependency: {XContext.dependency(str)}")
         Output: "my str dependency: 3"
 
         If you need to override a dependency, you can create a new context and set me as it's
@@ -818,8 +818,8 @@ class UContext:
         custom-resource-class and placing it in the Context for the normal-resource-type
         the normal code asks for.
 
-        >>> UContext().add(20, for_type=str)
-        >>> UContext().dependency(str)
+        >>> XContext().add(20, for_type=str)
+        >>> XContext().dependency(str)
         Output: 20
 
         ## Specific Details
@@ -868,7 +868,7 @@ class UContext:
         # If it is then we continue as normal.
         # If NOT, then we always return None.
         #
-        # This will indicate to the thread-specific UContext that is calling us to allocate
+        # This will indicate to the thread-specific XContext that is calling us to allocate
         # the object in its self.
         #
         # If something else is asking us, we still return None because this Dependency does not
@@ -892,10 +892,10 @@ class UContext:
         # Sanity check: If we are active we should have a None or an explicit, non-default parent.
         if self._is_active and parent is Default:
             raise UDependError(
-                "We somehow have a UContext that has been 'activated' but yet has "
-                "their parent still set to `Default`. This is a bug. Active UContext's "
+                "We somehow have a XContext that has been 'activated' but yet has "
+                "their parent still set to `Default`. This is a bug. Active XContext's "
                 "should NEVER have their parent set at `Default`. It should either be None "
-                f"or an explict parent UContext instance, problem instance: {self}"
+                f"or an explict parent XContext instance, problem instance: {self}"
             )
 
         # If we have a Default parent, then lookup current parent and use them for our 'Parent'.
@@ -904,12 +904,12 @@ class UContext:
             # The current context is `active` along with it's parent-chain....
             # So this should be safe.
             # Doing an assert here to at least minimally double check this.
-            parent = UContext.current()
+            parent = XContext.current()
             if self is parent:
                 raise UDependError(
-                    f"Somehow have self ({self}) and parent as same instance (UContext), "
+                    f"Somehow have self ({self}) and parent as same instance (XContext), "
                     f"when self is not currently active and is attempting to find the current "
-                    f"active UContext to use as it's temporary parent."
+                    f"active XContext to use as it's temporary parent."
                 )
             assert self is not parent, "Somehow have self and parent as same instance."
 
@@ -972,15 +972,15 @@ class UContext:
     def __copy__(self):
         """ Makes a copy of self.
 
-            We copy `UContext` implicitly and make that copy the 'active' context when it's made
+            We copy `XContext` implicitly and make that copy the 'active' context when it's made
             current/activated via a:
 
             - decorator `@`,
             - `with` statement,
-            - or `UContext.make_current`;
+            - or `XContext.make_current`;
 
-            Using one of the above with a UContext also makes it 'active'
-            (see UContext._is_active for more internal details, if your interested ).
+            Using one of the above with a XContext also makes it 'active'
+            (see XContext._is_active for more internal details, if your interested ).
 
             When a context is made current, it's sort of used as a 'template'.
             That way it can be used over and over again without accumulating
@@ -1002,10 +1002,10 @@ class UContext:
             parent = None
 
         # Blank context with the same parent configuration
-        new_context = UContext(parent=parent)
+        new_context = XContext(parent=parent)
 
-        # Copy current dependencies from self into new UContext;
-        # This uses `self` as a template for the new UContext.
+        # Copy current dependencies from self into new XContext;
+        # This uses `self` as a template for the new XContext.
         new_resources = {}
         for k, v in self._dependencies.items():
             v = copy(v)
@@ -1035,17 +1035,17 @@ class UContext:
             Deep copied object.
         """
         raise UDependError(
-            "Deepcopy is currently disabled for xinject.context.UContext. "
+            "Deepcopy is currently disabled for xinject.context.XContext. "
             "If there is a desire to use it again in the future, remove this exception "
             "as it should still work."
         )
         # return self.__copy__(deepcopy_resources=True, deepcopy_memo=memo)
 
     def copy(self):
-        """ Convenience method to easily shallow-copy a UContext, calls `return copy.copy(self)`.
-            Used when you activate a UContext via a decorator or `with` statement.
+        """ Convenience method to easily shallow-copy a XContext, calls `return copy.copy(self)`.
+            Used when you activate a XContext via a decorator or `with` statement.
 
-            When a UContext is activated, it is copied and then the copy is set to active.
+            When a XContext is activated, it is copied and then the copy is set to active.
         """
         return copy(self)
 
@@ -1063,13 +1063,13 @@ class UContext:
             We will copy self and then activate the copy, returning the copy as the
             output of the with statement.
 
-            >>> # Some pre-existing UContext object.
-            >>> some_context: UContext
+            >>> # Some pre-existing XContext object.
+            >>> some_context: XContext
             >>>
             >>> # Use it in `with` statement:
             >>> with some_context as copied_and_activated_context:
-            ...     assert UContext.current() is copied_and_activated_context
-            ...     assert UContext.current() is not some_context
+            ...     assert XContext.current() is copied_and_activated_context
+            ...     assert XContext.current() is not some_context
         """
         new_ctx = self
         if self.copy_as_template:
@@ -1088,10 +1088,10 @@ class UContext:
         return new_ctx
 
     def __exit__(self, *args, **kwargs):
-        # Makes it possible to use a UContext object in a `with UContext():` statement.
+        # Makes it possible to use a XContext object in a `with XContext():` statement.
         token = self._reset_token_stack.pop()
 
-        current_context = UContext.current()
+        current_context = XContext.current()
 
         if current_context._sibling:
             assert current_context._sibling is self, (
@@ -1100,15 +1100,15 @@ class UContext:
             context_to_deactivate = current_context
         else:
             assert current_context is self, (
-                f"A UContext ({self}) was exited, and was not current context ({current_context})"
+                f"A XContext ({self}) was exited, and was not current context ({current_context})"
             )
             context_to_deactivate = self
 
         assert not context_to_deactivate._reset_token_stack, (
-            f"A UContext ({self}) was exited, and there was still a reset-token on stack."
+            f"A XContext ({self}) was exited, and there was still a reset-token on stack."
         )
 
-        # Doing this to be extra-cautious, UContext should dynamically look up current
+        # Doing this to be extra-cautious, XContext should dynamically look up current
         # context if it's not active anymore
         # (ie: outside-of / not in python ContextVar: `_current_context_contextvar`).
         #
@@ -1125,19 +1125,19 @@ class UContext:
             context_to_deactivate._parent._children.remove(context_to_deactivate)
             context_to_deactivate._parent = Default
 
-        assert not context_to_deactivate._children, f"UContext ({context_to_deactivate}) still has children after exiting as active ({context_to_deactivate._children})."
+        assert not context_to_deactivate._children, f"XContext ({context_to_deactivate}) still has children after exiting as active ({context_to_deactivate._children})."
 
     def __call__(self, *args, **kwargs):
         """
         This allows us to support using `xinject.context.UContext` as a function decorator in a few ways:
 
-        >>> @UContext
+        >>> @XContext
         >>> def some_method():
         ...     pass
 
         OR
 
-        >>> my_context = UContext()
+        >>> my_context = XContext()
         >>> my_context.add(Dependency())
         >>>
         >>> @my_context
@@ -1166,14 +1166,14 @@ class UContext:
             # If we already have `self._func`,
             # it means we were used directly as a function decorator, ie:
             #
-            # >>> @UContext
+            # >>> @XContext
             # >>> def some_method():
             # ...     pass
             #
             # FYI: This will make a shallow copy IF `self` has already activated and then make the
             #      two contexts siblings, when a younger sibling has resources added to it, it
             #      will also add them to the older sibling.
-            #      (ie: we are activating same `UContext` object twice).
+            #      (ie: we are activating same `XContext` object twice).
             #      Example: Could happen if function we are decorating is called recursively.
             with self:
                 # Use the out-scope `_func` var; which should have the original/decorated method
@@ -1184,7 +1184,7 @@ class UContext:
             # If we have a `self._func`, that means we were used as a decorator without
             # using parens, like so:
             #
-            # @UContext
+            # @XContext
             # def some_method():
             #    pass
             #
@@ -1195,13 +1195,13 @@ class UContext:
         # If we don't already have an assigned self._func;
         # we have this situation:
         #
-        # @UContext()
+        # @XContext()
         # def some_func():
         #     pass
         #
         # OR
         #
-        # some_context = UContext()
+        # some_context = XContext()
         # @some_context
         # def some_func():
         #     pass
@@ -1225,7 +1225,7 @@ class UContext:
 
         if fail_reason:
             raise UDependError(
-                f"Used directly as decorator `@UContext` (without ending parens) which is"
+                f"Used directly as decorator `@XContext` (without ending parens) which is"
                 f"normally fine. This normally makes "
                 f"Python pass decorated function into `__init__` method and I don;t "
                 f"one of those. "
@@ -1238,7 +1238,7 @@ class UContext:
         # This should be the originally decorated method;
         # ie: It should be `some_method` in the below small example:
         #
-        # @UContext()
+        # @XContext()
         # def some_method():
         #    pass
 
@@ -1248,22 +1248,22 @@ class UContext:
         return wrapper
 
     # todo: rename this to just 'chain' ?? or context_chain? [it includes 'self' is why].
-    def parent_chain(self) -> List["UContext"]:
+    def parent_chain(self) -> List["XContext"]:
         """ A list of self + all parents in priority order.
 
             This is cached the first time we are called if we are currently active
-            since the `UContext.parent` can't be changed after `UContext` creation while active.
+            since the `XContext.parent` can't be changed after `XContext` creation while active.
 
-            See `UContext._is_active` internal/private var for a bit more detail on what is 'active'
-            but suffice to say that active means UContext is currently being used via a
-            decorator '@' or via `with` or via `UContext.make_current` and the `with` or `@` has
+            See `XContext._is_active` internal/private var for a bit more detail on what is 'active'
+            but suffice to say that active means XContext is currently being used via a
+            decorator '@' or via `with` or via `XContext.make_current` and the `with` or `@` has
             not been exited yet, we are active.
 
             If we are not current active, we won't cache the list and the parent chain will
             start with `self` as the first item, and if the parent passed in to us when self
             was created was left/set at:
 
-            - `guards.default.Default`: Lookup current context via `UContext.current` and that's
+            - `guards.default.Default`: Lookup current context via `XContext.current` and that's
                 our next parent (and we grab their parent and so forth and return the full list).
             - `None`: We don't look for more parents.
         """
@@ -1283,7 +1283,7 @@ class UContext:
 
         if self._is_active:
             # It's safe to cache parent-chain if we are active, our parent won't change
-            # while we are active. See doc-comment on `UContext._is_active` for more detials.
+            # while we are active. See doc-comment on `XContext._is_active` for more detials.
             self._cached_context_chain = chain
 
         return chain
@@ -1297,7 +1297,7 @@ class UContext:
         else:
             types = f'resource_count={len(types_list)}'
 
-        str = f"UContext(name='{self.name}', {types}"
+        str = f"XContext(name='{self.name}', {types}"
         if include_parent:
             str += f', parent={self.parent}'
         str += ')'
@@ -1321,15 +1321,15 @@ class UContext:
     _is_active = False
     """ This means at some point in the past we were 'activated' via one of these methods:
 
-        `with` or `@` or `UContext.make_current`.
+        `with` or `@` or `XContext.make_current`.
 
-        And we are still 'active' (or even the 'UContext.current');
+        And we are still 'active' (or even the 'XContext.current');
 
         When we are active we have a set parent, and can cache specific things since
         our parent won't change while we are 'active'.
 
         This means the `self` is inside `_current_context_contextvar` somewhere and is part of
-        the parent-chain.  See `UContext.parent_chain`.
+        the parent-chain.  See `XContext.parent_chain`.
     """
 
     _reset_token_stack: List[contextvars.Token] = None
@@ -1338,41 +1338,41 @@ class UContext:
     _is_root_context_for_app = False
 
     _is_root_context_for_thread: bool = False
-    """ If True, this UContext is the root-context for a thread
+    """ If True, this XContext is the root-context for a thread
         (or if only one thread, the only root context).
         This is mostly here for debugging purposes.
     """
 
     _is_root_like_context: bool = False
     """ If True, this context was originally created to be a root-like/root context.
-        The REAL thread-root context will have this AND `UContext._is_root_context_for_thread`
+        The REAL thread-root context will have this AND `XContext._is_root_context_for_thread`
         both set to True.
     """
 
-    _parent: 'Union[UContext, _TreatAsRootParent, None]' = None
+    _parent: 'Union[XContext, _TreatAsRootParent, None]' = None
     _originally_passed_none_for_parent = True
     """ Used internally to know if None was passed as my parent value originally. """
 
-    _children: Set['UContext'] = None
+    _children: Set['XContext'] = None
 
-    _sibling: Optional['UContext'] = None
+    _sibling: Optional['XContext'] = None
     """
-    If a `UContext` is activated a second time (perhaps when a function is called recursively, etc)
-    then it makes a shallow copy of self, and sets its self as the the UContext copy's sibling
-    by setting this var on the copied UContext.
+    If a `XContext` is activated a second time (perhaps when a function is called recursively, etc)
+    then it makes a shallow copy of self, and sets its self as the the XContext copy's sibling
+    by setting this var on the copied XContext.
     
-    If a UContext has a sibling, when a `xinject.dependency.Dependency` is directly added to
-    UContext via `UContext.add` it will also add that same dependency to the sibling UContext.
+    If a XContext has a sibling, when a `xinject.dependency.Dependency` is directly added to
+    XContext via `XContext.add` it will also add that same dependency to the sibling XContext.
     
     In this way, when you do something like this:
     
-    >>> @UContext()
+    >>> @XContext()
     >>> def some_method()
-    >>>   UContext.current().add(SomeDependency())  
+    >>>   XContext.current().add(SomeDependency())  
     
-    The `SomeDependency` instance will be added to all of the functions decorated UContext
+    The `SomeDependency` instance will be added to all of the functions decorated XContext
     objects like you would expect
-    (ie: it's treated as if one instance of UContext was created, even if `some_method` is
+    (ie: it's treated as if one instance of XContext was created, even if `some_method` is
          called recursively).
     
     The shallow-copy must be made if method is called recursively so that the parent-chain
@@ -1381,9 +1381,9 @@ class UContext:
     """
 
     _func = None
-    """ Used if UContext is used as a function decorator directly, ie:
+    """ Used if XContext is used as a function decorator directly, ie:
 
-        >>> @UContext
+        >>> @XContext
         >>> def some_method():
         ...     pass
     """
@@ -1392,14 +1392,14 @@ class UContext:
 def _setup_blank_app_and_thread_root_contexts_globals():
     """
     Used to create initial global state of app/thread-root contexts containers,
-    which keep track of the visible `Contexts` on each thread, and for the app-root `UContext`.
+    which keep track of the visible `Contexts` on each thread, and for the app-root `XContext`.
 
     Is also used by `xinject.pytest_plugin.xinject_test_context` auto-use fixture to blank/clear out
     all root/globally visible contexts by allocating the global-structures again and letting
     the old global structures deallocate.
 
     This allows for clean slate for each individual unit test run,
-    in a way that does not really alter how UContext works.
+    in a way that does not really alter how XContext works.
 
     It should work exactly the same as the normal, non-uniting app.
     We simply clear and allocate new root/global contexts at the start/end of each
@@ -1408,13 +1408,13 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     global _app_root_context
     global _current_context_contextvar
 
-    _app_root_context = UContext(parent=_TreatAsRootParent, name='AppRoot')
+    _app_root_context = XContext(parent=_TreatAsRootParent, name='AppRoot')
     _app_root_context._make_current_and_get_reset_token(is_app_root_context=True)
 
-    # Keeping this private for now, everything outside of this module should use the UContext class
+    # Keeping this private for now, everything outside of this module should use the XContext class
     # as a ContextManager/ContextDecorator to get/set current context.
     #
-    # This is used to keep track of the current context when using a UContext as a ContextManager.
+    # This is used to keep track of the current context when using a XContext as a ContextManager.
 
     _current_context_contextvar = contextvars.ContextVar(
         'py-xinject-current_context',
@@ -1422,9 +1422,9 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     )
 
 
-# Setup initial global UContext objects/state/containers:
+# Setup initial global XContext objects/state/containers:
 _setup_blank_app_and_thread_root_contexts_globals()
 
 # These are globals that should be here at this point:
-_app_root_context: UContext
-_current_context_contextvar: contextvars.ContextVar[Optional[UContext]]
+_app_root_context: XContext
+_current_context_contextvar: contextvars.ContextVar[Optional[XContext]]

@@ -85,7 +85,7 @@ def test_download_file(test_file):
 
 This is just extra info in case your intrested.
 
-Before the start of each pytest unit-test function run, the current dependencies are deactivated and a new blank UContext
+Before the start of each pytest unit-test function run, the current dependencies are deactivated and a new blank XContext
 (which contains the dependencies) is created.
 
 This means that by default, at the start of each running unit test function there will be no dependencies 'visible'.
@@ -93,7 +93,7 @@ This means that by default, at the start of each running unit test function ther
 
 ??? note "PyTest Plugin Details"
 
-    This project contains a pytest plugin to automatically install a brand-new app-root and thread-root UContext's 
+    This project contains a pytest plugin to automatically install a brand-new app-root and thread-root XContext's 
     at the start of each unit test run.     
 
     This is important, it ensures a blank root-context is used each time

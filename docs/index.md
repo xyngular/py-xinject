@@ -175,11 +175,11 @@ dependency is next asked for it will return the one that was added
 here:
 
 ```python
-from xinject import UContext
+from xinject import XContext
 from .my_resources import S3
 
 us_west_s3_resource = S3(region_name='us-west-2')
-UContext.grab().add(us_west_s3_resource)
+XContext.grab().add(us_west_s3_resource)
 ```
 
 And finally, you can replace dependencies with a completely different
@@ -192,12 +192,12 @@ In the future, this mocking object will be returned when the code
 asks for the `S3` dependency-type.
 
 ```python
-from xinject import UContext
+from xinject import XContext
 from .my_resources import S3
 from .my_mocks import MyS3MockingClass
 
 s3_mocking_obj = MyS3MockingClass()
-UContext.grab().add(s3_mocking_obj, for_type=S3)
+XContext.grab().add(s3_mocking_obj, for_type=S3)
 ```
 
 
