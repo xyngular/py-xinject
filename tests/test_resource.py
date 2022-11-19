@@ -1,7 +1,7 @@
 import pytest as pytest
 
-from udepend import CurrentDependencyProxy, UContext, Dependency
-from udepend.dependency import PerThreadDependency
+from xinject import CurrentDependencyProxy, UContext, Dependency
+from xinject.dependency import PerThreadDependency
 
 
 class MyClass(Dependency):

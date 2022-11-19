@@ -19,7 +19,7 @@ All you need to do is write a normal unit-test to take advantage of this feature
 # This is the "my_library/my_resources.py" file/module.
 
 import boto3
-from udepend import PerThreadDependency
+from xinject import PerThreadDependency
 
 class S3(PerThreadDependency):
     def __init__(self, **kwargs):
@@ -103,10 +103,10 @@ This means that by default, at the start of each running unit test function ther
     The fixture is in a pytest plugin module.
     This plugin module is automatically found and loaded by pytest.
     pytest checks all installed dependencies in the environment it runs in,
-    so as long as udepend is installed in the environment as a dependency it will find this
+    so as long as xinject is installed in the environment as a dependency it will find this
     and autoload this fixture for each unit test.
 
-    If curious The [`udepend_test_context`](api/udepend/pytest_plugin.html#udepend.pytest_plugin.udepend_test_context)
+    If curious The [`xinject_test_context`](api/xinject/pytest_plugin.html#xinject.pytest_plugin.xinject_test_context)
     fixture is how it's implemented.
 
 

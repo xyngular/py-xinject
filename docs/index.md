@@ -6,10 +6,10 @@ title: Getting Started
 
 ```bash
 # via pip
-pip install udepend
+pip install xinject
 
 # via poetry
-poetry add udepend
+poetry add xinject
 ```
 
 ## Introduction
@@ -18,10 +18,10 @@ Main focus is an easy way to create lazy universally injectable dependencies;
 in less magical way. It also leans more on the side of making it easier to get
 the dependency you need anywhere in the codebase.
 
-u-depend allows you to easily inject lazily created universal dependencies into whatever code that needs them,
+py-xinject allows you to easily inject lazily created universal dependencies into whatever code that needs them,
 in an easy to understand and self-documenting way.
 
-??? note "udepend is short for "Universal Dependency""
+??? note "xinject is short for "Universal Dependency""
     ie: a lazy universally injectable dependency
 
 
@@ -30,13 +30,13 @@ in an easy to understand and self-documenting way.
     Read this document first to get a general overview before reading the API reference
     documentation.
     
-    When you're done here and want more details go to [API Reference](api/udepend)
-    or directly to [`Dependency API Refrence`](api/udepend/dependency.html#udepend.dependency.Dependency)
+    When you're done here and want more details go to [API Reference](api/xinject)
+    or directly to [`Dependency API Refrence`](api/xinject/dependency.html#xinject.dependency.Dependency)
     for more detailed reference-type documentation.
 
 ## Quick Start
 
-Although it's not required, most of the time you'll want to subclass [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
+Although it's not required, most of the time you'll want to subclass [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency).
 The subclass will inherit some nice features that make it easier to use.
 
 The following is a specific usecase followed by a more generalized example
@@ -50,7 +50,7 @@ We have a choice to inherit from ether Dependency, or PerThreadDependency.
 The normal `Dependency` class lets the dependency be shared between threads, so more of a true singleton type
 of object where under normal/default circomstances there would ever only be one instance of a partculare `Dependency`.
 
-Using [`PerThreadDependency`](api/udepend/dependency.html#udepend.dependency.PerThreadDependency) will automatically get a
+Using [`PerThreadDependency`](api/xinject/dependency.html#xinject.dependency.PerThreadDependency) will automatically get a
 separate dependency object per-thread (ie: separate instance per-thread).
 It simply inherits from Dependency and configures it to not be thread sharable.
 
@@ -61,7 +61,7 @@ are not thread-safe. That means our program will need a separate s3 resource per
 # This is the "my_resources.py" file/module.
 
 import boto3
-from udepend import PerThreadDependency
+from xinject import PerThreadDependency
 
 class S3(PerThreadDependency):
     def __init__(self, **kwargs):
@@ -174,7 +174,7 @@ dependency is next asked for it will return the one that was added
 here:
 
 ```python
-from udepend import UContext
+from xinject import UContext
 from .my_resources import S3
 
 us_west_s3_resource = S3(region_name='us-west-2')
@@ -191,7 +191,7 @@ In the future, this mocking object will be returned when the code
 asks for the `S3` dependency-type.
 
 ```python
-from udepend import UContext
+from xinject import UContext
 from .my_resources import S3
 from .my_mocks import MyS3MockingClass
 
@@ -203,11 +203,11 @@ UContext.grab().add(s3_mocking_obj, for_type=S3)
 
 ### Generalized/Generic Example
 
-Although it's not required, most of the time you'll want to subclass [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
+Although it's not required, most of the time you'll want to subclass [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency).
 The subclass will inherit some nice features that make it easier to use.
 
 ```python
-from udepend import Dependency
+from xinject import Dependency
 
 # This is an example Dependency class, the intent with this class
 # is to treat it as a semi-singleton shared dependency.
@@ -262,7 +262,7 @@ This allows you to have an object that is directly importable/usable
 and still have it be injectable.
 
 ```python
-from udepend import Dependency
+from xinject import Dependency
 
 
 class MyUniversalDependency(Dependency):
@@ -282,7 +282,7 @@ with MyUniversalDependency(name='injected-value'):
 
 ## Overview
 
-The main class used most of the time is [`Dependency`](api/udepend/dependency.html#udepend.dependency.Dependency).
+The main class used most of the time is [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency).
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
 we are calling resources here.

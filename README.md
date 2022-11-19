@@ -1,5 +1,5 @@
 ![PythonSupport](https://img.shields.io/static/v1?label=python&message=%203.8|%203.9|%203.10&color=blue?style=flat-square&logo=python)
-![PyPI version](https://badge.fury.io/py/py-u-depend.svg?)
+![PyPI version](https://badge.fury.io/py/py-xinject.svg?)
 
 - [Introduction](#introduction)
 - [Documentation](#documentation)
@@ -13,12 +13,12 @@ Main focus is an easy way to create lazy universally injectable dependencies;
 in less magical way. It also leans more on the side of making it easier to get
 the dependency you need anywhere in the codebase.
 
-u-depend allows you to easily inject lazily created universal dependencies into whatever code that needs them,
+py-xinject allows you to easily inject lazily created universal dependencies into whatever code that needs them,
 in an easy to understand and self-documenting way.
 
 # Documentation
 
-**[📄 Detailed Documentation](https://xyngular.github.io/py-u-depend/latest/)** | **[🐍 PyPi](https://pypi.org/project/py-u-depend/)**
+**[📄 Detailed Documentation](https://xyngular.github.io/py-xinject/latest/)** | **[🐍 PyPi](https://pypi.org/project/py-xinject/)**
 
 # Install
 
@@ -36,7 +36,7 @@ poetry add guards
 # This is the "my_resources.py" file/module.
 
 import boto3
-from udepend import PerThreadDependency
+from xinject import PerThreadDependency
 
 class S3(PerThreadDependency):
     def __init__(self, **kwargs):

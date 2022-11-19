@@ -14,7 +14,7 @@ the very first time it's asked for.
 Example:
 
 ```python
-from udepend import Dependency
+from xinject import Dependency
 from dataclasses import dataclass
 
 

@@ -11,7 +11,7 @@ See one of these for more details:
 
 - [Active Dependency Proxy - pydoc](./#active-dependency-proxy)
 - [Active Dependency Proxy - github]
-  (https://github.com/xyngular/py-u-depend#active-resource-proxy#documentation)
+  (https://github.com/xyngular/py-xinject#active-resource-proxy#documentation)
 
 """
 from typing import TypeVar, Type, Generic, Callable, Any
@@ -66,7 +66,7 @@ class CurrentDependencyProxy(Generic[D]):
             into this method.
 
             A simpler/alternate way to wrap a Dependency with a `CurrentDependencyProxy` is via the
-            `udepend.dependency.Dependency.proxy` convenience method.
+            `xinject.dependency.Dependency.proxy` convenience method.
         """
         # noinspection PyTypeChecker
         return cls(resource_type=resource_type)
@@ -96,7 +96,7 @@ class CurrentDependencyProxy(Generic[D]):
         # Would give unusual error later on, lets just check right now!
         if not issubclass(resource_type, Dependency):
             raise Exception(
-                f"Must pass a udepend.Dependency subtype to udepend.ProxyActive.wrap, "
+                f"Must pass a xinject.Dependency subtype to xinject.ProxyActive.wrap, "
                 f"I was given a ({resource_type}) instead."
             )
 

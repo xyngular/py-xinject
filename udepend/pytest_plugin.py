@@ -5,18 +5,18 @@ Auto-loaded common fixtures for helping with unit-testing.
     pytest should automatically import this via it's plugin mechanism.
     If you import any of the fixtures below manually, you may get something like this:
 
-    `ValueError: duplicate 'udepend_test_context'`
+    `ValueError: duplicate 'xinject_test_context'`
 
     You should be able to use any of these fixtures without importing them.
-    This is accomplished via the setup.py file in udepend, it tells pytest about the
-    `udepend.fixtures` module, so it can load them automatically.
+    This is accomplished via the setup.py file in xinject, it tells pytest about the
+    `xinject.fixtures` module, so it can load them automatically.
 
 
-    For `udepend_test_context` fixture it's self... it's an auto-use fixture,
+    For `xinject_test_context` fixture it's self... it's an auto-use fixture,
     so it's automatically used anyway.
 
     I would probably just get the current context like you normally would
-    (via `udepend.context.UContext.current`), rather than use this fixture directly
+    (via `xinject.context.UContext.current`), rather than use this fixture directly
     in your unit-test.
 """
 import pytest
@@ -24,7 +24,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 @pytest.mark.order(-1300)
-def udepend_test_context():
+def xinject_test_context():
     """
     Will blank-out the app and root contexts by allocating new containers
     for the root contexts.
@@ -34,7 +34,7 @@ def udepend_test_context():
 
     This fixture is also using the `autouse=True` feature of pytest, to ensure this always runs.
     You don't need to use it directly,
-    simply call `udepend.context.UContext.current` like you normally would if you need the
+    simply call `xinject.context.UContext.current` like you normally would if you need the
     current context during your unit-test.
 
     After the unit test is finished, this auto-use fixture will clean up the state again.

@@ -11,9 +11,9 @@ By default, each Dependency subclass will be shared between different threads,
 ie: it's assumed to be thread-safe.
 
 You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `udepend.dependency.ThreadUnsafeResource` instead,
+by inheriting from `xinject.dependency.ThreadUnsafeResource` instead,
 or by setting the **class attribute** (on your custom subclass of Dependency)
-`udepend.dependency.Dependency.resource_thread_sharable` to `False`.
+`xinject.dependency.Dependency.resource_thread_sharable` to `False`.
 
 Things that are probably not thread-safe in general
 are resources that contain network/remote type connections/sessions/clients.
@@ -31,7 +31,7 @@ Example for which you would want a separate dependency instance/object per-threa
 
 ## Active Dependency Proxy
 
-You can use the convenience method `udepend.dependency.Dependency.proxy` to easily get a
+You can use the convenience method `xinject.dependency.Dependency.proxy` to easily get a
 proxy object.
 
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
@@ -49,10 +49,10 @@ Here is an example boto3 s3 resource dependency:
 ```python
 # This is the "my_resources.py" file/module.
 
-from udepend import Dependency
+from xinject import Dependency
 
 import boto3
-from udepend import PerThreadDependency
+from xinject import PerThreadDependency
 
 class S3(PerThreadDependency):
     def __init__(self, **kwargs):
@@ -94,5 +94,5 @@ Only use the proxy object for normal attribute/properties/methods.
 If you need do use an attribute/method that starts with an underscore `_`,
 grab the current object directly via `S3.grab()`.
 
-The [`grab`](api/udepend/dependency.html#udepend.dependency.Dependency.grab)
+The [`grab`](api/xinject/dependency.html#xinject.dependency.Dependency.grab)
 method returns the current real object each time it's called (and not a proxy).

@@ -1,19 +1,19 @@
-from udepend import UContext, Dependency
+from xinject import UContext, Dependency
 import dataclasses
 import pytest
 from copy import deepcopy, copy
-from udepend.errors import UDependError
+from xinject.errors import UDependError
 
 
 @UContext
-def test_decorator_on_direct_context_class(udepend_test_context):
+def test_decorator_on_direct_context_class(xinject_test_context):
     """ Test using UContext class directly as a decorator (not a UContext instance). """
     # This should be the UContext that was created via `@UContext`.
-    assert UContext.current() is not udepend_test_context
+    assert UContext.current() is not xinject_test_context
 
     # Since the `@UContext` would have been created AFTER the standard unit-test `context`
     # fixture, the parent of my `@UContext` would be the standard unit-test context fixture.
-    assert UContext.current().parent is udepend_test_context
+    assert UContext.current().parent is xinject_test_context
 
 
 @dataclasses.dataclass
@@ -25,7 +25,7 @@ module_level_context = UContext.current()
 
 
 def test_ensure_pytest_plugin_context_autouse_fixture_working():
-    # Ensure by default every unit test that has udepend as a dependency will use
+    # Ensure by default every unit test that has xinject as a dependency will use
     # the context auto-use fixture; which makes a blank root-like context.
     assert UContext.current() is not module_level_context
 
@@ -119,7 +119,7 @@ module_level_context = UContext(
 # If our decorator is not setup correctly, pytest won't call our test-method correctly.
 # So having pycharm call our test method correctly is a excellent edge-case test in of its self!
 @module_level_context.copy()
-def test_module_level_context(udepend_test_context):
+def test_module_level_context(xinject_test_context):
     # `context` is the base-context
     UContext.current().add(1.2)
     assert UContext.current(for_type=float) == 1.2

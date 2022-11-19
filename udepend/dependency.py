@@ -1,7 +1,7 @@
 """
 Easily create singleton-like classes in a sharable/injectable/decoupled way.
 
-Uses `udepend.context.UContext` to find the current dependency for any particular subclass
+Uses `xinject.context.UContext` to find the current dependency for any particular subclass
 of Dependency.
 
 You can think of this as making a `Dependency` act like a singleton by default,
@@ -20,9 +20,9 @@ It's still possible to get a second instance of the dependency, however:
     However, this is usually desirable as whatever manually created the object probably
     wants to override the dependency with its own configured object.
 
-- If a new `udepend.context.UContext` was created at some point later via `Context(parent=None)`
+- If a new `xinject.context.UContext` was created at some point later via `Context(parent=None)`
     and then activated. When a dependency is next asked for, it must create a new one as
-    any previous `udepend.context.UContext` would be unreachable until the context was deactivated.
+    any previous `xinject.context.UContext` would be unreachable until the context was deactivated.
     (for more details, see [Activating New Context](#activating-new-context))
 
 
@@ -31,9 +31,9 @@ It's still possible to get a second instance of the dependency, however:
 If you have not already, to get a nice high-level overview of library see either:
 
 - project README.md here:
-    - https://github.com/xyngular/py-u-depend#documentation
-- Or go to udepend module documentation at here:
-    - [udepend, How To Use](./#how-to-use)
+    - https://github.com/xyngular/py-xinject#documentation
+- Or go to xinject module documentation at here:
+    - [xinject, How To Use](./#how-to-use)
 
 ## Dependency Refrence Summary
 
@@ -94,7 +94,7 @@ You can do it via one of the below listed methods/examples below.
 For these examples, say I have this dependency defined:
 
 >>> from dataclasses import dataclass
->>> from udepend import Dependency
+>>> from xinject import Dependency
 >>>
 >>> @dataclass
 >>> class MyResource(Dependency):
@@ -102,7 +102,7 @@ For these examples, say I have this dependency defined:
 >>>
 >>> assert MyResource.grab().some_value == 'default-value'
 
-- Use desired `udepend.dependency.Dependency` subclass as a method decorator:
+- Use desired `xinject.dependency.Dependency` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
@@ -111,7 +111,7 @@ For these examples, say I have this dependency defined:
 
 ## Active Resource Proxy
 
-You can use `udepend.proxy.CurrentDependencyProxy` to create an object that will act
+You can use `xinject.proxy.CurrentDependencyProxy` to create an object that will act
 like the current dependency.
 All non-dunder attributes will be grabbed/set on the current object instead of the proxy.
 
@@ -122,7 +122,7 @@ For more info/details see:
 
 - [Active Resource Proxy - pydoc](./#active-dependency-proxy)
 - [Active Resource Proxy - github]
-  (https://github.com/xyngular/py-u-depend#documentation)
+  (https://github.com/xyngular/py-xinject#documentation)
 
 
 """
@@ -130,8 +130,8 @@ import functools
 from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any, Optional, Dict, Set
 from copy import copy, deepcopy
 from guards import Default
-from udepend import UContext, _private
-from udepend.errors import UDependError
+from xinject import UContext, _private
+from xinject.errors import UDependError
 import sys
 
 T = TypeVar('T')
@@ -163,8 +163,8 @@ def attributes_to_skip_while_copying(dependency: 'Dependency') -> Set[str]:
 
 class Dependency:
     """
-    If you have not already done so, you should also read the udepend project's
-    [README.md](https://github.com/xyngular/py-u-depend#documentation) for an overview
+    If you have not already done so, you should also read the xinject project's
+    [README.md](https://github.com/xyngular/py-xinject#documentation) for an overview
     of the library before diving into the below text, that's more of like reference material.
 
     ## Summary
@@ -191,22 +191,22 @@ class Dependency:
 
     ## Overview
 
-    A `Resource` represents an object in a `udepend.context.UContext`.
+    A `Resource` represents an object in a `xinject.context.UContext`.
     Generally, dependencies that are added/created inside a `UContext` inherit from this abstract base
     `Resource` class, but are not required too. `Resource` just adds some class-level
     conveince methods and configuratino options. Inheriting from Resource also helps
     self-document that it's a Resource.
 
     See [Resources](#dependencies) at top of this module for a general overview of how dependencies
-    and `UContext`'s work. You should also read the udepend project's
-    [README.md](https://github.com/xyngular/py-u-depend#documentation) for a high-level
+    and `UContext`'s work. You should also read the xinject project's
+    [README.md](https://github.com/xyngular/py-xinject#documentation) for a high-level
     overview.  The text below is more like plain refrence matrial.
 
 
     Get the current dependency via `Resource.dependency`, you can call it on sub-class/concreate
     dependency type, like so:
 
-    >>> from udepend import Dependency
+    >>> from xinject import Dependency
     >>> class MyConfig(Dependency):
     ...     some_setting: str = "default-setting-string"
     >>>
@@ -225,9 +225,9 @@ class Dependency:
     (like what happens when `Resource.dependency` is called on it),
     it will be created in the deepest/oldest parent UContext.
 
-    This is the first parent `udepend.context.UContext` who's `UContext.parent` is None.
+    This is the first parent `xinject.context.UContext` who's `UContext.parent` is None.
     That way it should be visible to everyone on the current thread since it will normally be
-    created in the app-root `udepend.context.UContext`.
+    created in the app-root `xinject.context.UContext`.
 
     If the Dependency can't be shared between multiple threads, creation would normally happen
     at the thread-root UContext instead of the app-root one.
@@ -282,7 +282,7 @@ class Dependency:
     ## Background on Unit Testing
 
     By default, unit tests always create a new blank `UContext` with `parent=None`.
-    THis is done by an autouse fixture (`udepend.fixtures.context`)
+    THis is done by an autouse fixture (`xinject.fixtures.context`)
     THis forces every unit test run to create new dependencies when they are asked for (lazily).
 
     This fixture is used automatically for each unit test, it clears the app-root UContext,
@@ -320,10 +320,10 @@ class Dependency:
             thread_sharable: If `False`: While a resource is lazily auto-created, we will
                 ensure we do it per-thread, and not make it visible to other threads.
                 This is accomplished by only auto-creating the resource in the thread-root
-                `udepend.context.UContext`.
+                `xinject.context.UContext`.
 
                 If `True` (default): Lazily auto-creating the `Dependency` subclass will happen
-                in app-root `udepend.context.UContext`, and will therefore be visible and shared
+                in app-root `xinject.context.UContext`, and will therefore be visible and shared
                 among all threads.
 
                 If True, we can be put in the app-root context, and can be potentially used in
@@ -549,7 +549,7 @@ class Dependency:
             raise UDependError(
                 f"While using ({self}) as a context manager via a `with` statement,"
                 f"somehow we did not have an internal context from the initial entering "
-                f"(see `udepend.context.Dependency.__enter__`). "
+                f"(see `xinject.context.Dependency.__enter__`). "
                 f"Indicates a very strange bug."
             )
 
@@ -649,7 +649,7 @@ class PerThreadDependency(Dependency, thread_sharable=False):
     ## Details
 
     Normally, when a new `Dependency` subclass needs to be created on-demand for the first time
-    the new Dependency will be placed in the app's root `udepend.context.UContext`,
+    the new Dependency will be placed in the app's root `xinject.context.UContext`,
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
@@ -665,6 +665,6 @@ class PerThreadDependency(Dependency, thread_sharable=False):
 
     Therefore, when other threads also ask for the dependency, they will each create their own
     the first time they ask for it, and place it in their thread-root
-    `udepend.context.UContext`.
+    `xinject.context.UContext`.
     """
     pass

@@ -7,9 +7,9 @@ Manage shared dependency and dependency injection.
 If you have not already, to get a nice high-level overview of library see either:
 
 - project README.md here:
-    - https://github.com/xyngular/py-u-depend#documentation
-- Or go to udepend module documentation at here:
-    - [udepend, How To Use](./#how-to-use)
+    - https://github.com/xyngular/py-xinject#documentation
+- Or go to xinject module documentation at here:
+    - [xinject, How To Use](./#how-to-use)
 
 
 # Quick Start
@@ -17,14 +17,14 @@ If you have not already, to get a nice high-level overview of library see either
 ## Please Read First
 
 If your looking for a simple example/use of singltone-like dependencies,
-go to `udepend.dependency.Dependency`.
+go to `xinject.dependency.Dependency`.
 
-The whole point of the `udepend.context.UContext` is to have a place to get shared dependencies.
+The whole point of the `xinject.context.UContext` is to have a place to get shared dependencies.
 
 Normally, code will use some other convenience methods, as an example:
 
-Most of the time a dependency will inherit from `udepend.dependency.Dependency` and that
-class provides a class method `udepend.dependency.Resource.dependency` to easily get a
+Most of the time a dependency will inherit from `xinject.dependency.Dependency` and that
+class provides a class method `xinject.dependency.Resource.dependency` to easily get a
 dependency of the inherited type from the current context as a convenience.
 
 So normally, code would do this to get the current object instance for a Resource:
@@ -36,20 +36,20 @@ So normally, code would do this to get the current object instance for a Resourc
 >>> SomeResource.grab().my_attribute = "change-value"
 
 Another convenient way to get the current dependency is via the
-`udepend.dependency.CurrentDependencyProxy`. This class lets you create an object
+`xinject.dependency.CurrentDependencyProxy`. This class lets you create an object
 that always acts like the current/active object for some Resource.
 So you can define it at the top-level of some module, and code can import it
 and use it directly.
 
-I would start with [Fundamentals](#fundamentals) if you know nothing of how `udepend.context.UContext` works
+I would start with [Fundamentals](#fundamentals) if you know nothing of how `xinject.context.UContext` works
 and want to learn more about how it works.
 
 Most of the time, you interact with Context indrectly via
-`udepend.dependency.Dependency`.  So getting familiar with Context is more about
+`xinject.dependency.Dependency`.  So getting familiar with Context is more about
 utilize more advance use-cases. I get into some of these advanced use-cases below.
 
 .. important:: The below is for advanced use-cases and understanding.
-    Look at `udepend.dependency.Dependency` or docs just above ^^^ for the normal use-case and
+    Look at `xinject.dependency.Dependency` or docs just above ^^^ for the normal use-case and
     examples / quick starts.
 
 # Context Overview
@@ -59,15 +59,15 @@ type. IE: One dependency per-context per-dependency-type.
 
 Main Classes:
 
-- `udepend.context.UContext`: Container of dependencies, mapped by type.
+- `xinject.context.UContext`: Container of dependencies, mapped by type.
 - For Resource Subclasses:
-    - `udepend.dependency.Dependency`: Nice interface to easily get the current dependency.
+    - `xinject.dependency.Dependency`: Nice interface to easily get the current dependency.
         Used to implment a something that should be shared and not generally duplicated,
         like a soft-singleton.
 
 # Fundamentals
 
-`udepend.context.UContext` is like a container, used to store various objects we are calling
+`xinject.context.UContext` is like a container, used to store various objects we are calling
 dependencies.
 
 Used to store various dependencies of any type  in general [ie: configs, auths, clients, etc].
@@ -80,13 +80,13 @@ The values are mapped by their type.  When a dependency of a specific type is as
 the Context will return it if it finds it. If not found it will create it, add it to its self
 and return it. Future calls will return this new dependency.
 
-`udepend.context.UContext` can optionally have a parent. By default, a newly created/used Context
+`xinject.context.UContext` can optionally have a parent. By default, a newly created/used Context
 will use the current context Normally, dependencies are still normally created even if a
 parent has a value, as long as the current context does not have one yet.
 
 This behavior can be customized by the dependency, see one of these for details:
 
-- `udepend.dependency.Dependency`
+- `xinject.dependency.Dependency`
     - Useful for a shared/soft overridable shared object; where you can easily get the current
         version of it.
 
@@ -109,10 +109,10 @@ a dependency called `SomeResourceType`:
     So the first SomeResoureType's `ident` will equal `0`,
     the second one created will be `1` and so forth.
 
-If what you want inherits from `udepend.dependency.Dependency`, it has a nice class method that
+If what you want inherits from `xinject.dependency.Dependency`, it has a nice class method that
 returns the current dependency.
 The easiest way to get the current dependency for the type in this case is
-to call `udepend.dependency.Resource.dependency` on it's type like so:
+to call `xinject.dependency.Resource.dependency` on it's type like so:
 
 >>> SomeResourceType.grab().some_value
 'hello!'
@@ -127,7 +127,7 @@ type is passed in, it will return the current Context's dependency for the passe
 
 This means another way to grab dependencies is to get the current `Context.current`,
 and then ask it for the dependency like below. This works for any type, including
-types that don't inherit from `udepend.dependency.Dependency`:
+types that don't inherit from `xinject.dependency.Dependency`:
 
 >>> UContext.current().grab(SomeResourceType).some_value
 'hello!'
@@ -152,7 +152,7 @@ You can do it via one of the below listed methods/examples below.
 For these examples, say I have this dependency defined:
 
 >>> from dataclasses import dataclass
->>> from udepend import Dependency
+>>> from xinject import Dependency
 >>>
 >>> @dataclass
 >>> class MyResource(Dependency):
@@ -160,7 +160,7 @@ For these examples, say I have this dependency defined:
 >>>
 >>> assert MyResource.grab().some_value == 'default-value'
 
-- Use desired `udepend.dependency.Dependency` subclass as a method decorator:
+- Use desired `xinject.dependency.Dependency` subclass as a method decorator:
 
         >>> @MyResource(some_value='new-value')
         >>> def my_method():
@@ -177,8 +177,8 @@ the copy is what is made current/activated (see `Context.__copy__` for more deta
 2. As a method dectorator, ie: `@`.
 3. Permently activiating it via `Context.make_current`, making it the new Default/Base
    context in general.
-4. When running a unit-test where udepend is installed as a dependcy,
-    because the `udepend.ptest_plugin.udepend_test_context` fixture is auto-used in this case.
+4. When running a unit-test where xinject is installed as a dependcy,
+    because the `xinject.ptest_plugin.xinject_test_context` fixture is auto-used in this case.
     This fixture creates a new Context with a None parent;
     that will isolate dependencies between each run of a unit test method.
 
@@ -213,7 +213,7 @@ older version of the dependency and so returns that one.
 
 By default, a context will create a dependency when it's asked for it and it does not have it
 already. As you saw above, every time a blank Context was created, it also created a new
-SomeResourceType when it was asked for it because the new blank `udepend.context.UContext` did not already
+SomeResourceType when it was asked for it because the new blank `xinject.context.UContext` did not already
 have the dependency.
 
 
@@ -224,7 +224,7 @@ have the dependency.
 With the context test fixture, it creates a brand new parent-less context every time a test runs
 (see `Context.parent` for more about parents). You can use it like so:
 
->>> from udepend.fixtures import context
+>>> from xinject.fixtures import context
 >>> def test_some_text(context):
 ...    SomeResourceType.grab()
 
@@ -254,20 +254,20 @@ When creating a new context. This will tell the context NOT to use a parent. By 
 Context will use the current Context as the time the Context was created as it's parent.
 See `Context.parent` for more details.
 
-This is also how the Context test fixture works (see `udepend.ptest_plugin.udepend_test_context`). It creates
+This is also how the Context test fixture works (see `xinject.ptest_plugin.xinject_test_context`). It creates
 a new parent-less context and activates it while the fixture is used.
 
 # Resource Base Classes
 [dependency-base-classes]: #dependency-base-classes.
 
-### `udepend.dependency.Dependency`
+### `xinject.dependency.Dependency`
 
 You can implment the singleton-pattern easily by inherting from the
-`udepend.dependency.Dependency` class.
+`xinject.dependency.Dependency` class.
 This will try it's best to ensure only one dependency is used amoung a chain/tree of parents.
-It does this by returning `self` when `udepend.context.UContext` asks it what it wants to do when a child-context
+It does this by returning `self` when `xinject.context.UContext` asks it what it wants to do when a child-context
 asks for the dependency of a specific type.
-Since `udepend.dependency.Dependency` can be shared amoung many diffrent child Context objects,
+Since `xinject.dependency.Dependency` can be shared amoung many diffrent child Context objects,
 and makes the same instance always 'look' like it's the current one;
 generally only one is every made or used.
 
@@ -278,7 +278,7 @@ See [Activating New Resource](#activating-new-dependency) for more details.
 #### Example
 
 I create a new class that uses our previous [SomeResourceType][dependencies] but adds in a
-`udepend.dependency.Dependency`.
+`xinject.dependency.Dependency`.
 
 >>> class MySingleton(SomeResourceType, Dependency):
 ...     pass
@@ -298,10 +298,10 @@ context:
 ...     MySingleton.grab().ident
 6
 
-The `udepend.dependency.Dependency` will not see pased the parent-less context,
+The `xinject.dependency.Dependency` will not see pased the parent-less context,
 and so won't see the old dependency.
-It will create a new one. The `udepend.dependency.Dependency` will still create it in the
-furtherest parent it can... which in this case was the `udepend.context.UContext` activated by the with statement.
+It will create a new one. The `xinject.dependency.Dependency` will still create it in the
+furtherest parent it can... which in this case was the `xinject.context.UContext` activated by the with statement.
 
 """
 import contextvars
@@ -310,7 +310,7 @@ import functools
 from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable, Set
 from copy import copy
 from guards.default import Default, DefaultType, Singleton
-from udepend.errors import UDependError
+from xinject.errors import UDependError
 
 T = TypeVar('T')
 C = TypeVar('C')
@@ -374,7 +374,7 @@ _TreatAsRootParent = _TreatAsRootParentType()
 
 class UContext:
     """
-    See [Quick Start](#quick-start) in the `udepend.context` module if your new to the UContext
+    See [Quick Start](#quick-start) in the `xinject.context` module if your new to the UContext
     class.
     """
     copy_as_template = False
@@ -555,7 +555,7 @@ class UContext:
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
         method dependencies from other unit tests. Right now, the unit-test Dependency isolation
-        happens automatically via an auto-use fixture (`udepend.ptest_plugin.udepend_test_context`).
+        happens automatically via an auto-use fixture (`xinject.ptest_plugin.xinject_test_context`).
 
         A non-activated context will return `guards.default.Default` as it's `UContext.parent`
         if it was created with the default value;
@@ -707,7 +707,7 @@ class UContext:
         ...     print(f"my int dependency: {UContext.dependency(int)}")
         Output: "my int dependency: 2"
 
-        As as side-note, you can easily add resources to a new `udepend.context.UContext` via:
+        As as side-note, you can easily add resources to a new `xinject.context.UContext` via:
 
         >>> @UContext(dependencies=[2])
         >>> def some_method()
@@ -725,10 +725,10 @@ class UContext:
 
         If you need to override a dependency, you can create a new context and set me as it's
         parent. At that point you can add whatever resources you want before anyone else
-        uses the new `udepend.context.UContext`.
+        uses the new `xinject.context.UContext`.
 
         .. warning:: If you attempt to add a second dependency of the same type...
-            ...a `udepend.UDependError` will be
+            ...a `xinject.UDependError` will be
             raised. This is because other objects have already gotten this dependency and are
             relying on it now.  You need to configure any special resources you want to add
             to this context early enough before anything else will need it.
@@ -775,13 +775,13 @@ class UContext:
 
         ## Summary
 
-        The whole point of the `udepend.context.UContext` is to have a place to get shared dependencies. This method
+        The whole point of the `xinject.context.UContext` is to have a place to get shared dependencies. This method
         is the primary way to get a shared resource from a Contet directly
 
         Normally, code will use some other convenience methods, as an example:
 
-        Normally a resource will inherit from `udepend.resource.Dependency` and that
-        class provides a class method `udepend.resource.Resource.resource` to easily get a
+        Normally a resource will inherit from `xinject.resource.Dependency` and that
+        class provides a class method `xinject.resource.Resource.resource` to easily get a
         resource of the inherited type from the current context as a convenience.
 
         So normally, code would do this to get a Resource:
@@ -792,16 +792,16 @@ class UContext:
         >>> SomeResource.grab()
 
         Another convenient way to get the current resource is via the
-        `udepend.resource.CurrentDependencyProxy`. This class lets you create an object
+        `xinject.resource.CurrentDependencyProxy`. This class lets you create an object
         that always acts like the current/active object for some Resource.
         So you can define it at the top-level of some module, and code can import it
         and use it directly.
 
-        I would start with [Quick Start](#quick-start) if you know nothing of how `udepend.context.UContext` works
+        I would start with [Quick Start](#quick-start) if you know nothing of how `xinject.context.UContext` works
         and want to learn more about how it works.
 
         Most of the time, you interact with Context indrectly via
-        `udepend.context.Dependency`.  So getting familure with Context is more about
+        `xinject.context.Dependency`.  So getting familure with Context is more about
         utilize more advance use-cases. I get into some of these advanced use-cases below.
 
         ## Advanced Usage for Unit Tests
@@ -811,7 +811,7 @@ class UContext:
         resource you made temporarily active is forgotten.
 
         You can inject/replace dependencies as needed for unit-testing purposes as well by simply
-        adding the resource to a new/blank `udepend.context.UContext` as a diffrent type, see example below.
+        adding the resource to a new/blank `xinject.context.UContext` as a diffrent type, see example below.
 
         In this example, we add a value of int(20) for the `str` resource type.
         I used built-int types to simplify this, but you can image using your own
@@ -824,14 +824,14 @@ class UContext:
 
         ## Specific Details
 
-        Given a type of `udepend.resource.Dependency`, or any other type;
+        Given a type of `xinject.resource.Dependency`, or any other type;
         we will return an instance of it.
 
         If we currently don't have one, we will create a new one of type passe in and return that.
         We will continue to return the one created in the future for the type passed in.
 
         You can customize this process a bit by having your custom resource inherit from
-        `udepend.resource.Dependency`.
+        `xinject.resource.Dependency`.
 
         Otherwise, no other parameters will be sent to init method.
 
@@ -882,7 +882,7 @@ class UContext:
         # So, code using a Dependency in general should never have to worry about this None case.
 
         if self._is_root_context_for_app:
-            from udepend.dependency import is_dependency_thread_sharable
+            from xinject.dependency import is_dependency_thread_sharable
             if not is_dependency_thread_sharable(for_type):
                 return None
 
@@ -949,10 +949,10 @@ class UContext:
         This won't create a dependency if none exist unless you pass True into `create`, so it's
         possible for no results to be yielded if it's never been created and `create` == False.
 
-        .. warning:: This is mostly used by `udepend.dependency.Dependency` subclasses
+        .. warning:: This is mostly used by `xinject.dependency.Dependency` subclasses
             (internally).
 
-            Not normally used elsewhere. It can help the udepend.dependency.Dependency`
+            Not normally used elsewhere. It can help the xinject.dependency.Dependency`
             subclasses to find their list of parent dependencies to consult for its
             own purposes (ie: to inherit settings/configuration from parent objects).
 
@@ -991,7 +991,7 @@ class UContext:
             to how their parent values in their copies are treated.
             See `_TreatAsRootParent` for more details on this aspect.
         """
-        from udepend import Dependency
+        from xinject import Dependency
         # Use None for parent if we were originally created with a `None` parent.
         parent = Default
         if self._parent is _TreatAsRootParent:
@@ -1035,7 +1035,7 @@ class UContext:
             Deep copied object.
         """
         raise UDependError(
-            "Deepcopy is currently disabled for udepend.context.UContext. "
+            "Deepcopy is currently disabled for xinject.context.UContext. "
             "If there is a desire to use it again in the future, remove this exception "
             "as it should still work."
         )
@@ -1129,7 +1129,7 @@ class UContext:
 
     def __call__(self, *args, **kwargs):
         """
-        This allows us to support using `udepend.context.UContext` as a function decorator in a few ways:
+        This allows us to support using `xinject.context.UContext` as a function decorator in a few ways:
 
         >>> @UContext
         >>> def some_method():
@@ -1153,8 +1153,8 @@ class UContext:
         In the case of a pre-allocated context, such as `my_context` in the above example;
         we will use that as the template/starting-point each time `some_method` is called;
 
-        What this means is that when `some_method` is called, and we create this new `udepend.context.UContext`
-        to use. The next `udepend.context.UContext` will get the same dependencies that are/were assigned to it;
+        What this means is that when `some_method` is called, and we create this new `xinject.context.UContext`
+        to use. The next `xinject.context.UContext` will get the same dependencies that are/were assigned to it;
         whatever it is at the time `some_method` is called.
 
         This allows for more fine-control of what is in the `template` context, without
@@ -1361,7 +1361,7 @@ class UContext:
     then it makes a shallow copy of self, and sets its self as the the UContext copy's sibling
     by setting this var on the copied UContext.
     
-    If a UContext has a sibling, when a `udepend.dependency.Dependency` is directly added to
+    If a UContext has a sibling, when a `xinject.dependency.Dependency` is directly added to
     UContext via `UContext.add` it will also add that same dependency to the sibling UContext.
     
     In this way, when you do something like this:
@@ -1394,7 +1394,7 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     Used to create initial global state of app/thread-root contexts containers,
     which keep track of the visible `Contexts` on each thread, and for the app-root `UContext`.
 
-    Is also used by `udepend.pytest_plugin.udepend_test_context` auto-use fixture to blank/clear out
+    Is also used by `xinject.pytest_plugin.xinject_test_context` auto-use fixture to blank/clear out
     all root/globally visible contexts by allocating the global-structures again and letting
     the old global structures deallocate.
 
@@ -1417,7 +1417,7 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     # This is used to keep track of the current context when using a UContext as a ContextManager.
 
     _current_context_contextvar = contextvars.ContextVar(
-        'u-depend-current_context',
+        'py-xinject-current_context',
         default=None
     )
 
