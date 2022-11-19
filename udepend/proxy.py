@@ -11,7 +11,7 @@ See one of these for more details:
 
 - [Active Dependency Proxy - pydoc](./#active-dependency-proxy)
 - [Active Dependency Proxy - github]
-  (https://github.com/xyngular/py-u-depend#active-resource-proxy)
+  (https://github.com/xyngular/py-u-depend#active-resource-proxy#documentation)
 
 """
 from typing import TypeVar, Type, Generic, Callable, Any

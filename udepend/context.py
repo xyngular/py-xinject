@@ -7,7 +7,7 @@ Manage shared dependency and dependency injection.
 If you have not already, to get a nice high-level overview of library see either:
 
 - project README.md here:
-    - https://github.com/xyngular/py-u-depend#how-to-use
+    - https://github.com/xyngular/py-u-depend#documentation
 - Or go to udepend module documentation at here:
     - [udepend, How To Use](./#how-to-use)
 
@@ -953,10 +953,8 @@ class UContext:
             (internally).
 
             Not normally used elsewhere. It can help the udepend.dependency.Dependency`
-            subclass to find it's
-            list of parent dependencies to consult on it's own.
-
-            Real Example: `xyn_config.config.Config` uses this to construct it's parent-chain.
+            subclasses to find their list of parent dependencies to consult for its
+            own purposes (ie: to inherit settings/configuration from parent objects).
 
         Args:
             for_type (Type[ResourceTypeVar]): The dependency type to look for.
@@ -1419,7 +1417,7 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     # This is used to keep track of the current context when using a UContext as a ContextManager.
 
     _current_context_contextvar = contextvars.ContextVar(
-        'xyn_sdk-current_context',
+        'u-depend-current_context',
         default=None
     )
 

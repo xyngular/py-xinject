@@ -31,7 +31,7 @@ It's still possible to get a second instance of the dependency, however:
 If you have not already, to get a nice high-level overview of library see either:
 
 - project README.md here:
-    - https://github.com/xyngular/py-u-depend#how-to-use
+    - https://github.com/xyngular/py-u-depend#documentation
 - Or go to udepend module documentation at here:
     - [udepend, How To Use](./#how-to-use)
 
@@ -122,7 +122,7 @@ For more info/details see:
 
 - [Active Resource Proxy - pydoc](./#active-dependency-proxy)
 - [Active Resource Proxy - github]
-  (https://github.com/xyngular/py-u-depend#active-resource-proxy)
+  (https://github.com/xyngular/py-u-depend#documentation)
 
 
 """
@@ -164,7 +164,7 @@ def attributes_to_skip_while_copying(dependency: 'Dependency') -> Set[str]:
 class Dependency:
     """
     If you have not already done so, you should also read the udepend project's
-    [README.md](https://github.com/xyngular/py-u-depend#active-resource-proxy) for an overview
+    [README.md](https://github.com/xyngular/py-u-depend#documentation) for an overview
     of the library before diving into the below text, that's more of like reference material.
 
     ## Summary
@@ -199,7 +199,7 @@ class Dependency:
 
     See [Resources](#dependencies) at top of this module for a general overview of how dependencies
     and `UContext`'s work. You should also read the udepend project's
-    [README.md](https://github.com/xyngular/py-u-depend#active-resource-proxy) for a high-level
+    [README.md](https://github.com/xyngular/py-u-depend#documentation) for a high-level
     overview.  The text below is more like plain refrence matrial.
 
 
