@@ -18,7 +18,7 @@ Main focus is an easy way to create lazy universally injectable dependencies;
 in less magical way. It also leans more on the side of making it easier to get
 the dependency you need anywhere in the codebase.
 
-u-depend allows you to easily inject universal dependency dependencies into whatever code that needs them,
+u-depend allows you to easily inject lazily created universal dependencies into whatever code that needs them,
 in an easy to understand and self-documenting way.
 
 ??? note "udepend is short for "Universal Dependency""

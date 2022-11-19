@@ -6,14 +6,14 @@
 - [Quick Start](#quick-start)
 - [Licensing](#licensing)
 
-# Overview
+# Introduction
 
-Various objects that allow for sentinel-like singleton guards for various purposes, including:
+Main focus is an easy way to create lazy universally injectable dependencies;
+in less magical way. It also leans more on the side of making it easier to get
+the dependency you need anywhere in the codebase.
 
-- Ones pre-defined in this library:
-  - Default
-  - Null
-- Also, Easily create your own custom singletons/sentinels types.
+u-depend allows you to easily inject lazily created universal dependencies into whatever code that needs them,
+in an easy to understand and self-documenting way.
 
 **[📄 Detailed Documentation](https://xyngular.github.io/py-u-depend/latest/)** | **[🐍 PyPi](https://pypi.org/project/py-u-depend/)**
 
