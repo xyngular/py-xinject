@@ -45,12 +45,12 @@ The following is a specific usecase followed by a more generalized example
 
 Here is a very basic injectable/sharable lazily created S3 resource.
 
-We have a choice to inherit from ether Dependency, or PerThreadDependency.
+We have a choice to inherit from ether Dependency, or DependencyPerThread.
 
 The normal `Dependency` class lets the dependency be shared between threads, so more of a true singleton type
 of object where under normal/default circomstances there would ever only be one instance of a partculare `Dependency`.
 
-Using [`PerThreadDependency`](api/xinject/dependency.html#xinject.dependency.PerThreadDependency) will automatically get a
+Using [`DependencyPerThread`](api/xinject/dependency.html#xinject.dependency.DependencyPerThread) will automatically get a
 separate dependency object per-thread (ie: separate instance per-thread).
 It simply inherits from Dependency and configures it to not be thread sharable.
 
@@ -61,14 +61,15 @@ are not thread-safe. That means our program will need a separate s3 resource per
 # This is the "my_resources.py" file/module.
 
 import boto3
-from xinject import PerThreadDependency
+from xinject import DependencyPerThread
 
-class S3(PerThreadDependency):
+
+class S3(DependencyPerThread):
     def __init__(self, **kwargs):
         # Keeping this simple; a more complex version
         # may store the `kwargs` and lazily create the s3 resource
         # only when it's asked for (via a `@property or some such).
-        
+
         self.resource = boto3.resource('s3', **kwargs)
 ```
 

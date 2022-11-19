@@ -52,9 +52,10 @@ Here is an example boto3 s3 resource dependency:
 from xinject import Dependency
 
 import boto3
-from xinject import PerThreadDependency
+from xinject import DependencyPerThread
 
-class S3(PerThreadDependency):
+
+class S3(DependencyPerThread):
     def __init__(self, **kwargs):
         self.resource = boto3.resource('s3', **kwargs)
 

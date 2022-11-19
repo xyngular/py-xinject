@@ -36,14 +36,15 @@ poetry add guards
 # This is the "my_resources.py" file/module.
 
 import boto3
-from xinject import PerThreadDependency
+from xinject import DependencyPerThread
 
-class S3(PerThreadDependency):
+
+class S3(DependencyPerThread):
     def __init__(self, **kwargs):
         # Keeping this simple; a more complex version
         # may store the `kwargs` and lazily create the s3 resource
         # only when it's asked for (via a `@property or some such).
-        
+
         self.resource = boto3.resource('s3', **kwargs)
 ```
 

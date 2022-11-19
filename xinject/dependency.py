@@ -633,7 +633,7 @@ class Dependency:
 setattr(Dependency, 'obj', _private.classproperty(fget=lambda cls: cls.grab()))
 
 
-class PerThreadDependency(Dependency, thread_sharable=False):
+class DependencyPerThread(Dependency, thread_sharable=False):
     """
     Same as `Dependency`, except we set the `thread_sharable` flag to False (via class argument),
     this means when an instance of us is created by the system lazily,
@@ -653,7 +653,7 @@ class PerThreadDependency(Dependency, thread_sharable=False):
     which each thread's root-context has set as its parent.
     This makes the object available to be seen/used by other threads.
 
-    When a dependency makes a subclass from `PerThreadDependency` or otherwise set's
+    When a dependency makes a subclass from `DependencyPerThread` or otherwise set's
     the `Dependency.__init_subclass__`'s `thread_sharable` to `False` via the Dependency
     class arguments (so that `is_dependency_thread_sharable` will return `False` when its passed
     the new Dependency subclass/type).
