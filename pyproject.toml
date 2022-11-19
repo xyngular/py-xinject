@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "xinject"
 version = "0.3.0"
-description = "Inject universal resources/dependencies lazily."
+description = "Lazy dependency injection."
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "xinject"}]
 

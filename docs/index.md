@@ -31,12 +31,12 @@ in an easy to understand and self-documenting way.
     documentation.
     
     When you're done here and want more details go to [API Reference](api/xinject)
-    or directly to [`Dependency API Refrence`](api/xinject/dependency.html#xinject.dependency.Dependency)
+    or directly to [`Dependency API Refrence`](api/xinject/dependency.html#xinject.dependency.Dependency){target=_blank}
     for more detailed reference-type documentation.
 
 ## Quick Start
 
-Although it's not required, most of the time you'll want to subclass [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency).
+Although it's not required, most of the time you'll want to subclass [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency){target=_blank}.
 The subclass will inherit some nice features that make it easier to use.
 
 The following is a specific usecase followed by a more generalized example
@@ -50,7 +50,7 @@ We have a choice to inherit from ether Dependency, or DependencyPerThread.
 The normal `Dependency` class lets the dependency be shared between threads, so more of a true singleton type
 of object where under normal/default circomstances there would ever only be one instance of a partculare `Dependency`.
 
-Using [`DependencyPerThread`](api/xinject/dependency.html#xinject.dependency.DependencyPerThread) will automatically get a
+Using [`DependencyPerThread`](api/xinject/dependency.html#xinject.dependency.DependencyPerThread){target=_blank} will automatically get a
 separate dependency object per-thread (ie: separate instance per-thread).
 It simply inherits from Dependency and configures it to not be thread sharable.
 
@@ -204,7 +204,7 @@ XContext.grab().add(s3_mocking_obj, for_type=S3)
 
 ### Generalized/Generic Example
 
-Although it's not required, most of the time you'll want to subclass [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency).
+Although it's not required, most of the time you'll want to subclass [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency){target=_blank}.
 The subclass will inherit some nice features that make it easier to use.
 
 ```python
@@ -283,7 +283,7 @@ with MyUniversalDependency(name='injected-value'):
 
 ## Overview
 
-The main class used most of the time is [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency).
+The main class used most of the time is [`Dependency`](api/xinject/dependency.html#xinject.dependency.Dependency){target=_blank}.
 
 Allows you to create sub-classes that act as sharable singleton-type objects that
 we are calling resources here.

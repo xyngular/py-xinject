@@ -8,7 +8,8 @@ nav:
     - index.md
     - Unit Testing: unit-testing.md
     - Data Classes: dataclasses.md
-    - Advanced Use Cases: advanced.md
+    - thread-safety.md
+    - dependency-proxy.md
   - API Reference: api/xinject/" target="_blank
   - Changelog: changelog.md
 

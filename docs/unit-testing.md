@@ -107,7 +107,7 @@ This means that by default, at the start of each running unit test function ther
     so as long as xinject is installed in the environment as a dependency it will find this
     and autoload this fixture for each unit test.
 
-    If curious The [`xinject_test_context`](api/xinject/pytest_plugin.html#xinject.pytest_plugin.xinject_test_context)
+    If curious The [`xinject_test_context`](api/xinject/pytest_plugin.html#xinject.pytest_plugin.xinject_test_context){target=_blank}
     fixture is how it's implemented.
 
 

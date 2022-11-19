@@ -1,38 +1,10 @@
 ---
-title: REST API
-description: Core utility
+title: Dependency Proxy
 ---
 
-## Thread Safety
-
-There is a concept of an app-root, and thread-root contexts.
-
-By default, each Dependency subclass will be shared between different threads,
-ie: it's assumed to be thread-safe.
-
-You can indicate a Dependency subclass should not be shared between threads
-by inheriting from `xinject.dependency.ThreadUnsafeResource` instead,
-or by setting the **class attribute** (on your custom subclass of Dependency)
-`xinject.dependency.Dependency.resource_thread_sharable` to `False`.
-
-Things that are probably not thread-safe in general
-are resources that contain network/remote type connections/sessions/clients.
-
-Example for which you would want a separate dependency instance/object per-thread:
-
-- `requests` library session
-  - Requests libraries session object is not thread-safe, there is issue that's been around for 7 years
-    to make it thread safe that's still open. For now, you need a seperate requests Session per-thread.
-  - `requests-mock` also needs the session created after it's setup, so after unit test runs.
-- boto client/dependency
-  - Library says it's not thread-safe, you need to use a different object per-thread.
-  - Moto mocking library for AWS services needs you to allocate a client after it's setup,
-    (so lazily allocate client/dependency from boto).
-
-## Active Dependency Proxy
-
-You can use the convenience method `xinject.dependency.Dependency.proxy` to easily get a
-proxy object.
+You can use the method
+[`Dependency.proxy()`](api/xinject/dependency.html#xinject.dependency.Dependency.proxy){target=_blank}
+to easily get a proxy object.
 
 All non-dunder attributes/methods will be grabbed/set on the current object instead of the proxy.
 
@@ -83,7 +55,7 @@ if __name__ == '__main__':
     s3.resource.Bucket("my-bucket").download_file(file_name, dest_path)
 ```
 
-You can use the proxy objecy like a normal object.
+You can use the proxy object like a normal object.
 
 The only things not forwarded are any method/attribute that starts
 with a `_`, which conveays the attribute as private/internal.
@@ -95,5 +67,5 @@ Only use the proxy object for normal attribute/properties/methods.
 If you need do use an attribute/method that starts with an underscore `_`,
 grab the current object directly via `S3.grab()`.
 
-The [`grab`](api/xinject/dependency.html#xinject.dependency.Dependency.grab)
+The [`grab()`](api/xinject/dependency.html#xinject.dependency.Dependency.grab){target=_blank}
 method returns the current real object each time it's called (and not a proxy).
