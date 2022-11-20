@@ -1,5 +1,5 @@
 ![PythonSupport](https://img.shields.io/static/v1?label=python&message=%203.8|%203.9|%203.10&color=blue?style=flat-square&logo=python)
-![PyPI version](https://badge.fury.io/py/py-xinject.svg?)
+![PyPI version](https://badge.fury.io/py/xinject.svg?)
 
 - [Introduction](#introduction)
 - [Documentation](#documentation)
