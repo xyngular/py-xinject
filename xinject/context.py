@@ -41,8 +41,8 @@ that always acts like the current/active object for some Resource.
 So you can define it at the top-level of some module, and code can import it
 and use it directly.
 
-I would start with [Fundamentals](#fundamentals) if you know nothing of how `xinject.context.UContext` works
-and want to learn more about how it works.
+I would start with [Fundamentals](#fundamentals) if you know nothing of how
+`xinject.context.UContext` works and want to learn more about how it works.
 
 Most of the time, you interact with Context indrectly via
 `xinject.dependency.Dependency`.  So getting familiar with Context is more about
@@ -213,8 +213,8 @@ older version of the dependency and so returns that one.
 
 By default, a context will create a dependency when it's asked for it and it does not have it
 already. As you saw above, every time a blank Context was created, it also created a new
-SomeResourceType when it was asked for it because the new blank `xinject.context.UContext` did not already
-have the dependency.
+SomeResourceType when it was asked for it because the new blank `xinject.context.UContext`
+did not already have the dependency.
 
 
 >>> XContext().make_current()
@@ -254,8 +254,8 @@ When creating a new context. This will tell the context NOT to use a parent. By 
 Context will use the current Context as the time the Context was created as it's parent.
 See `Context.parent` for more details.
 
-This is also how the Context test fixture works (see `xinject.ptest_plugin.xinject_test_context`). It creates
-a new parent-less context and activates it while the fixture is used.
+This is also how the Context test fixture works (see `xinject.ptest_plugin.xinject_test_context`).
+It creates a new parent-less context and activates it while the fixture is used.
 
 # Resource Base Classes
 [dependency-base-classes]: #dependency-base-classes.
@@ -265,8 +265,9 @@ a new parent-less context and activates it while the fixture is used.
 You can implment the singleton-pattern easily by inherting from the
 `xinject.dependency.Dependency` class.
 This will try it's best to ensure only one dependency is used amoung a chain/tree of parents.
-It does this by returning `self` when `xinject.context.UContext` asks it what it wants to do when a child-context
-asks for the dependency of a specific type.
+It does this by returning `self` when `xinject.context.UContext` asks it what it wants to do when
+a child-context asks for the dependency of a specific type.
+
 Since `xinject.dependency.Dependency` can be shared amoung many diffrent child Context objects,
 and makes the same instance always 'look' like it's the current one;
 generally only one is every made or used.
@@ -301,7 +302,8 @@ context:
 The `xinject.dependency.Dependency` will not see pased the parent-less context,
 and so won't see the old dependency.
 It will create a new one. The `xinject.dependency.Dependency` will still create it in the
-furtherest parent it can... which in this case was the `xinject.context.UContext` activated by the with statement.
+furtherest parent it can... which in this case was the `xinject.context.UContext` activated by the
+with statement.
 
 """
 import contextvars
@@ -556,7 +558,8 @@ class XContext:
         If you pass in None for parent, no parent will be used/consulted. Normally you'll only
         want to do this for a root context. Also, useful for unit testing to isolate testing
         method dependencies from other unit tests. Right now, the unit-test Dependency isolation
-        happens automatically via an auto-use fixture (`xinject.ptest_plugin.xinject_test_context`).
+        happens automatically via an auto-use fixture
+        (`xinject.ptest_plugin.xinject_test_context`).
 
         A non-activated context will return `xsentinels.default.Default` as it's `XContext.parent`
         if it was created with the default value;
@@ -567,7 +570,8 @@ class XContext:
                 `XContext` your creating have an initial list of dependencies you can pass them
                 in here.
 
-                It can be a single Dependency, or a list of dependencies, or a mapping of dependencies.
+                It can be a single Dependency, or a list of dependencies, or a mapping of
+                dependencies.
 
                 Mainly useful for unit-testing, but could be useful elsewhere too.
 
@@ -776,8 +780,9 @@ class XContext:
 
         ## Summary
 
-        The whole point of the `xinject.context.UContext` is to have a place to get shared dependencies. This method
-        is the primary way to get a shared resource from a Contet directly
+        The whole point of the `xinject.context.UContext` is to have a place to get shared
+        dependencies. This method is the primary way to get a shared resource from a Contet
+        directly.
 
         Normally, code will use some other convenience methods, as an example:
 
@@ -798,8 +803,8 @@ class XContext:
         So you can define it at the top-level of some module, and code can import it
         and use it directly.
 
-        I would start with [Quick Start](#quick-start) if you know nothing of how `xinject.context.UContext` works
-        and want to learn more about how it works.
+        I would start with [Quick Start](#quick-start) if you know nothing of how
+        `xinject.context.UContext` works and want to learn more about how it works.
 
         Most of the time, you interact with Context indrectly via
         `xinject.context.Dependency`.  So getting familure with Context is more about
@@ -812,7 +817,8 @@ class XContext:
         resource you made temporarily active is forgotten.
 
         You can inject/replace dependencies as needed for unit-testing purposes as well by simply
-        adding the resource to a new/blank `xinject.context.UContext` as a diffrent type, see example below.
+        adding the resource to a new/blank `xinject.context.UContext` as a diffrent type,
+        see example below.
 
         In this example, we add a value of int(20) for the `str` resource type.
         I used built-int types to simplify this, but you can image using your own
@@ -1126,11 +1132,15 @@ class XContext:
             context_to_deactivate._parent._children.remove(context_to_deactivate)
             context_to_deactivate._parent = Default
 
-        assert not context_to_deactivate._children, f"XContext ({context_to_deactivate}) still has children after exiting as active ({context_to_deactivate._children})."
+        assert not context_to_deactivate._children, (
+            f"XContext ({context_to_deactivate}) still has children after exiting as active "
+            f"({context_to_deactivate._children})."
+        )
 
     def __call__(self, *args, **kwargs):
         """
-        This allows us to support using `xinject.context.UContext` as a function decorator in a few ways:
+        This allows us to support using `xinject.context.UContext` as a function decorator in a
+        few ways:
 
         >>> @XContext
         >>> def some_method():
@@ -1154,9 +1164,10 @@ class XContext:
         In the case of a pre-allocated context, such as `my_context` in the above example;
         we will use that as the template/starting-point each time `some_method` is called;
 
-        What this means is that when `some_method` is called, and we create this new `xinject.context.UContext`
-        to use. The next `xinject.context.UContext` will get the same dependencies that are/were assigned to it;
-        whatever it is at the time `some_method` is called.
+        What this means is that when `some_method` is called, and we create this new
+        `xinject.context.UContext` to use.
+        The next `xinject.context.UContext` will get the same dependencies that are/were assigned
+        to it; whatever it is at the time `some_method` is called.
 
         This allows for more fine-control of what is in the `template` context, without
         worrying about taking other changes into it that come later.
@@ -1255,8 +1266,8 @@ class XContext:
             This is cached the first time we are called if we are currently active
             since the `XContext.parent` can't be changed after `XContext` creation while active.
 
-            See `XContext._is_active` internal/private var for a bit more detail on what is 'active'
-            but suffice to say that active means XContext is currently being used via a
+            See `XContext._is_active` internal/private var for a bit more detail on what is
+            'active' but suffice to say that active means XContext is currently being used via a
             decorator '@' or via `with` or via `XContext.make_current` and the `with` or `@` has
             not been exited yet, we are active.
 
@@ -1264,8 +1275,9 @@ class XContext:
             start with `self` as the first item, and if the parent passed in to us when self
             was created was left/set at:
 
-            - `xsentinels.default.Default`: Lookup current context via `XContext.current` and that's
-                our next parent (and we grab their parent and so forth and return the full list).
+            - `xsentinels.default.Default`: Lookup current context via `XContext.current` and
+                that's our next parent
+                (and we grab their parent and so forth and return the full list).
             - `None`: We don't look for more parents.
         """
         chain = self._cached_context_chain
@@ -1361,24 +1373,23 @@ class XContext:
     If a `XContext` is activated a second time (perhaps when a function is called recursively, etc)
     then it makes a shallow copy of self, and sets its self as the the XContext copy's sibling
     by setting this var on the copied XContext.
-    
+
     If a XContext has a sibling, when a `xinject.dependency.Dependency` is directly added to
     XContext via `XContext.add` it will also add that same dependency to the sibling XContext.
-    
+
     In this way, when you do something like this:
-    
+
     >>> @XContext()
     >>> def some_method()
-    >>>   XContext.current().add(SomeDependency())  
-    
+    >>>   XContext.current().add(SomeDependency())
+
     The `SomeDependency` instance will be added to all of the functions decorated XContext
     objects like you would expect
     (ie: it's treated as if one instance of XContext was created, even if `some_method` is
          called recursively).
-    
+
     The shallow-copy must be made if method is called recursively so that the parent-chain
     can be kept track of correctly along with any cached resources from the parent-chain.
-    
     """
 
     _func = None
@@ -1395,8 +1406,8 @@ def _setup_blank_app_and_thread_root_contexts_globals():
     Used to create initial global state of app/thread-root contexts containers,
     which keep track of the visible `Contexts` on each thread, and for the app-root `XContext`.
 
-    Is also used by `xinject.pytest_plugin.xinject_test_context` auto-use fixture to blank/clear out
-    all root/globally visible contexts by allocating the global-structures again and letting
+    Is also used by `xinject.pytest_plugin.xinject_test_context` auto-use fixture to blank/clear
+    out all root/globally visible contexts by allocating the global-structures again and letting
     the old global structures deallocate.
 
     This allows for clean slate for each individual unit test run,

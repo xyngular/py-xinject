@@ -163,11 +163,11 @@ def test_deepcopy_context():
 
 
 @dataclasses.dataclass
-class TestDependency(Dependency):
+class ATestDependency(Dependency):
     my_name: str = 'hello!'
 
 
-module_level_test_resource = TestDependency.grab()
+module_level_test_resource = ATestDependency.grab()
 print(module_level_test_resource)
 module_level_test_resource.my_name = "module-level-change"
 
@@ -176,14 +176,14 @@ module_level_test_resource.my_name = "module-level-change"
 @pytest.mark.parametrize("test_run", [1, 2])
 def test_module_level_resource_in_unit_test(test_run):
     # Make sure we have a different TestDependency instance.
-    assert module_level_test_resource is not TestDependency.grab()
+    assert module_level_test_resource is not ATestDependency.grab()
 
     # Check values, see if they are still at the module-level value
-    assert TestDependency.grab().my_name == "hello!"
+    assert ATestDependency.grab().my_name == "hello!"
 
     # Do a unit-test change, ensure we don't see it in another unit test.
-    TestDependency.grab().my_name = "unit-test-change"
-    assert TestDependency.grab().my_name == "unit-test-change"
+    ATestDependency.grab().my_name = "unit-test-change"
+    assert ATestDependency.grab().my_name == "unit-test-change"
 
 
 def test_each_unit_test_starts_with_a_single_parentless_root_like_context():

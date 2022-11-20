@@ -23,7 +23,7 @@ tomlkit = "^0.11.5"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--verbose --pycodestyle"
-testpaths = ["tests"]
+testpaths = ["tests", "xinject"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

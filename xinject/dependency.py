@@ -192,8 +192,8 @@ class Dependency:
     ## Overview
 
     A `Resource` represents an object in a `xinject.context.XContext`.
-    Generally, dependencies that are added/created inside a `XContext` inherit from this abstract base
-    `Resource` class, but are not required too. `Resource` just adds some class-level
+    Generally, dependencies that are added/created inside a `XContext` inherit from this abstract
+    base `Resource` class, but are not required too. `Resource` just adds some class-level
     conveince methods and configuratino options. Inheriting from Resource also helps
     self-document that it's a Resource.
 
@@ -246,7 +246,8 @@ class Dependency:
 
     >>> MyResource()
 
-    You can allocate the dependency yourself with custom options and add it to the XContext your self.
+    You can allocate the dependency yourself with custom options and add it to the XContext your
+    self.
 
     Here are the various ways to do that, via:
 
@@ -411,11 +412,11 @@ class Dependency:
     _dependency__meta = None
 
     obj: Self
-    """ 
+    """
     class property/attribute that will return the current dependency for the subclass
     it's asked on by calling `Dependency.grab`, passing no extra arguments and returning the
     result.
-    
+
     >>> class MyDependency(Dependency):
     >>>     my_attribute: str = "default-value"
     >>>
@@ -425,14 +426,14 @@ class Dependency:
     >>>
     >>> assert MyDependency.obj.my_attribute == "default-value"
     >>> assert MyDependency.grab().my_attribute == "default-value"
-    
+
     Background Details (only if interested in implementation details):
-    
+
     This is implemented via a `setattr` later on in the module that sets a
     `_private.classproperty.classproperty` on it. This is a private class and should not be
     used outside. I use a `setattr` to try and hide from IDE that a classproperty is being used,
     which can add confusing details to the resulting type-hint the IDE comes up with for `.obj`.
-    
+
     This way, we hide that detail and the type-hint is cleaner, while at the same time not having
     to implement a `__getattribute__` (which would slow down attribute access to the class).
     """
@@ -611,10 +612,10 @@ class Dependency:
                 f"Attempt to calling a Dependency of type ({self}) as a callable function. "
                 f"By default (unless dependency subclass does/says otherwise) you need to use "
                 f"it as a decorator when calling it. "
-                f"When using a Dependency subclass as a decorator, Python will call the Dependency "
-                f"and pass in a callable function. The dependency will then make self the current "
-                f"dependency via `with self` and call the passed in function inside that with "
-                f"statement, returning the result of calling the passed in function."
+                f"When using a Dependency subclass as a decorator, Python will call the "
+                f"Dependency and pass in a callable function. The dependency will then make self "
+                f"the current dependency via `with self` and call the passed in function inside "
+                f"that with statement, returning the result of calling the passed in function."
             )
 
         @functools.wraps(func)
