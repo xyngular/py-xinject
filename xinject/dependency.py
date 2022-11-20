@@ -137,6 +137,14 @@ import sys
 T = TypeVar('T')
 R = TypeVar('R')
 
+# Tell pdoc3 to document the normally private method __call__.
+__pdoc__ = {
+    "Dependency.__call__": True,
+    "Dependency.__copy__": True,
+    "Dependency.__deepcopy__": True,
+    "Dependency.__init_subclass__": True,
+}
+
 if sys.version_info >= (3, 11):
     # If we are using Python 3.11, can use this new `Self` type that means current class/subclass
     # that is being used.
@@ -283,7 +291,7 @@ class Dependency:
     ## Background on Unit Testing
 
     By default, unit tests always create a new blank `XContext` with `parent=None`.
-    THis is done by an autouse fixture (`xinject.fixtures.context`)
+    THis is done by an autouse fixture (`xinject.pytest_plugin.xinject_test_context`)
     THis forces every unit test run to create new dependencies when they are asked for (lazily).
 
     This fixture is used automatically for each unit test, it clears the app-root XContext,
@@ -373,13 +381,16 @@ class Dependency:
                 names, we will skip copying them for you
                 (via `Dependency.__copy__` and `Dependency.__deepcopy__`).
 
+                See `Dependency.__copy__` for details.
+
                 We ourselves need to skip copying a specific internal property,
                 and there are other dependencies that need to do the same thing.
 
                 This is an easy way to accomplish that goal.
 
                 As a side note, we will always skip copying `_context_manager_stack` in addition to
-                what's set on `Dependency.attributes_to_skip_while_copying`.
+                what's set on `Dependency.__init_subclass__` attributes_to_skip_while_copying
+                class argument.
 
                 This can be dynamic if needed, by default it's consulted on the object each time
                 it's copied.
@@ -458,7 +469,7 @@ class Dependency:
         ...         pass
         >>> SomeResourceManager.obj.get_resource_via("some-key-or-value")
         """
-        return XContext.current().dependency(for_type=cls)
+        return XContext.grab().dependency(for_type=cls)
 
     @classmethod
     def proxy(cls: Type[R]) -> R:
@@ -472,14 +483,19 @@ class Dependency:
         (I am wondering if I should just remove this default copy code).
 
         `Dependency` overrides the default copy operation to shallow copy everything,
-        except it will make a new instance for dict/lists
+        except it will make a shallow copy for any normal dict/list types.
         (so old a new dependencies don't share the same list/dict instance).
 
-        If you want different behavior, then override.
+        It will also look skip copying any attributes that are named in the
+        `attributes_to_skip_while_copying` class parameter (if anything),
+        if a super-class of the `Dependency` has specified any `attributes_to_skip_while_copying`
+        subclasses will inherit any items in that parents list of attributes to skip while copying.
+
+        If you want different behavior, then override `Dependency.__copy__`.
 
         A dependency could also use `deepcopy` instead when making a copy, if desirable.
 
-        Copying a dependency may be useful if you want to activate a new dependency but have it's
+        Copying a dependency may be useful if you want to activate a new dependency but have its
         configuration similar to a current dependency (with some tweaks/modifications).
         """
         clone = type(self)()
@@ -550,7 +566,7 @@ class Dependency:
             raise UDependError(
                 f"While using ({self}) as a context manager via a `with` statement,"
                 f"somehow we did not have an internal context from the initial entering "
-                f"(see `xinject.context.Dependency.__enter__`). "
+                f"(see `xinject.dependency.Dependency.__enter__`). "
                 f"Indicates a very strange bug."
             )
 

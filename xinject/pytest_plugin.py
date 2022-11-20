@@ -9,14 +9,14 @@ Auto-loaded common fixtures for helping with unit-testing.
 
     You should be able to use any of these fixtures without importing them.
     This is accomplished via the setup.py file in xinject, it tells pytest about the
-    `xinject.fixtures` module, so it can load them automatically.
+    `xinject.pytest_plugin` module, so it can load them automatically.
 
 
-    For `xinject_test_context` fixture it's self... it's an auto-use fixture,
+    For `xinject.pytest_plugin.xinject_test_context` fixture it's self... it's an auto-use fixture,
     so it's automatically used anyway.
 
     I would probably just get the current context like you normally would
-    (via `xinject.context.XContext.current`), rather than use this fixture directly
+    (via `xinject.context.XContext.grab`), rather than use this fixture directly
     in your unit-test.
 """
 import pytest
@@ -56,7 +56,7 @@ def xinject_test_context():
     _setup_blank_app_and_thread_root_contexts_globals()
 
     # Yield the current thread-root context as the fixture-value.
-    yield XContext.current()
+    yield XContext.grab()
 
     # Ensure app+thread root-contexts do not have leftover dependency objects from unit test.
     _setup_blank_app_and_thread_root_contexts_globals()

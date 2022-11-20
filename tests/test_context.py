@@ -9,11 +9,11 @@ from xinject.errors import UDependError
 def test_decorator_on_direct_context_class(xinject_test_context):
     """ Test using XContext class directly as a decorator (not a XContext instance). """
     # This should be the XContext that was created via `@XContext`.
-    assert XContext.current() is not xinject_test_context
+    assert XContext.grab() is not xinject_test_context
 
     # Since the `@XContext` would have been created AFTER the standard unit-test `context`
     # fixture, the parent of my `@XContext` would be the standard unit-test context fixture.
-    assert XContext.current().parent is xinject_test_context
+    assert XContext.grab().parent is xinject_test_context
 
 
 @dataclasses.dataclass
@@ -21,19 +21,19 @@ class SomeDependency(Dependency):
     my_name: str = 'hello!'
 
 
-module_level_context = XContext.current()
+module_level_context = XContext.grab()
 
 
 def test_ensure_pytest_plugin_context_autouse_fixture_working():
     # Ensure by default every unit test that has xinject as a dependency will use
     # the context auto-use fixture; which makes a blank root-like context.
-    assert XContext.current() is not module_level_context
+    assert XContext.grab() is not module_level_context
 
     # Ensure we have no items in the XContext, that it is indeed blank.
-    assert len(XContext.current()._dependencies) == 0
+    assert len(XContext.grab()._dependencies) == 0
 
     # Ensure app-root context also has no items in it, that it's blank.
-    assert len(XContext.current().parent._dependencies) == 0
+    assert len(XContext.grab().parent._dependencies) == 0
 
 
 # noinspection PyTypeChecker
@@ -45,7 +45,7 @@ def test_ensure_pytest_plugin_context_autouse_fixture_working():
 def test_decorator_on_context_object():
     first_resource = SomeDependency.grab()
     assert first_resource.my_name == 'first-name'
-    decorated_context = XContext.current()
+    decorated_context = XContext.grab()
 
     new_resource = SomeDependency(my_name='new-name')
     with XContext(dependencies=[new_resource]) as with_context:
@@ -68,12 +68,12 @@ def test_decorator_on_context_object():
 
 
 def test_context_and_with():
-    root_context = XContext.current()
+    root_context = XContext.grab()
 
     context_1 = XContext(dependencies=[2])
 
     def verify_current_context_is_copy():
-        copied_context: XContext = XContext.current()
+        copied_context: XContext = XContext.grab()
         # ensure they are not the same object (ie: it got copied), and the parent is correct.
         assert context_1 is not copied_context
         assert copied_context.parent is context_1
@@ -87,19 +87,17 @@ def test_context_and_with():
         assert copied_context._dependencies == {int: 2}
 
     with context_1 as current_context:
-        # When we use XContext via `@` or `with` or `make_current`, they should copy the
-        # context and activate/make-current that copied context.
-        assert XContext.current() is current_context
+        assert XContext.grab() is current_context
 
         with context_1 as current_context_2:
-            assert XContext.current() is current_context_2
-            assert XContext.current() is not current_context
+            assert XContext.grab() is current_context_2
+            assert XContext.grab() is not current_context
             verify_current_context_is_copy()
 
     # check to make sure same behavior happens when using context as a decorator.
     @context_1
     def my_method():
-        assert XContext.current() is context_1
+        assert XContext.grab() is context_1
         # verify_current_context_is_copy()
 
     my_method()
@@ -121,8 +119,8 @@ module_level_context = XContext(
 @module_level_context.copy()
 def test_module_level_context(xinject_test_context):
     # `context` is the base-context
-    XContext.current().add(1.2)
-    assert XContext.current(for_type=float) == 1.2
+    XContext.grab().add(1.2)
+    assert XContext.current(float) == 1.2
 
     # Ensure that when we used the module-level-context, ensure it still uses the current
     # context as it's first parent. the `create=False` will ensure it won't add this looked
@@ -130,7 +128,7 @@ def test_module_level_context(xinject_test_context):
     assert module_level_context.dependency(for_type=float, create=False) == 1.2
 
     # Should be the same object since we have not been called recursively.
-    assert module_level_context is not XContext.current()
+    assert module_level_context is not XContext.grab()
 
     # Ensure that we don't have a float dependency in the outer-module version
     # (since create=False).
@@ -138,8 +136,8 @@ def test_module_level_context(xinject_test_context):
 
     # See if the copied-context has the same dependencies still
     assert SomeDependency.grab().my_name == "start-name"
-    assert XContext.current(for_type=int) == 20
-    assert XContext.current(for_type=str) == "hello-str"
+    assert XContext.current(int) == 20
+    assert XContext.current(str) == "hello-str"
 
 
 def test_initial_context_resources_with_dict():
@@ -152,8 +150,8 @@ def test_initial_context_resources_with_dict():
         # dependencies with a completely different type
         # (if you want to mock/test something specific).
         assert SomeDependency.grab() == 'str-instead'
-        assert XContext.current(for_type=int) == 'string-as-int-dependency'
-        assert XContext.current(for_type=float) is False
+        assert XContext.current(int) == 'string-as-int-dependency'
+        assert XContext.current(float) is False
 
 
 def test_deepcopy_context():
@@ -188,7 +186,7 @@ def test_module_level_resource_in_unit_test(test_run):
 
 def test_each_unit_test_starts_with_a_single_parentless_root_like_context():
     # Ensure we have no parent.
-    unit_test_root_context = XContext.current()
+    unit_test_root_context = XContext.grab()
 
     # We should only have a thread-root context that is pointing to a single parent app-root.
     assert unit_test_root_context.parent.parent is None
