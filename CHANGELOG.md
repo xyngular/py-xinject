@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/xyngular/py-xinject/compare/v1.0.1...v1.0.2) (2022-11-20)
+
+
+### Documentation
+
+* fix readme pypi pointer. ([e775c81](https://github.com/xyngular/py-xinject/commit/e775c8126e5f7419796102271797ea3479b1c1f3))
+
 ## [1.0.1](https://github.com/xyngular/py-xinject/compare/v1.0.0...v1.0.1) (2022-11-20)
 
 
