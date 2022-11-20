@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/xyngular/py-xinject/compare/v1.0.0...v1.0.1) (2022-11-20)
+
+
+### Bug Fixes
+
+* add missing metadata to package. ([ced4cea](https://github.com/xyngular/py-xinject/commit/ced4cea1a53287d4d2e7206d0e2b7a4ea71b2e3c))
+
 ## [1.0.0](https://github.com/xyngular/py-xinject/compare/v0.4.0...v1.0.0) (2022-11-20)
 
 
