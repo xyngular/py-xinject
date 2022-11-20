@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/xyngular/py-xinject/compare/v0.4.0...v1.0.0) (2022-11-20)
+
+
+### Features
+
+* release as version 1.0.0 ([a971752](https://github.com/xyngular/py-xinject/commit/a971752c0a4c6d189d048969ec79a7ff06a537bb))
+
 ## [0.4.0](https://github.com/xyngular/py-xinject/compare/v0.3.0...v0.4.0) (2022-11-20)
 
 
