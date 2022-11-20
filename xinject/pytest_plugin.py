@@ -5,18 +5,18 @@ Auto-loaded common fixtures for helping with unit-testing.
     pytest should automatically import this via it's plugin mechanism.
     If you import any of the fixtures below manually, you may get something like this:
 
-    `ValueError: duplicate 'glazy_test_context'`
+    `ValueError: duplicate 'xinject_test_context'`
 
     You should be able to use any of these fixtures without importing them.
-    This is accomplished via the setup.py file in glazy, it tells pytest about the
-    `glazy.fixtures` module so it can load them automatically.
+    This is accomplished via the setup.py file in xinject, it tells pytest about the
+    `xinject.fixtures` module, so it can load them automatically.
 
 
-    For `glazy_test_context` fixture it's self... it's an auto-use fixture,
+    For `xinject_test_context` fixture it's self... it's an auto-use fixture,
     so it's automatically used anyway.
 
     I would probably just get the current context like you normally would
-    (via `glazy.context.Context.current`), rather than use this fixture directly
+    (via `xinject.context.XContext.current`), rather than use this fixture directly
     in your unit-test.
 """
 import pytest
@@ -24,17 +24,17 @@ import pytest
 
 @pytest.fixture(autouse=True)
 @pytest.mark.order(-1300)
-def glazy_test_context():
+def xinject_test_context():
     """
     Will blank-out the app and root contexts by allocating new containers
     for the root contexts.
 
-    This means that, the first time a thread asks/needs a Context, one will be created lazily
+    This means that, the first time a thread asks/needs a XContext, one will be created lazily
     after the unit test starts since we removed all of them from the global state.
 
     This fixture is also using the `autouse=True` feature of pytest, to ensure this always runs.
     You don't need to use it directly,
-    simply call `glazy.context.Context.current` like you normally would if you need the
+    simply call `xinject.context.XContext.current` like you normally would if you need the
     current context during your unit-test.
 
     After the unit test is finished, this auto-use fixture will clean up the state again.
@@ -48,7 +48,7 @@ def glazy_test_context():
 
     # Want to keep global-module slate clean, import stuff we need privately.
     from .context import (
-        Context, _setup_blank_app_and_thread_root_contexts_globals
+        XContext, _setup_blank_app_and_thread_root_contexts_globals
     )
 
     # Ensure we have a blank slate for the unit-test.
@@ -56,8 +56,8 @@ def glazy_test_context():
     _setup_blank_app_and_thread_root_contexts_globals()
 
     # Yield the current thread-root context as the fixture-value.
-    yield Context.current()
+    yield XContext.current()
 
-    # Ensure app+thread root-contexts do not have leftover resource objects from unit test.
+    # Ensure app+thread root-contexts do not have leftover dependency objects from unit test.
     _setup_blank_app_and_thread_root_contexts_globals()
 

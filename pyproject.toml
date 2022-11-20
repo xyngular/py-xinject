@@ -1,15 +1,17 @@
 [tool.poetry]
-name = "glazy"
+name = "xinject"
 version = "0.3.0"
-description = "Inject global resources lazily; global-lazy -> glazy"
+description = "Lazy dependency injection."
 authors = ["Josh Orr <josh@orr.blue>"]
-packages = [{include = "glazy"}]
+packages = [{include = "xinject"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-guards = "^1.0.0"
+xsentinels = "^1.2.0"
+
 
 [tool.poetry.group.dev.dependencies]
+mkdocs-git-revision-date-plugin = "^0.3.2"
 mkdocs = "^1.4.0"
 mike = "^1.1.2"
 pytest-pycodestyle = "^2.3.0"
@@ -21,15 +23,18 @@ tomlkit = "^0.11.5"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--verbose --pycodestyle"
-testpaths = ["tests"]
+testpaths = ["tests", "xinject"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.custom.xpublish]
+extra-module-docs = ['xsentinels']
+
 [tool.poetry.plugins]
-# Pytest plugin to support automatic clearing of all current resource between each test.
-pytest11 = {glazy_pytest_plugin = "glazy.pytest_plugin"}
+# Pytest plugin to support automatic clearing of all current dependency dependencies between each test.
+pytest11 = {xinject_pytest_plugin = "xinject.pytest_plugin"}
 
 [tool.black]
 line-length = 99

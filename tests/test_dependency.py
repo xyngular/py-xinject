@@ -1,10 +1,10 @@
 import pytest as pytest
 
-from glazy import ActiveResourceProxy, Context, Resource
-from glazy.resource import PerThreadResource
+from xinject import CurrentDependencyProxy, XContext, Dependency
+from xinject.dependency import DependencyPerThread
 
 
-class MyClass(Resource):
+class MyClass(Dependency):
     def __init__(self):
         self._my_value = "b"
 
@@ -20,13 +20,13 @@ class MyClass(Resource):
         self._my_value = value
 
 
-my_class = ActiveResourceProxy.wrap(MyClass)
-my_class_via_proxy_method = MyClass.resource_proxy()
+my_class = CurrentDependencyProxy.wrap(MyClass)
+my_class_via_proxy_method = MyClass.proxy()
 
 
 def test_proxy_wrapper():
     for current_class in [my_class, my_class_via_proxy_method]:
-        with Context(resources=[MyClass()]):
+        with XContext(dependencies=[MyClass()]):
             assert_myclass("b")
 
             current_class.my_prop = "c"
@@ -45,25 +45,25 @@ def assert_myclass(param):
     assert my_class.my_method() == param
     assert my_class_via_proxy_method.my_prop == param
     assert my_class_via_proxy_method.my_method() == param
-    assert MyClass.resource().my_prop == param
-    assert MyClass.resource().my_method() == param
+    assert MyClass.grab().my_prop == param
+    assert MyClass.grab().my_method() == param
 
 
 def test_shared_threaded_resource():
     # Test to ensure that the app-root and thread-root work correctly with
-    # thread safe/unsafe resources.
+    # thread safe/unsafe dependencies.
 
-    class ThreadSharableResource(Resource):
+    class ThreadSharableDependency(Dependency):
         hello = "1"
 
-    class NonThreadSharableResource(PerThreadResource):
+    class NonThreadSharableDependency(DependencyPerThread):
         hello2 = "a"
 
-    ThreadSharableResource.resource().hello = "3"
-    NonThreadSharableResource.resource().hello2 = "b"
+    ThreadSharableDependency.grab().hello = "3"
+    NonThreadSharableDependency.grab().hello2 = "b"
 
-    assert ThreadSharableResource.resource().hello == "3"
-    assert NonThreadSharableResource.resource().hello2 == "b"
+    assert ThreadSharableDependency.grab().hello == "3"
+    assert NonThreadSharableDependency.grab().hello2 == "b"
 
     thread_out_sharable = None
     thread_out_nonsharable = None
@@ -74,12 +74,12 @@ def test_shared_threaded_resource():
         nonlocal thread_out_sharable
         nonlocal thread_out_nonsharable
 
-        # This should produce an '3', since resource can be shared between threads.
-        thread_out_sharable = ThreadSharableResource.resource().hello
+        # This should produce an '3', since dependency can be shared between threads.
+        thread_out_sharable = ThreadSharableDependency.grab().hello
 
-        # This should produce an 'a', since the resource is NOT shared between threads;
+        # This should produce an 'a', since the dependency is NOT shared between threads;
         # the setting of it to 'b' above is in another thread and is NOT shared.
-        thread_out_nonsharable = NonThreadSharableResource.resource().hello2
+        thread_out_nonsharable = NonThreadSharableDependency.grab().hello2
 
     import threading
 
@@ -96,6 +96,6 @@ def test_shared_threaded_resource():
     # Wait for thread to finish
     other_thread.join()
 
-    # Check to see if the thread safe/unsafe resources worked correctly.
+    # Check to see if the thread safe/unsafe dependencies worked correctly.
     assert thread_out_sharable == "3"
     assert thread_out_nonsharable == "a"
