@@ -1,3 +1,3 @@
 
-class UDependError(Exception):
+class XInjectError(Exception):
     pass
