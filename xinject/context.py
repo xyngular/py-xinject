@@ -1026,7 +1026,7 @@ class XContext:
         """
         For right now, I am disabling making deep-copies of UContext.
 
-        This method currently raises a `NotImplemented` error.
+        This method currently raises a `NotImplementedError` error.
 
         Will enable this in a future version of the library.
 
@@ -1035,9 +1035,9 @@ class XContext:
                 that have multiple ways/paths to get to in a graph.
 
         Returns:
-            Raises a `NotImplemented` error.
+            Raises a `NotImplementedError` error.
         """
-        raise NotImplemented(
+        raise NotImplementedError(
             "Deepcopy is currently disabled for xinject.context.XContext. "
             "Will enable at some point in the future, disabled for now."
         )

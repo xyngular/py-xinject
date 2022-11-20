@@ -156,7 +156,7 @@ def test_initial_context_resources_with_dict():
 
 def test_deepcopy_context():
     c1 = XContext()
-    with pytest.raises(XInjectError):
+    with pytest.raises(NotImplementedError):
         deepcopy(c1)
 
 
