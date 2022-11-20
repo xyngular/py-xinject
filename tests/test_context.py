@@ -2,7 +2,7 @@ from xinject import XContext, Dependency
 import dataclasses
 import pytest
 from copy import deepcopy, copy
-from xinject.errors import UDependError
+from xinject.errors import XInjectError
 
 
 @XContext
@@ -156,7 +156,7 @@ def test_initial_context_resources_with_dict():
 
 def test_deepcopy_context():
     c1 = XContext()
-    with pytest.raises(UDependError):
+    with pytest.raises(XInjectError):
         deepcopy(c1)
 
 

@@ -131,7 +131,7 @@ from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any, Option
 from copy import copy, deepcopy
 from xsentinels import Default
 from xinject import XContext, _private
-from xinject.errors import UDependError
+from xinject.errors import XInjectError
 import sys
 
 T = TypeVar('T')
@@ -563,7 +563,7 @@ class Dependency:
     def __exit__(self, *args, **kwargs):
         stack = self._context_manager_stack
         if not stack:
-            raise UDependError(
+            raise XInjectError(
                 f"While using ({self}) as a context manager via a `with` statement,"
                 f"somehow we did not have an internal context from the initial entering "
                 f"(see `xinject.dependency.Dependency.__enter__`). "
@@ -624,7 +624,7 @@ class Dependency:
         Returns: We execute decorated method and return whatever it returns.
         """
         if not callable(func):
-            raise UDependError(
+            raise XInjectError(
                 f"Attempt to calling a Dependency of type ({self}) as a callable function. "
                 f"By default (unless dependency subclass does/says otherwise) you need to use "
                 f"it as a decorator when calling it. "

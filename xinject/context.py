@@ -311,7 +311,7 @@ from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable, Se
 from copy import copy
 from xsentinels.default import Default, DefaultType
 from xsentinels.singleton import Singleton
-from xinject.errors import UDependError
+from xinject.errors import XInjectError
 
 T = TypeVar('T')
 C = TypeVar('C')
@@ -491,7 +491,7 @@ class XContext:
 
             # `parent` is most likely still set as `Default`.
 
-            raise UDependError(
+            raise XInjectError(
                 f"Somehow we have a XContext has been activated "
                 f"(ie: has activated via decorator `@` or via `with` "
                 f"at some point and has not exited yet) "
@@ -522,7 +522,7 @@ class XContext:
         if parent in (_TreatAsRootParent, None):
             return None
 
-        raise UDependError(
+        raise XInjectError(
             f"Somehow we have a XContext that is not active "
             f"(ie: ever activated via decorator `@` or via `with` or activating a "
             f"`xinject.dependency.Dependency` via `@` or `with`) but has a specific parent "
@@ -642,7 +642,7 @@ class XContext:
         # Store the decorated function for later use
         # (for when decorated method get's called).
         if __func and not callable(__func):
-            raise UDependError(
+            raise XInjectError(
                 "First position argument was NOT a callable function; "
                 "The first positional argument `__func` is reserved for a decorated function "
                 "when you do use XContext directly as a decorator, "
@@ -680,7 +680,7 @@ class XContext:
             self._originally_passed_none_for_parent = False
             self._is_root_like_context = True
         else:
-            raise UDependError(
+            raise XInjectError(
                 "You must only pass in `Default` or `None` or `_TreatAsRootParentType` for parent "
                 f"when creating a new XContext, got ({parent}) instead."
             )
@@ -739,7 +739,7 @@ class XContext:
         uses the new `xinject.context.XContext`.
 
         .. warning:: If you attempt to add a second dependency of the same type...
-            ...a `xinject.errors.UDependError` will be
+            ...a `xinject.errors.XInjectError` will be
             raised. This is because other objects have already gotten this dependency and are
             relying on it now.  You need to configure any special resources you want to add
             to this context early enough before anything else will need it.
@@ -904,7 +904,7 @@ class XContext:
 
         # Sanity check: If we are active we should have a None or an explicit, non-default parent.
         if self._is_active and parent is Default:
-            raise UDependError(
+            raise XInjectError(
                 "We somehow have a XContext that has been 'activated' but yet has "
                 "their parent still set to `Default`. This is a bug. Active XContext's "
                 "should NEVER have their parent set at `Default`. It should either be None "
@@ -919,7 +919,7 @@ class XContext:
             # Doing an assert here to at least minimally double check this.
             parent = XContext.grab()
             if self is parent:
-                raise UDependError(
+                raise XInjectError(
                     f"Somehow have self ({self}) and parent as same instance (XContext), "
                     f"when self is not currently active and is attempting to find the current "
                     f"active XContext to use as it's temporary parent."
@@ -1234,7 +1234,7 @@ class XContext:
             fail_reason = "one non-callable argument"
 
         if fail_reason:
-            raise UDependError(
+            raise XInjectError(
                 f"Used directly as decorator `@XContext` (without ending parens) which is"
                 f"normally fine. This normally makes "
                 f"Python pass decorated function into `__init__` method and I don;t "
