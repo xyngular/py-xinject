@@ -4,6 +4,14 @@ version = "1.0.0"
 description = "Lazy dependency injection."
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "xinject"}]
+readme = "README.md"
+license = "MIT-0"
+repository = "https://github.com/xyngular/py-xinject"
+keywords = ["dependency", "injection", "lazy", "resource"]
+classifiers = [
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
 
 [tool.poetry.dependencies]
 python = "^3.8"
