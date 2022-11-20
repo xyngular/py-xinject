@@ -309,7 +309,8 @@ import itertools
 import functools
 from typing import TypeVar, Type, Dict, List, Optional, Union, Any, Iterable, Set
 from copy import copy
-from guards.default import Default, DefaultType, Singleton
+from xsentinels.default import Default, DefaultType
+from xsentinels.singleton import Singleton
 from xinject.errors import UDependError
 
 T = TypeVar('T')
@@ -544,7 +545,7 @@ class XContext:
         You can give an initial list of dependencies
         (if desired, most of the time you just start with a blank context).
 
-        for `parent`, it can be set to `guards.default.Default` (default value); or to `None.
+        for `parent`, it can be set to `xsentinels.default.Default` (default value); or to `None.
 
         If you don't pass anything to parent, then the default value of `Default` will cause us
         to lookup the current context and use that for the parent automatically when the
@@ -557,7 +558,7 @@ class XContext:
         method dependencies from other unit tests. Right now, the unit-test Dependency isolation
         happens automatically via an auto-use fixture (`xinject.ptest_plugin.xinject_test_context`).
 
-        A non-activated context will return `guards.default.Default` as it's `XContext.parent`
+        A non-activated context will return `xsentinels.default.Default` as it's `XContext.parent`
         if it was created with the default value;
         otherwise we return `None` (if it was created that way).
 
@@ -582,14 +583,14 @@ class XContext:
 
                 By default, no dependencies are initially added to a new XContext.
 
-            parent (Union[guards.default.Default, _TreatAsRootParent, None]): If we should use
-                `guards.default.Default`, treat this as a root-like XContext, or use None as
+            parent (Union[xsentinels.default.Default, _TreatAsRootParent, None]): If we should use
+                `xsentinels.default.Default`, treat this as a root-like XContext, or use None as
                 parent.
 
                 Right now the only valid option is to do one of these three options:
 
-                - nothing (ie: leave at `guards.default.Default`): If left as
-                    `guards.default.Default`, We lookup current context and use that as the
+                - nothing (ie: leave at `xsentinels.default.Default`): If left as
+                    `xsentinels.default.Default`, We lookup current context and use that as the
                     parent in self and in copies or when self is used in a `with` statement or as
                     a decorator.
                 - Pass `None`, indicating to not use any parent for current thread,
@@ -1263,7 +1264,7 @@ class XContext:
             start with `self` as the first item, and if the parent passed in to us when self
             was created was left/set at:
 
-            - `guards.default.Default`: Lookup current context via `XContext.current` and that's
+            - `xsentinels.default.Default`: Lookup current context via `XContext.current` and that's
                 our next parent (and we grab their parent and so forth and return the full list).
             - `None`: We don't look for more parents.
         """

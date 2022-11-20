@@ -129,7 +129,7 @@ For more info/details see:
 import functools
 from typing import TypeVar, Iterable, Type, List, Generic, Callable, Any, Optional, Dict, Set
 from copy import copy, deepcopy
-from guards import Default
+from xsentinels import Default
 from xinject import XContext, _private
 from xinject.errors import UDependError
 import sys

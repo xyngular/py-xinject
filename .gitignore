@@ -5,4 +5,4 @@ __pycache__
 /site
 /docs/api/
 /docs/xinject/
-/docs/guards/
+/docs/xsentinels/

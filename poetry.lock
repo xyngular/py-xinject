@@ -98,17 +98,6 @@ python-versions = ">=3.7"
 gitdb = ">=4.0.1,<5"
 
 [[package]]
-name = "guards"
-version = "1.1.4"
-description = "Tools for guarding Defaults, Null and creating Singletons."
-category = "main"
-optional = false
-python-versions = ">=3.8,<4.0"
-
-[package.dependencies]
-typing-inspect = ">=0.8.0,<0.9.0"
-
-[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -545,6 +534,17 @@ python-versions = ">=3.6"
 watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
+name = "xsentinels"
+version = "1.2.0"
+description = "Sentinels for Defaults, Null and for creating sentinels/singletons."
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+typing-inspect = ">=0,<1"
+
+[[package]]
 name = "zipp"
 version = "3.10.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -559,7 +559,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c2af98fc8de069e3cdcef0a1eded9d42119a7f2045affaa42136d168d52cc28a"
+content-hash = "9254c74c4ad03e56eeef11f911ef2896d5f608ae10e00e9d3076601dcadc9e47"
 
 [metadata.files]
 attrs = [
@@ -597,10 +597,6 @@ gitdb = [
 gitpython = [
     {file = "GitPython-3.1.29-py3-none-any.whl", hash = "sha256:41eea0deec2deea139b459ac03656f0dd28fc4a3387240ec1d3c259a2c47850f"},
     {file = "GitPython-3.1.29.tar.gz", hash = "sha256:cc36bfc4a3f913e66805a28e84703e419d9c264c1077e537b54f0e1af85dbefd"},
-]
-guards = [
-    {file = "guards-1.1.4-py3-none-any.whl", hash = "sha256:63bd0bc229dbbca818b7ca6270bd5906b0825fb127f72b1fbac728981af2fee9"},
-    {file = "guards-1.1.4.tar.gz", hash = "sha256:4730b8d5707aab38852a31188608e7520e87b1c241873f58fff559d729349af2"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
@@ -839,6 +835,10 @@ watchdog = [
     {file = "watchdog-2.1.9-py3-none-win_amd64.whl", hash = "sha256:7a833211f49143c3d336729b0020ffd1274078e94b0ae42e22f596999f50279c"},
     {file = "watchdog-2.1.9-py3-none-win_ia64.whl", hash = "sha256:ad576a565260d8f99d97f2e64b0f97a48228317095908568a9d5c786c829d428"},
     {file = "watchdog-2.1.9.tar.gz", hash = "sha256:43ce20ebb36a51f21fa376f76d1d4692452b2527ccd601950d69ed36b9e21609"},
+]
+xsentinels = [
+    {file = "xsentinels-1.2.0-py3-none-any.whl", hash = "sha256:56b5255999173357a58809fdce2e46acc5e518bd93dbd595e68d83a3d8a5cd7a"},
+    {file = "xsentinels-1.2.0.tar.gz", hash = "sha256:68d850ca5f9b780acd004ec2337ac0336786078cacfd4a2c2ce63b5b4046e3c6"},
 ]
 zipp = [
     {file = "zipp-3.10.0-py3-none-any.whl", hash = "sha256:4fcb6f278987a6605757302a6e40e896257570d11c51628968ccb2a47e80c6c1"},

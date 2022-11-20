@@ -7,7 +7,7 @@ packages = [{include = "xinject"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-guards = "^1.0.0"
+xsentinels = "^1.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -28,6 +28,9 @@ testpaths = ["tests"]
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.custom.xpublish]
+extra-module-docs = ['xsentinels']
 
 [tool.poetry.plugins]
 # Pytest plugin to support automatic clearing of all current dependency dependencies between each test.

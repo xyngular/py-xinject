@@ -24,10 +24,10 @@ in an easy to understand and self-documenting way.
 
 ```bash
 # via pip
-pip install guards
+pip install xinject
 
 # via poetry
-poetry add guards
+poetry add xinject
 ```
 
 # Quick Start
