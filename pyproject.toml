@@ -5,7 +5,7 @@ description = "Lazy dependency injection."
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "xinject"}]
 readme = "README.md"
-license = "MIT-0"
+license = "MIT"
 repository = "https://github.com/xyngular/py-xinject"
 keywords = ["dependency", "injection", "lazy", "resource"]
 classifiers = [

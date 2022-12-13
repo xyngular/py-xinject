@@ -1,6 +1,9 @@
+import dataclasses
+
 import pytest as pytest
 
 from xinject import CurrentDependencyProxy, XContext, Dependency
+from xinject.context import _setup_blank_app_and_thread_root_contexts_globals
 from xinject.dependency import DependencyPerThread
 
 
@@ -99,3 +102,21 @@ def test_shared_threaded_resource():
     # Check to see if the thread safe/unsafe dependencies worked correctly.
     assert thread_out_sharable == "3"
     assert thread_out_nonsharable == "a"
+
+
+def test_dep_as_decorator():
+    @dataclasses.dataclass
+    class MyDep(Dependency):
+        some_value: str = 'my-value'
+
+    # This ensures we don't have any thread-root context's,
+    # which is important for testing to make sure a specific bug is fixed.
+    # (the pytest-plugin already creates a blank thread-root-context for us, so we clear it again here)
+    _setup_blank_app_and_thread_root_contexts_globals()
+
+    @MyDep(some_value='new-value')
+    def my_func():
+        return MyDep.grab().some_value
+
+    assert my_func() == 'new-value'
+
