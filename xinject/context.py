@@ -520,17 +520,17 @@ class XContext:
         if parent in (_TreatAsRootParent, None):
             return None
 
-        # raise XInjectError(
-        #     f"Somehow we have a XContext that is not active "
-        #     f"(ie: ever activated via decorator `@` or via `with` or activating a "
-        #     f"`xinject.dependency.Dependency` via `@` or `with`) but has a specific parent "
-        #     f"(ie: not None or _TreatAsRootParent or Default). "
-        #     f"This indicates some sort of programming error or bug with XContext. "
-        #     f"A XContext should only have an explicit parent if they have "
-        #     f"been activated via `@` or `with` or activating a `xinject.dependency.Dependency` "
-        #     f"via `@` or `with` "
-        #     f"(side note: you can look at XContext._is_active for more internal details)."
-        # )
+        raise XInjectError(
+            f"Somehow we have a XContext that is not active "
+            f"(ie: ever activated via decorator `@` or via `with` or activating a "
+            f"`xinject.dependency.Dependency` via `@` or `with`) but has a specific parent "
+            f"(ie: not None or _TreatAsRootParent or Default). "
+            f"This indicates some sort of programming error or bug with XContext. "
+            f"A XContext should only have an explicit parent if they have "
+            f"been activated via `@` or `with` or activating a `xinject.dependency.Dependency` "
+            f"via `@` or `with` "
+            f"(side note: you can look at XContext._is_active for more internal details)."
+        )
 
     @property
     def name(self) -> str:
