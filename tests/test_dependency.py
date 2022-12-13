@@ -111,7 +111,8 @@ def test_dep_as_decorator():
 
     # This ensures we don't have any thread-root context's,
     # which is important for testing to make sure a specific bug is fixed.
-    # (the pytest-plugin already creates a blank thread-root-context for us, so we clear it again here)
+    # (the pytest-plugin already creates a blank thread-root-context for us,
+    #  so we clear it again here)
     _setup_blank_app_and_thread_root_contexts_globals()
 
     @MyDep(some_value='new-value')
