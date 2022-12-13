@@ -18,7 +18,7 @@ in an easy to understand and self-documenting way.
 
 # Documentation
 
-**[📄 Detailed Documentation](https://xyngular.github.io/py-xinject/latest/)** | **[🐍 PyPi](https://pypi.org/project/py-xinject/)**
+**[📄 Detailed Documentation](https://xyngular.github.io/py-xinject/latest/)** | **[🐍 PyPi](https://pypi.org/project/xinject/)**
 
 # Install
 

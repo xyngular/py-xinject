@@ -438,23 +438,21 @@ class XContext:
 
                     Only returns None when this is True.
         """
-        if is_thread_root_context:
-            # For debugging purposes, so you know which one was truly the thread-root context
-            # if there is another root-like-context made (for unit tests).
-            self._is_root_context_for_thread = True
-            assert self._parent is Default, "See my methods doc-comment for details."
 
         if is_app_root_context:
             self._is_root_context_for_app = True
             assert self._parent is _TreatAsRootParent, "See my methods doc-comment for details."
+        elif is_thread_root_context:
+            # For debugging purposes, so you know which one was truly the thread-root context
+            # if there is another root-like-context made (for unit tests).
+            self._is_root_context_for_thread = True
+
+            # We set parent to use app-root-context if we are the thread-root-context.
+            self._parent = _app_root_context
 
         if self._parent is Default:
             # Side Note: This will be `None` if we are the first XContext on current thread.
-            self._parent = XContext._current_without_creating_thread_root()
-
-            if self._parent is None:
-                # We set parent to use app-root-context if we are the thread-root-context.
-                self._parent = _app_root_context
+            self._parent = XContext.grab()
         elif self._parent is _TreatAsRootParent:
             # When you activate a context who should be treated as root, we have a None
             # parent and we set `_originally_passed_none_for_parent` to False
