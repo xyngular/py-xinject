@@ -954,6 +954,14 @@ class XContext:
             self, for_type: Type[ResourceTypeVar], create: bool = False
     ) -> Iterable[ResourceTypeVar]:
         """
+        This is deprecated, renamed to `XContext.dependency_chain`; use `dependency_chain` instead.
+        """
+        return self.dependency_chain(for_type=for_type, create=create)
+
+    def dependency_chain(
+            self, for_type: Type[ResourceTypeVar], create: bool = False
+    ) -> Iterable[ResourceTypeVar]:
+        """
         Returns a python generator yielding dependencies in self and in each parent;
         returns them in order.
 
@@ -1302,9 +1310,9 @@ class XContext:
         if types_list and len(types_list) < 3:
             types_list = [t.__name__ for t in types_list]
             types = ';'.join(types_list)
-            types = f'resource_types={types}'
+            types = f'dependency_type={types}'
         else:
-            types = f'resource_count={len(types_list)}'
+            types = f'dependency_count={len(types_list)}'
 
         str = f"XContext(name='{self.name}', {types}"
         if include_parent:
