@@ -11,7 +11,7 @@ See one of these for more details:
 
 - [Active Dependency Proxy - pydoc](./#active-dependency-proxy)
 - [Active Dependency Proxy - github]
-  (https://github.com/xyngular/py-xinject#active-resource-proxy#documentation)
+  (https://github.com/xyngular/py-xinject#active-dependecy-proxy#documentation)
 
 """
 from typing import TypeVar, Type, Generic, Callable, Any
@@ -58,55 +58,55 @@ class CurrentDependencyProxy(Generic[D]):
     """
 
     @classmethod
-    def wrap(cls, resource_type: Type[D]) -> D:
-        """ Just like init'ing a new object with `resource_type`....
+    def wrap(cls, dependency_type: Type[D]) -> D:
+        """ Just like init'ing a new object with `dependency_type`....
             Except this will preserve
             the type-hinting, and tell things that care about the type (like an IDE) that
-            what's returned from here should act like an instance of the `resource_type` passed
+            what's returned from here should act like an instance of the `dependency_type` passed
             into this method.
 
             A simpler/alternate way to wrap a Dependency with a `CurrentDependencyProxy` is via the
             `xinject.dependency.Dependency.proxy` convenience method.
         """
         # noinspection PyTypeChecker
-        return cls(resource_type=resource_type)
+        return cls(dependency_type=dependency_type)
 
-    def __init__(self, resource_type: Type[D], grabber: Callable[[D], Any] = None):
+    def __init__(self, dependency_type: Type[D], grabber: Callable[[D], Any] = None):
         """
         See `CurrentDependencyProxy` for and overview. Init method doc below.
 
         ## Init Method
 
-        When you create a CurrentDependencyProxy, you pass in the resource_type you want
+        When you create a CurrentDependencyProxy, you pass in the `dependency_type` you want
         it to proxy.
 
-        Will act like the current/active object of Dependency type `resource_type`.
+        Will act like the current/active object of Dependency type `dependency_type`.
         you can optionally provide a grabber function, that will be called with the current
         dependency passed to it.  You can then grab something from that dependency and return it.
         If you pass in a grabber function, this ProxyActive will act like a proxy of whatever
         is returned from the grabber method.
 
         Args:
-            resource_type: Type of dependency to proxy.
+            dependency_type: Type of dependency to proxy.
             grabber: Optional callable, if you wish to grab a specific attribute off the dependency
                 and act like a proxy for that, you can pass in a method here to do so.
                 Whatever is returned from the grabber is what is used to as the object to 'proxy'.
         """
 
         # Would give unusual error later on, lets just check right now!
-        if not issubclass(resource_type, Dependency):
+        if not issubclass(dependency_type, Dependency):
             raise Exception(
                 f"Must pass a xinject.Dependency subtype to xinject.ProxyActive.wrap, "
-                f"I was given a ({resource_type}) instead."
+                f"I was given a ({dependency_type}) instead."
             )
 
-        self._resource_type = resource_type
+        self._dependency_type = dependency_type
         self._grabber = grabber
         pass
 
     def _get_active(self):
         # Get current/active instance of dependency type
-        value = self._resource_type.grab()
+        value = self._dependency_type.grab()
         if self._grabber:
             return self._grabber(value)
         return value

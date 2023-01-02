@@ -32,7 +32,7 @@ class S3(DependencyPerThread):
         self.resource = boto3.resource('s3', **kwargs)
 
 
-# The `xny_resource.proxy.CurrentDependencyProxy.wrap` method to get
+# The `Dependency.proxy.CurrentDependencyProxy.wrap` method to get
 # a correctly type-hinted (for IDE) proxy back:
 s3 = S3.proxy()
 ```

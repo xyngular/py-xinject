@@ -326,9 +326,9 @@ class Dependency:
         """
 
         Args:
-            thread_sharable: If `False`: While a resource is lazily auto-created, we will
+            thread_sharable: If `False`: While a dependency is lazily auto-created, we will
                 ensure we do it per-thread, and not make it visible to other threads.
-                This is accomplished by only auto-creating the resource in the thread-root
+                This is accomplished by only auto-creating the dependency in the thread-root
                 `xinject.context.XContext`.
 
                 If `True` (default): Lazily auto-creating the `Dependency` subclass will happen
