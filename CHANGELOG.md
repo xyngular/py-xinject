@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.1.0](https://github.com/xyngular/py-xinject/compare/v1.0.2...v1.1.0) (2022-12-13)
+
+
+### Features
+
+* update deps. ([0c49054](https://github.com/xyngular/py-xinject/commit/0c49054de4f00e825234531c0b14ea9587d209da))
+
+
+### Bug Fixes
+
+* fixes a bug where if you activate a dependency before the thread-root context is created. ([0bb778c](https://github.com/xyngular/py-xinject/commit/0bb778c79a2a39b81041b7e848fb1a7a35f3fd08))
+
+## [1.0.2](https://github.com/xyngular/py-xinject/compare/v1.0.1...v1.0.2) (2022-11-20)
+
+
+### Documentation
+
+* fix readme pypi pointer. ([e775c81](https://github.com/xyngular/py-xinject/commit/e775c8126e5f7419796102271797ea3479b1c1f3))
+
+## [1.0.1](https://github.com/xyngular/py-xinject/compare/v1.0.0...v1.0.1) (2022-11-20)
+
+
+### Bug Fixes
+
+* add missing metadata to package. ([ced4cea](https://github.com/xyngular/py-xinject/commit/ced4cea1a53287d4d2e7206d0e2b7a4ea71b2e3c))
+
 ## [1.0.0](https://github.com/xyngular/py-xinject/compare/v0.4.0...v1.0.0) (2022-11-20)
 
 
