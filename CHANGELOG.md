@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/xyngular/py-xinject/compare/v1.1.0...v1.2.0) (2023-01-02)
+
+
+### Features
+
+* renamed resource-refs to dependency-refs terminology; ie: `resource_chain() -&gt; dependency_chain()` ([f1f7b08](https://github.com/xyngular/py-xinject/commit/f1f7b08401cf21b1fdbd78c55c3e868205e9c85e))
+
 ## [1.1.0](https://github.com/xyngular/py-xinject/compare/v1.0.2...v1.1.0) (2022-12-13)
 
 
