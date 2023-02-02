@@ -497,7 +497,11 @@ class Dependency:
         >>> return getattr(getattr(cls.grab(), attribute_name), requested_attribute)
         """
         from .proxy import CurrentDependencyProxy
-        return CurrentDependencyProxy(dependency_type=cls, grabber=lambda x: getattr(x, attribute_name), repr_info=f'attr:{attribute_name}')
+        return CurrentDependencyProxy(
+            dependency_type=cls,
+            grabber=lambda x: getattr(x, attribute_name),
+            repr_info=f'attr:{attribute_name}'
+        )
 
     def __copy__(self):
         """
