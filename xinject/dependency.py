@@ -472,10 +472,32 @@ class Dependency:
         return XContext.grab().dependency(for_type=cls)
 
     @classmethod
-    def proxy(cls: Type[R]) -> R:
-        """ Convenience method to easily get a wrapped CurrentDependencyProxy for cls/self. """
+    def proxy(cls: Type[R], ) -> R:
+        """
+        Returns a proxy-object, that when and attribute is asked for, it will
+        proxy it to the current object of `cls`.
+
+        ie: the equivalent of this code will run:
+        >>> # `requested_attribute` is the original attribute being requested
+        >>> # on returned proxy object.
+        >>> return getattr(cls.grab(), requested_attribute)
+        """
         from .proxy import CurrentDependencyProxy
         return CurrentDependencyProxy.wrap(cls)
+
+    @classmethod
+    def proxy_attribute(cls, attribute_name: str) -> Any:
+        """
+        Returns a proxy-object, that when and attribute is asked for, it will
+        proxy it to the current attribute value on the current object of `cls`.
+
+        ie: the equivalent of this code will run:
+        >>> # `requested_attribute` is the original attribute being requested
+        >>> # on returned proxy object.
+        >>> return getattr(getattr(cls.grab(), attribute_name), requested_attribute)
+        """
+        from .proxy import CurrentDependencyProxy
+        return CurrentDependencyProxy(dependency_type=cls, grabber=lambda x: getattr(x, attribute_name), repr_info=f'attr:{attribute_name}')
 
     def __copy__(self):
         """

@@ -71,7 +71,7 @@ class CurrentDependencyProxy(Generic[D]):
         # noinspection PyTypeChecker
         return cls(dependency_type=dependency_type)
 
-    def __init__(self, dependency_type: Type[D], grabber: Callable[[D], Any] = None):
+    def __init__(self, dependency_type: Type[D], grabber: Callable[[D], Any] = None, repr_info: str = None):
         """
         See `CurrentDependencyProxy` for and overview. Init method doc below.
 
@@ -102,6 +102,7 @@ class CurrentDependencyProxy(Generic[D]):
 
         self._dependency_type = dependency_type
         self._grabber = grabber
+        self._repr_info = repr_info
         pass
 
     def _get_active(self):
@@ -129,7 +130,10 @@ class CurrentDependencyProxy(Generic[D]):
         return setattr(self._get_active(), key, value)
 
     def __repr__(self):
-        return f'CurrentDependencyProxy<{self._get_active().__repr__()}>'
+        info = ''
+        if repr_info := self._repr_info:
+            info = f'({repr_info})'
+        return f'CurrentDependencyProxy{info}<{self._get_active().__repr__()}>'
 
     def __str__(self):
         return self._get_active().__str__()
