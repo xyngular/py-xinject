@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/xyngular/py-xinject/compare/v1.2.0...v1.3.0) (2023-02-03)
+
+
+### Features
+
+* added ability to easily proxy an attribute on dependency. ([0ff42a0](https://github.com/xyngular/py-xinject/commit/0ff42a09c78d16ceaa3981aff25d5c281934944d))
+
+
+### Bug Fixes
+
+* style, add doc comment. ([3ad3817](https://github.com/xyngular/py-xinject/commit/3ad38173d30c3f03184630b7af78f2b89f04d237))
+
 ## [1.2.0](https://github.com/xyngular/py-xinject/compare/v1.1.0...v1.2.0) (2023-01-02)
 
 
