@@ -121,3 +121,24 @@ def test_dep_as_decorator():
 
     assert my_func() == 'new-value'
 
+
+def test_proxy_attribute():
+    @dataclasses.dataclass
+    class MyData:
+        some_data: str = 'hello'
+
+    class MyDep(Dependency):
+        def __init__(self, my_data: MyData = None):
+            if not my_data:
+                my_data = MyData(some_data='data-value')
+            self.my_data = my_data
+
+    proxy__my_data: MyData = MyDep.proxy_attribute('my_data')
+
+    assert proxy__my_data.some_data == 'data-value'
+    with MyDep(my_data=MyData(some_data='new-value')):
+        # Proxy should find the newly injected MyData object with its new value.
+        assert proxy__my_data.some_data == 'new-value'
+
+    # Original MyData object is restored
+    assert proxy__my_data.some_data == 'data-value'

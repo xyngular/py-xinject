@@ -971,7 +971,7 @@ class XContext:
         .. warning:: This is mostly used by `xinject.dependency.Dependency` subclasses
             (internally).
 
-            Not normally used elsewhere. It can help the xinject.dependency.Dependency`
+            Not normally used elsewhere. It can help the `xinject.dependency.Dependency`
             subclasses to find their list of parent dependencies to consult for its
             own purposes (ie: to inherit settings/configuration from parent objects).
 
