@@ -145,3 +145,9 @@ class CurrentDependencyProxy(Generic[D]):
 
     def __str__(self):
         return self._get_active().__str__()
+
+    def __getitem__(self, key):
+        return self._get_active().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        return self._get_active().__setitem__(key, value)
