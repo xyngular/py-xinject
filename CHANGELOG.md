@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/xyngular/py-xinject/compare/v1.3.0...v1.4.0) (2023-02-19)
+
+
+### Features
+
+* have proxy also forward set/get item dunder methods. ([e471b71](https://github.com/xyngular/py-xinject/commit/e471b7115c2e580e5065280ac11991384ce3bf3b))
+
 ## [1.3.0](https://github.com/xyngular/py-xinject/compare/v1.2.0...v1.3.0) (2023-02-03)
 
 
