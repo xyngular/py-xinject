@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/xyngular/py-xinject/compare/v1.4.0...v1.4.1) (2023-04-15)
+
+
+### Bug Fixes
+
+* license ([709f49e](https://github.com/xyngular/py-xinject/commit/709f49e7a107b51f6223f4a7b781c62f254c807c))
+
 ## [1.4.0](https://github.com/xyngular/py-xinject/compare/v1.3.0...v1.4.0) (2023-02-19)
 
 
