@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/xyngular/py-xinject/compare/v1.4.1...v1.4.2) (2024-07-21)
+
+
+### Bug Fixes
+
+* only return any particular object once in a dependency-chain call. ([f3c9b0a](https://github.com/xyngular/py-xinject/commit/f3c9b0a956837ea9e5f4206bda36e6d64a266d89))
+
 ## [1.4.1](https://github.com/xyngular/py-xinject/compare/v1.4.0...v1.4.1) (2023-04-15)
 
 
